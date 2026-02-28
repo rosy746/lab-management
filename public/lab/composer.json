@@ -1,0 +1,25 @@
+{
+    "name": "lab-inventory/management-system",
+    "description": "Lab Computer Inventory Management System with Export Features",
+    "type": "project",
+    "require": {
+        "php": ">=7.4",
+        "phpoffice/phpspreadsheet": "^5.4",
+        "tecnickcom/tcpdf": "^6.10"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "LabInventory\\": "app/"
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

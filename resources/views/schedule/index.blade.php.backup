@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Jadwal Lab - Lab Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family:'DM Sans',sans-serif; background:#f0f4ef; margin:0; }
+        .font-display, h1, h2, h3 { font-family:'Outfit',sans-serif; }
+
+        /* Inputs */
+        .inp {
+            width:100%; border-radius:10px; border:1.5px solid #e5e7eb;
+            padding:9px 13px; font-size:13px; background:#fafcf9;
+            outline:none; transition:border-color .15s; box-sizing:border-box;
+        }
+        .inp:focus { border-color:#ACC8A2; box-shadow:0 0 0 3px rgba(172,200,162,0.12); }
+        .inp:disabled { opacity:.5; cursor:not-allowed; background:#f3f4f6; }
+
+        /* Booking cell hover */
+        .bk:hover { border-color:#ACC8A2 !important; background:#f0f7ee !important; }
+
+        /* Mobile responsive */
+        .hide-xs { display:inline; }
+        .show-xs { display:none; }
+        @media (max-width:600px) {
+            .hide-xs { display:none; }
+            .show-xs { display:inline; }
+        }
+
+        /* Table scroll mobile */
+        .table-scroll-wrap {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scroll-snap-type: x proximity;
+            position: relative;
+        }
+        .table-scroll-wrap::-webkit-scrollbar { height: 4px; }
+        .table-scroll-wrap::-webkit-scrollbar-track { background: #f0f4ef; }
+        .table-scroll-wrap::-webkit-scrollbar-thumb { background: #ACC8A2; border-radius: 4px; }
+
+        /* Swipe hint badge - mobile only */
+        .swipe-hint {
+            display: none;
+        }
+        @media (max-width:768px) {
+            .swipe-hint {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                font-size: 11px;
+                font-weight: 600;
+                color: #6b7280;
+                background: #fff;
+                border: 1px solid #e8f0e6;
+                border-radius: 8px;
+                padding: 6px 12px;
+                margin-bottom: 8px;
+                width: fit-content;
+            }
+        }
+
+        /* Modal overlay */
+        #modal-overlay {
+            display:none; position:fixed; inset:0; z-index:100;
+            background:rgba(26,37,23,0.78); backdrop-filter:blur(5px);
+            align-items:center; justify-content:center; padding:1rem;
+        }
+        #modal-overlay.show { display:flex; }
+        #modal-box {
+            background:#fff; border-radius:16px; width:100%; max-width:520px;
+            max-height:93vh; overflow:hidden; display:flex; flex-direction:column;
+            animation:su .22s cubic-bezier(.16,1,.3,1);
+        }
+        @keyframes su {
+            from{opacity:0;transform:translateY(18px) scale(.97)}
+            to{opacity:1;transform:none}
+        }
+        .badge {
+            font-size:11px; padding:3px 10px; border-radius:999px; font-weight:600;
+            background:rgba(172,200,162,.1); color:#ACC8A2;
+            border:1px solid rgba(172,200,162,.2); white-space:nowrap;
+        }
+    </style>
+</head>
+<body>
+
+{{-- ═══ NAVBAR ═══ --}}
+<nav style="background:linear-gradient(135deg,#1A2517,#2d3d29);position:sticky;top:0;z-index:40;box-shadow:0 2px 12px rgba(0,0,0,.3)">
+    <div style="max-width:1280px;margin:auto;padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:60px">
+        <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:36px;height:36px;border-radius:10px;background:rgba(172,200,162,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <svg style="width:18px;height:18px;color:#ACC8A2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                </svg>
+            </div>
+            <div>
+                <div style="font-family:Outfit,sans-serif;font-weight:700;color:#fff;font-size:15px;line-height:1.2">Lab Management</div>
+                <div style="font-size:11px;color:rgba(172,200,162,.5)">Nuris Jember</div>
+            </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+            <a href="{{ route('inventory.public') }}" style="font-size:13px;font-weight:600;color:rgba(172,200,162,.6);text-decoration:none;padding:7px 14px;border-radius:8px;transition:all .15s"
+               onmouseover="this.style.color='#ACC8A2';this.style.background='rgba(172,200,162,.08)'" onmouseout="this.style.color='rgba(172,200,162,.6)';this.style.background='transparent'">
+                Inventaris
+            </a>
+            @auth
+            <a href="{{ route('dashboard') }}" style="font-size:12px;font-weight:600;padding:7px 16px;border-radius:9px;border:1px solid rgba(172,200,162,.3);color:#ACC8A2;text-decoration:none;transition:all .15s"
+               onmouseover="this.style.background='rgba(172,200,162,.1)'" onmouseout="this.style.background='transparent'">Dashboard →</a>
+            @else
+            <a href="{{ route('login') }}" style="font-size:12px;font-weight:600;padding:7px 16px;border-radius:9px;border:1px solid rgba(172,200,162,.3);color:#ACC8A2;text-decoration:none;transition:all .15s"
+               onmouseover="this.style.background='rgba(172,200,162,.1)'" onmouseout="this.style.background='transparent'">Login Admin →</a>
+            @endauth
+        </div>
+    </div>
+</nav>
+
+{{-- ═══ HERO ═══ --}}
+<div style="background:linear-gradient(135deg,#1A2517,#2d3d29,#3d5438);padding:2rem 2rem 3.5rem">
+    <div style="max-width:1280px;margin:auto">
+        <p style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:rgba(172,200,162,.6);margin:0 0 6px">
+            Sistem Informasi Laboratorium
+        </p>
+        <h1 style="font-family:Outfit,sans-serif;font-weight:800;font-size:clamp(1.6rem,4vw,2.2rem);color:#fff;margin:0 0 4px">
+            Jadwal Penggunaan Lab
+        </h1>
+        <p style="font-size:13px;color:rgba(172,200,162,.6);margin:0 0 16px">
+            Pilih lab · Klik slot kosong untuk booking · Tanpa perlu login
+        </p>
+        {{-- Period badge --}}
+        <div style="display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;background:rgba(172,200,162,.1);border:1px solid rgba(172,200,162,.22);font-size:13px;font-weight:600;color:#ACC8A2">
+            <svg style="width:15px;height:15px" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            {{ $weekStart->translatedFormat('d M') }} – {{ $weekEnd->translatedFormat('d M Y') }}
+        </div>
+
+        {{-- Legend --}}
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px">
+            @foreach([
+                ['bg'=>'linear-gradient(135deg,#d6ead2,#ACC8A2)','label'=>'Jadwal Tetap'],
+                ['bg'=>'#dcfce7','border'=>'#86efac','label'=>'Disetujui'],
+                ['bg'=>'#fef3c7','border'=>'#fcd34d','label'=>'Pending'],
+                ['bg'=>'transparent','dashed'=>true,'label'=>'Tersedia — klik booking'],
+            ] as $lg)
+            <div style="display:flex;align-items:center;gap:7px;padding:6px 12px;border-radius:8px;background:rgba(172,200,162,.07);border:1px solid rgba(172,200,162,.14)">
+                <div style="width:14px;height:14px;border-radius:5px;flex-shrink:0;
+                    background:{{ $lg['bg'] }};
+                    border:{{ isset($lg['dashed']) ? '2px dashed rgba(172,200,162,.5)' : '1.5px solid '.($lg['border']??'transparent') }}"></div>
+                <span style="font-size:11px;color:rgba(172,200,162,.85)">{{ $lg['label'] }}</span>
+            </div>
+            @endforeach
+        </div>
+    </div>
+</div>
+
+{{-- ═══ MAIN CONTENT ═══ --}}
+<div style="max-width:1280px;margin:auto;padding:0 2rem 3rem;margin-top:-20px">
+
+    {{-- Flash --}}
+    @if(session('success'))
+    <div style="margin-bottom:16px;padding:12px 16px;border-radius:12px;font-size:13px;font-weight:600;color:#166534;background:#f0fdf4;border:1px solid #bbf7d0">
+        ✓ {{ session('success') }}
+    </div>
+    @endif
+    @if($errors->has('error'))
+    <div style="margin-bottom:16px;padding:12px 16px;border-radius:12px;font-size:13px;font-weight:600;color:#991b1b;background:#fef2f2;border:1px solid #fecaca">
+        ⚠ {{ $errors->first('error') }}
+    </div>
+    @endif
+
+    {{-- Week nav --}}
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;gap:8px">
+        <a href="?week={{ $prevWeek }}"
+           style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;background:linear-gradient(135deg,#1A2517,#2d3d29);color:#ACC8A2;padding:10px 18px;border-radius:12px;text-decoration:none;box-shadow:0 3px 10px rgba(26,37,23,.25);transition:all .15s;border:none;flex-shrink:0"
+           onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 5px 15px rgba(26,37,23,.3)'"
+           onmouseout="this.style.transform='';this.style.boxShadow='0 3px 10px rgba(26,37,23,.25)'">
+            <svg style="width:15px;height:15px" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+            </svg>
+            <span class="hide-xs">Minggu Lalu</span>
+        </a>
+        <span style="font-size:12px;font-weight:700;color:#1A2517;background:#fff;padding:9px 14px;border-radius:10px;border:1.5px solid #e5e7eb;box-shadow:0 1px 4px rgba(0,0,0,.06);text-align:center;flex:1;min-width:0">
+            📅 <span class="hide-xs">{{ $weekStart->translatedFormat('d M Y') }} – {{ $weekEnd->translatedFormat('d M Y') }}</span>
+            <span class="show-xs">{{ $weekStart->translatedFormat('d M') }} – {{ $weekEnd->translatedFormat('d M Y') }}</span>
+        </span>
+        <a href="?week={{ $nextWeek }}"
+           style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;background:linear-gradient(135deg,#ACC8A2,#8ab87e);color:#1A2517;padding:10px 18px;border-radius:12px;text-decoration:none;box-shadow:0 3px 10px rgba(172,200,162,.4);transition:all .15s;border:none;flex-shrink:0"
+           onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 5px 15px rgba(172,200,162,.5)'"
+           onmouseout="this.style.transform='';this.style.boxShadow='0 3px 10px rgba(172,200,162,.4)'">
+            <span class="hide-xs">Minggu Depan</span>
+            <svg style="width:15px;height:15px" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+            </svg>
+        </a>
+    </div>
+
+    {{-- Tab Buttons --}}
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px">
+        @foreach($resources as $i => $resource)
+        <button onclick="switchTab({{ $resource->id }})" id="tab-{{ $resource->id }}"
+            style="display:flex;align-items:center;gap:8px;padding:9px 16px;border-radius:12px;font-size:13px;font-weight:600;cursor:pointer;transition:all .18s;border:1.5px solid;
+            {{ $i===0 ? 'background:linear-gradient(135deg,#1A2517,#2d3d29);color:#ACC8A2;border-color:transparent;box-shadow:0 4px 12px rgba(26,37,23,.3)' : 'background:#fff;color:#6b7280;border-color:#e5e7eb' }}">
+            <svg style="width:14px;height:14px;flex-shrink:0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+            {{ $resource->name }}
+        </button>
+        @endforeach
+    </div>
+
+    {{-- Lab panels --}}
+    @foreach($resources as $i => $resource)
+    <div id="panel-{{ $resource->id }}" class="lab-panel" style="{{ $i!==0 ? 'display:none' : '' }}">
+        <div style="background:#fff;border-radius:16px;box-shadow:0 1px 6px rgba(0,0,0,.07);border:1px solid #e8f0e6;overflow:hidden">
+
+            {{-- Lab header --}}
+            <div style="display:flex;align-items:center;gap:14px;padding:16px 24px;background:linear-gradient(135deg,#1A2517,#2d3d29)">
+                <div style="width:40px;height:40px;border-radius:12px;background:rgba(172,200,162,.12);border:1.5px solid rgba(172,200,162,.25);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                    <svg style="width:20px;height:20px;color:#ACC8A2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+                <div>
+                    <div style="font-family:Outfit,sans-serif;font-weight:700;color:#fff;font-size:18px">{{ $resource->name }}</div>
+                    @if($resource->capacity)
+                    <div style="font-size:11px;color:rgba(172,200,162,.5);margin-top:2px">Kapasitas {{ $resource->capacity }} komputer</div>
+                    @endif
+                </div>
+            </div>
+
+            {{-- Table --}}
+            {{-- Swipe hint (mobile only) --}}
+            <div class="swipe-hint" style="margin:10px 16px 0">
+                <svg style="width:14px;height:14px;flex-shrink:0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                </svg>
+                Geser kanan/kiri untuk melihat semua hari
+            </div>
+            <div class="table-scroll-wrap">
+                <table style="width:100%;border-collapse:collapse;min-width:820px;font-size:12px">
+                    <thead>
+                        <tr style="background:#f8faf7;border-bottom:2px solid #e8f0e6">
+                            <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:#9ca3af;letter-spacing:.1em;text-transform:uppercase;position:sticky;left:0;background:#f8faf7;width:80px;z-index:2">JAM</th>
+                            @foreach($days as $day)
+                            @php $isToday=\Carbon\Carbon::parse($weekDates[$day])->isToday(); $isSun=$day==='Minggu'; @endphp
+                            <th style="padding:10px 8px;text-align:center;font-weight:700;font-size:11px;color:{{ $isSun?'#dc2626':($isToday?'#1A2517':'#6b7280') }};{{ $isToday?'border-bottom:3px solid #ACC8A2':'' }}">
+                                <div>{{ $day }}</div>
+                                <div style="margin-top:3px;font-weight:400">
+                                    @if($isToday)
+                                    <span style="background:#1A2517;color:#fff;font-size:10px;font-weight:700;padding:1px 8px;border-radius:999px">{{ \Carbon\Carbon::parse($weekDates[$day])->format('d/m') }}</span>
+                                    @else
+                                    <span style="font-size:10px;color:{{ $isSun?'#fca5a5':'#9ca3af' }}">{{ \Carbon\Carbon::parse($weekDates[$day])->format('d/m') }}</span>
+                                    @endif
+                                </div>
+                            </th>
+                            @endforeach
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($timeSlots as $slot)
+                        @php $isBreak=$slot->is_break??false; @endphp
+                        @if($isBreak)
+                        <tr>
+                            <td colspan="{{ count($days)+1 }}" style="text-align:center;padding:9px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:linear-gradient(135deg,#fef9ec,#fef3c7);color:#92400e;border-top:1px solid #fde68a;border-bottom:1px solid #fde68a">
+                                ☕ ISTIRAHAT · {{ \Carbon\Carbon::parse($slot->start_time)->format('H:i') }}@if($slot->end_time) – {{ \Carbon\Carbon::parse($slot->end_time)->format('H:i') }}@endif
+                            </td>
+                        </tr>
+                        @else
+                        <tr style="border-top:1px solid #f3f4f6" onmouseover="this.style.background='#fafcf9'" onmouseout="this.style.background=''">
+                            <td style="padding:10px 14px;position:sticky;left:0;background:#fff;border-right:1px solid #f0f0f0;z-index:1">
+                                <div style="font-family:Outfit,sans-serif;font-weight:700;color:#374151;font-size:11px">{{ $slot->name }}</div>
+                                <div style="font-size:10px;color:#9ca3af;margin-top:2px">
+                                    {{ \Carbon\Carbon::parse($slot->start_time)->format('H:i') }}@if($slot->end_time)–{{ \Carbon\Carbon::parse($slot->end_time)->format('H:i') }}@endif
+                                </div>
+                            </td>
+                            @foreach($days as $day)
+                            @php
+                                $dayEn=$dayMapReverse[$day];
+                                $date=$weekDates[$day];
+                                $sk=$resource->id.'_'.$dayEn.'_'.$slot->id;
+                                $bk=$resource->id.'_'.$date.'_'.$slot->id;
+                                $isToday=\Carbon\Carbon::parse($date)->isToday();
+                                $isPast=\Carbon\Carbon::parse($date)->isPast()&&!$isToday;
+                                // Hari ini tapi jam slot sudah lewat
+                                $slotTime=\Carbon\Carbon::parse($slot->start_time)->setDateFrom(\Carbon\Carbon::today());
+                                $isSlotPast=$isToday&&$slotTime->isPast();
+                                $isSun=$day==='Minggu';
+                                $sched=$schedules->get($sk)?->first();
+                                $book=$bookings->get($bk)?->first();
+                                // Minggu: cek apakah lab ini sudah ada booking di hari ini
+                                $sundayLocked=$isSun&&!$book&&!$sched&&$bookings->filter(fn($b)=>$b->resource_id==$resource->id&&$b->booking_date==$date&&in_array($b->status,['pending','approved']))->isNotEmpty();
+                            @endphp
+                            <td style="padding:5px 4px;border-right:1px solid #f5f5f5;{{ $isToday?'background:rgba(172,200,162,.05)':($isSun?'background:rgba(254,226,226,.2)':'') }}">
+                                @if($sched)
+                                <div style="border-radius:10px;padding:7px 10px;background:linear-gradient(135deg,#e0edd9,#cde0c7);border:1.5px solid #ACC8A2">
+                                    <div style="font-weight:700;font-size:11px;color:#1A2517;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ $sched->teacher_name }}</div>
+                                    <div style="font-size:10px;color:#3d5438;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ $sched->labClass?->name??'-' }}</div>
+                                    @if($sched->subject_name)<div style="font-size:10px;color:#7a9475;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ $sched->subject_name }}</div>@endif
+                                </div>
+                                @elseif($book&&$book->status==='approved')
+                                <div style="border-radius:10px;padding:7px 10px;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1.5px solid #86efac">
+                                    <div style="font-weight:700;font-size:11px;color:#166534;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ $book->teacher_name }}</div>
+                                    <div style="font-size:10px;color:#15803d;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ $book->class_name }}</div>
+                                    <div style="font-size:10px;color:#4ade80;margin-top:1px">✓ Disetujui</div>
+                                </div>
+                                @elseif($book&&$book->status==='pending')
+                                <div style="border-radius:10px;padding:7px 10px;background:linear-gradient(135deg,#fffbeb,#fef3c7);border:1.5px solid #fcd34d">
+                                    <div style="font-weight:700;font-size:11px;color:#92400e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ $book->teacher_name }}</div>
+                                    <div style="font-size:10px;color:#b45309;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ $book->class_name }}</div>
+                                    <div style="font-size:10px;color:#f59e0b;margin-top:1px">⏳ Pending</div>
+                                </div>
+                                @elseif($isPast||$isSlotPast)
+                                <div style="text-align:center;padding:14px 0;opacity:.25;font-size:12px;color:#9ca3af">Lewat</div>
+                                @elseif($sundayLocked)
+                                <div style="text-align:center;padding:10px 4px;border-radius:10px;background:rgba(254,226,226,.4);border:1.5px dashed #fca5a5">
+                                    <div style="font-size:14px">🔒</div>
+                                    <div style="font-size:10px;color:#dc2626;font-weight:600;margin-top:2px">Minggu 1x</div>
+                                </div>
+                                @else
+                                @php
+                                    // Collect booked slot IDs for this date+resource
+                                    $bookedSlotIds = $bookings->filter(fn($b) =>
+                                        $b->resource_id == $resource->id &&
+                                        $b->booking_date == $date &&
+                                        in_array($b->status, ['pending','approved'])
+                                    )->pluck('time_slot_id')->toArray();
+                                    // $schedules is grouped by "rid_day_slotId" — extract slot IDs for this resource+day
+                                    $scheduledSlotIds = $timeSlots->filter(fn($ts) =>
+                                        !($ts->is_break ?? false) &&
+                                        $schedules->has($resource->id.'_'.$dayEn.'_'.$ts->id)
+                                    )->pluck('id')->toArray();
+                                    $takenSlotIds = array_unique(array_merge($bookedSlotIds, $scheduledSlotIds));
+                                @endphp
+                                <button onclick="openBooking({{ $resource->id }},'{{ addslashes($resource->name) }}',{{ $slot->id }},'{{ $slot->name }}','{{ \Carbon\Carbon::parse($slot->start_time)->format('H:i') }}{{ $slot->end_time ? '–'.\Carbon\Carbon::parse($slot->end_time)->format('H:i') : '' }}','{{ $dayEn }}','{{ $day }}','{{ $date }}',{{ json_encode($takenSlotIds) }})"
+                                    class="bk"
+                                    style="width:100%;border-radius:10px;padding:14px 4px;background:transparent;cursor:pointer;border:1.5px dashed {{ $isSun?'#fca5a5':'#c8d9c5' }};transition:all .15s">
+                                    <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+                                        <svg style="width:14px;height:14px;color:{{ $isSun?'#fca5a5':'#d1d5db' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                                        </svg>
+                                        <span style="font-size:10px;font-weight:500;color:{{ $isSun?'#fca5a5':'#9ca3af' }}">Booking</span>
+                                    </div>
+                                </button>
+                                @endif
+                            </td>
+                            @endforeach
+                        </tr>
+                        @endif
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>{{-- end table-scroll-wrap --}}
+        </div>
+    </div>
+    @endforeach
+</div>
+
+{{-- Footer --}}
+<footer style="text-align:center;padding:20px;font-size:12px;color:#9ca3af">
+    © {{ date('Y') }} Lab Management System · Nuris Jember
+</footer>
+
+{{-- ═══ MODAL ═══ --}}
+<div id="modal-overlay" onclick="if(event.target===this)closeModal()">
+    <div id="modal-box">
+        {{-- Header --}}
+        <div style="padding:20px 24px 16px;flex-shrink:0;background:linear-gradient(135deg,#1A2517,#2d3d29)">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between">
+                <div>
+                    <p style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(172,200,162,.6);margin:0 0 4px">Form Booking Lab</p>
+                    <h2 style="font-family:Outfit,sans-serif;font-weight:700;font-size:20px;color:#fff;margin:0">Ajukan Penggunaan Lab</h2>
+                </div>
+                <button onclick="closeModal()" style="background:none;border:none;cursor:pointer;color:#6b7280;padding:4px;line-height:1" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#6b7280'">
+                    <svg style="width:20px;height:20px" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px">
+                <span class="badge" id="b-lab">🖥 -</span>
+                <span class="badge" id="b-date">📅 -</span>
+                <span class="badge" id="b-slot">🕐 -</span>
+            </div>
+        </div>
+
+        {{-- Form --}}
+        <form method="POST" action="/booking" style="flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:14px">
+            @csrf
+            <input type="hidden" name="resource_id"  id="f_rid">
+            <input type="hidden" name="time_slot_id" id="f_sid">
+            <input type="hidden" name="booking_date" id="f_date">
+            <input type="hidden" name="week" value="{{ $weekStart->toDateString() }}">
+
+            {{-- Pilihan slot kedua --}}
+            <div id="slot2-wrap" style="background:#f8faf7;border:1.5px solid #e8f0e6;border-radius:12px;padding:12px 14px">
+                <label style="display:block;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">
+                    🕐 Durasi Booking
+                </label>
+                <div style="display:flex;gap:8px;flex-wrap:wrap" id="slot-options">
+                    {{-- Diisi oleh JS --}}
+                </div>
+                <input type="hidden" name="time_slot_id_2" id="f_sid2" value="">
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div>
+                    <label style="display:block;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Nama Pengajar *</label>
+                    <input name="teacher_name" type="text" placeholder="Nama lengkap" class="inp" required value="{{ old('teacher_name') }}">
+                </div>
+                <div>
+                    <label style="display:block;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Nomor HP *</label>
+                    <input name="teacher_phone" type="text" placeholder="08xxxxxxxxxx" class="inp" required value="{{ old('teacher_phone') }}">
+                </div>
+            </div>
+
+            <div>
+                <label style="display:block;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Unit Sekolah *</label>
+                <select name="organization_id" id="f_org" class="inp" required onchange="loadKelas(this.value)" style="appearance:auto">
+                    <option value="">— Pilih unit sekolah —</option>
+                    @foreach($organizations as $org)
+                    <option value="{{ $org->id }}" {{ old('organization_id')==$org->id?'selected':'' }}>{{ $org->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div>
+                <label style="display:block;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Kelas *</label>
+                <select name="class_id" id="f_class" class="inp" required disabled style="appearance:auto">
+                    <option value="">— Pilih unit sekolah dulu —</option>
+                </select>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div>
+                    <label style="display:block;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Mata Pelajaran *</label>
+                    <input name="subject_name" type="text" placeholder="Contoh: TIK" class="inp" required value="{{ old('subject_name') }}">
+                </div>
+                <div>
+                    <label style="display:block;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Jumlah Peserta *</label>
+                    <input name="participant_count" type="number" min="1" placeholder="0" class="inp" required value="{{ old('participant_count') }}">
+                </div>
+            </div>
+
+            <div>
+                <label style="display:block;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Judul Kegiatan *</label>
+                <input name="title" type="text" placeholder="Contoh: Praktikum Microsoft Excel" class="inp" required value="{{ old('title') }}">
+            </div>
+
+            <div>
+                <label style="display:block;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Keterangan</label>
+                <input name="description" type="text" placeholder="Opsional" class="inp" value="{{ old('description') }}">
+            </div>
+
+            <div style="display:flex;gap:10px;padding-top:4px;padding-bottom:4px">
+                <button type="button" onclick="closeModal()"
+                    style="flex:1;background:#f3f4f6;border:none;color:#374151;font-weight:700;padding:12px;border-radius:12px;font-size:13px;cursor:pointer;transition:background .15s"
+                    onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='#f3f4f6'">
+                    Batal
+                </button>
+                <button type="submit"
+                    style="flex:1;background:linear-gradient(135deg,#1A2517,#2d3d29);border:none;color:#ACC8A2;font-weight:700;padding:12px;border-radius:12px;font-size:13px;cursor:pointer;box-shadow:0 4px 14px rgba(26,37,23,.3)">
+                    ✓ Ajukan Booking
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// All slots data (from PHP)
+const ALL_SLOTS = @json($timeSlots->where('is_break', false)->values());
+
+// Tab switching
+function switchTab(id) {
+    document.querySelectorAll('.lab-panel').forEach(p => p.style.display = 'none');
+    document.querySelectorAll('[id^="tab-"]').forEach(b => {
+        b.style.background = '#fff';
+        b.style.color = '#6b7280';
+        b.style.borderColor = '#e5e7eb';
+        b.style.boxShadow = 'none';
+    });
+    document.getElementById('panel-' + id).style.display = '';
+    const btn = document.getElementById('tab-' + id);
+    btn.style.background = 'linear-gradient(135deg,#1A2517,#2d3d29)';
+    btn.style.color = '#ACC8A2';
+    btn.style.borderColor = 'transparent';
+    btn.style.boxShadow = '0 4px 12px rgba(26,37,23,.3)';
+}
+
+// Open modal
+// bookedSlots = array of slot IDs already booked/scheduled on this date+resource
+function openBooking(rid, rname, sid, sname, stime, dayEn, dayId, date, bookedSlots) {
+    bookedSlots = bookedSlots || [];
+
+    document.getElementById('f_rid').value  = rid;
+    document.getElementById('f_sid').value  = sid;
+    document.getElementById('f_sid2').value = '';
+    document.getElementById('f_date').value = date;
+
+    const d = new Date(date + 'T00:00:00');
+    const mn = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+    document.getElementById('b-lab').textContent  = '🖥 ' + rname;
+    document.getElementById('b-date').textContent = '📅 ' + dayId + ', ' + d.getDate() + ' ' + mn[d.getMonth()] + ' ' + d.getFullYear();
+    document.getElementById('b-slot').textContent = '🕐 ' + sname + ' · ' + stime;
+
+    // Build slot options
+    const slotIdx = ALL_SLOTS.findIndex(s => s.id == sid);
+    const nextSlot = slotIdx >= 0 && slotIdx + 1 < ALL_SLOTS.length ? ALL_SLOTS[slotIdx + 1] : null;
+    const nextAvail = nextSlot && !bookedSlots.includes(nextSlot.id);
+
+    const optWrap = document.getElementById('slot-options');
+    optWrap.innerHTML = '';
+
+    // Option 1: 1 slot only
+    const o1 = document.createElement('button');
+    o1.type = 'button';
+    o1.dataset.val = '';
+    o1.innerHTML = '<strong>1 Slot</strong><br><span style="font-size:10px">' + sname + ' · ' + stime + '</span>';
+    o1.style.cssText = 'flex:1;min-width:120px;padding:10px 12px;border-radius:10px;border:2px solid #ACC8A2;background:linear-gradient(135deg,#1A2517,#2d3d29);color:#ACC8A2;cursor:pointer;text-align:center;font-size:12px;font-family:inherit;transition:all .15s;';
+    o1.onclick = function() { selectSlotOption(this, ''); };
+    optWrap.appendChild(o1);
+
+    // Option 2: 2 slots (if next slot is available)
+    const o2 = document.createElement('button');
+    o2.type = 'button';
+    if (nextAvail) {
+        const endTime = nextSlot.end_time ? nextSlot.end_time.slice(0,5) : '';
+        const startTime = stime.split('–')[0] || stime.slice(0,5);
+        o2.dataset.val = nextSlot.id;
+        o2.innerHTML = '<strong>2 Slot</strong><br><span style="font-size:10px">' + sname + ' + ' + nextSlot.name + ' · ' + startTime + '–' + endTime + '</span>';
+        o2.style.cssText = 'flex:1;min-width:120px;padding:10px 12px;border-radius:10px;border:2px solid #e5e7eb;background:#fff;color:#374151;cursor:pointer;text-align:center;font-size:12px;font-family:inherit;transition:all .15s;';
+        o2.onclick = function() { selectSlotOption(this, nextSlot.id); };
+    } else {
+        o2.innerHTML = '<strong>2 Slot</strong><br><span style="font-size:10px">Slot berikutnya tidak tersedia</span>';
+        o2.style.cssText = 'flex:1;min-width:120px;padding:10px 12px;border-radius:10px;border:2px dashed #e5e7eb;background:#f9fafb;color:#9ca3af;cursor:not-allowed;text-align:center;font-size:12px;font-family:inherit;opacity:.6;';
+        o2.disabled = true;
+    }
+    optWrap.appendChild(o2);
+
+    // Reset kelas
+    const fc = document.getElementById('f_class');
+    fc.innerHTML = '<option value="">— Pilih unit sekolah dulu —</option>';
+    fc.disabled = true;
+    document.getElementById('f_org').value = '';
+
+    document.getElementById('modal-overlay').classList.add('show');
+    document.body.style.overflow = 'hidden';
+}
+
+function selectSlotOption(btn, slotId) {
+    // Reset all option buttons
+    document.querySelectorAll('#slot-options button').forEach(b => {
+        b.style.border = '2px solid #e5e7eb';
+        b.style.background = '#fff';
+        b.style.color = '#374151';
+    });
+    // Mark selected
+    btn.style.border = '2px solid #ACC8A2';
+    btn.style.background = 'linear-gradient(135deg,#1A2517,#2d3d29)';
+    btn.style.color = '#ACC8A2';
+    document.getElementById('f_sid2').value = slotId;
+
+    // Update badge
+    const lines = btn.querySelector('span')?.textContent || '';
+    const slotBadge = document.getElementById('b-slot');
+    if (slotId) {
+        slotBadge.textContent = '🕐 ' + lines;
+    }
+}
+
+function closeModal() {
+    document.getElementById('modal-overlay').classList.remove('show');
+    document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); });
+
+// Load kelas by organisasi
+function loadKelas(orgId) {
+    const sel = document.getElementById('f_class');
+    if (!orgId) {
+        sel.innerHTML = '<option value="">— Pilih unit sekolah dulu —</option>';
+        sel.disabled = true;
+        return;
+    }
+    sel.innerHTML = '<option value="">Memuat kelas...</option>';
+    sel.disabled = true;
+    fetch('/kelas?organization_id=' + orgId)
+        .then(r => r.json())
+        .then(data => {
+            sel.innerHTML = '<option value="">— Pilih kelas —</option>';
+            data.forEach(c => sel.innerHTML += `<option value="${c.id}">${c.name}</option>`);
+            sel.disabled = false;
+        })
+        .catch(() => {
+            sel.innerHTML = '<option value="">Gagal memuat</option>';
+        });
+}
+</script>
+</body>
+</html>
