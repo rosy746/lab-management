@@ -48,5 +48,8 @@ class Kernel extends HttpKernel
         // ← Tambahan untuk Finance (2 baris ini saja yang baru)
         'finance.auth'     => \App\Http\Middleware\FinanceAuth::class,
         'finance.guest'    => \App\Http\Middleware\FinanceGuest::class,
+        
+        // Tambahkan baris ini:
+        'bot.auth'         => \App\Http\Middleware\BotAuthMiddleware::class,
     ];
 }
