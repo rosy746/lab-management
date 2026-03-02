@@ -12,7 +12,7 @@ class Kernel extends ConsoleKernel
             $target = now()->addMinutes(5);
             $todate = now()->toDateString();
 
-            // Kumpulkan semua slot yang akan mulai dalam 5 menit
+            // Cari slot yang akan mulai dalam 5 menit
             $schedules = \App\Models\Schedule::where('status', 'active')
                 ->whereNull('deleted_at')
                 ->where('day_of_week', $today)
@@ -26,17 +26,75 @@ class Kernel extends ConsoleKernel
 
             if ($schedules->isEmpty()) return;
 
-            // Group by teacher_name + resource_id agar tidak kirim WA 2x
-            $groups = $schedules->groupBy(fn($s) => $s->teacher_name . '_' . $s->resource_id);
+            foreach ($schedules as $sch) {
+                if (!$sch->timeSlot) continue;
 
-            foreach ($groups as $group) {
-                $session = null;
-                foreach ($group as $sch) {
-                    $sch->start_time = $sch->timeSlot->start_time;
-                    $sch->end_time   = $sch->timeSlot->end_time;
-                    $session = \App\Http\Controllers\LabControlController::generateFromSchedule($sch);
+                $sch->start_time = $sch->timeSlot->start_time;
+                $sch->end_time   = $sch->timeSlot->end_time;
+
+                // Cek apakah sudah ada session aktif hari ini untuk guru+lab ini
+                $existingSession = \App\Models\LabSession::where('source_type', 'schedule')
+                    ->where('resource_id', $sch->resource_id)
+                    ->whereDate('session_start', $todate)
+                    ->where('teacher_name', $sch->teacher_name)
+                    ->where('is_active', true)
+                    ->first();
+
+                if ($existingSession) {
+                    // Session sudah ada, skip (sudah di-lookahead sebelumnya)
+                    continue;
                 }
-                // Kirim WA sekali setelah semua slot di-extend
+
+                // Cek apakah slot ini sudah pernah dibuat
+                $existsBySource = \App\Models\LabSession::where('source_type', 'schedule')
+                    ->where('source_id', $sch->id)
+                    ->whereDate('session_start', $todate)
+                    ->exists();
+                if ($existsBySource) continue;
+
+                // Lookahead: cari semua slot berurutan dari guru+lab yang sama hari ini
+                $allSlots = \App\Models\Schedule::where('status', 'active')
+                    ->whereNull('deleted_at')
+                    ->where('day_of_week', $today)
+                    ->where('resource_id', $sch->resource_id)
+                    ->where('teacher_name', $sch->teacher_name)
+                    ->with('timeSlot')
+                    ->get()
+                    ->filter(fn($s) => $s->timeSlot !== null)
+                    ->sortBy(fn($s) => $s->timeSlot->slot_order);
+
+                // Cari slot berurutan mulai dari slot ini (slot_order berurutan tanpa jeda non-istirahat)
+                $currentOrder = $sch->timeSlot->slot_order;
+                $lastEndTime  = $sch->timeSlot->end_time;
+
+                foreach ($allSlots as $nextSlot) {
+                    $order = $nextSlot->timeSlot->slot_order;
+                    if ($order <= $currentOrder) continue;
+
+                    // Cek apakah slot berikutnya berurutan (order selisih 1, atau melewati istirahat)
+                    $prevEnd  = \Carbon\Carbon::parse($todate . ' ' . $lastEndTime);
+                    $nextStart = \Carbon\Carbon::parse($todate . ' ' . $nextSlot->timeSlot->start_time);
+
+                    // Berurutan jika jeda <= 5 menit (toleransi istirahat pendek)
+                    if ($nextStart->diffInMinutes($prevEnd) <= 5) {
+                        $lastEndTime  = $nextSlot->timeSlot->end_time;
+                        $currentOrder = $order;
+                    } else {
+                        break;
+                    }
+                }
+
+                // Buat session dengan session_end = slot terakhir yang berurutan
+                $session = \App\Http\Controllers\LabControlController::generateFromSchedule($sch);
+
+                if ($session && $lastEndTime !== $sch->timeSlot->end_time) {
+                    $finalEnd = \Carbon\Carbon::parse($todate . ' ' . $lastEndTime);
+                    if ($finalEnd > $session->session_end) {
+                        $session->update(['session_end' => $finalEnd]);
+                    }
+                }
+
+                // Kirim WA sekali dengan jam akhir yang sudah benar
                 if ($session) {
                     (new \App\Http\Controllers\LabControlController)->sendWebhookPublic($session->fresh());
                 }
