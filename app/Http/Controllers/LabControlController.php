@@ -213,8 +213,6 @@ class LabControlController extends Controller
             'session_start' => $start,
             'session_end'   => $end,
         ]);
-
-        (new self)->sendWebhook($session);
         return $session;
     }
 
