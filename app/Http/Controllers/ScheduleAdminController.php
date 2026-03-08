@@ -8,6 +8,7 @@ use App\Models\Schedule;
 use App\Models\TimeSlot;
 use App\Models\Organization;
 use App\Models\LabClass;
+use App\Models\Teacher;
 
 class ScheduleAdminController extends Controller
 {
@@ -44,28 +45,34 @@ class ScheduleAdminController extends Controller
             $query->whereIn('resource_id', $allowed);
         }
 
-        if ($request->filled('resource_id')) $query->where('resource_id', $request->resource_id);
-        if ($request->filled('day'))         $query->where('day_of_week', $request->day);
-        if ($request->filled('status'))      $query->where('status', $request->status);
-        if ($request->filled('search')) {
-            $query->where(function($q) use ($request) {
-                $q->where('teacher_name', 'like', '%'.$request->search.'%')
-                  ->orWhere('subject_name', 'like', '%'.$request->search.'%');
-            });
-        }
-
         $dayOrder = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
         $schedules = $query->get()->sortBy([
             fn($a,$b) => array_search($a->day_of_week, $dayOrder) <=> array_search($b->day_of_week, $dayOrder),
             fn($a,$b) => ($a->timeSlot->slot_order ?? 0) <=> ($b->timeSlot->slot_order ?? 0),
         ])->values();
 
+        // ─── SCHEDULE GRID untuk tampilan grid ───────────────
+        // Key: "{resource_id}_{day_of_week}_{time_slot_id}"
+        // Selalu load SEMUA jadwal aktif (tanpa filter) agar grid lengkap
+        $allSchedules = Schedule::with(['resource','timeSlot','labClass'])
+            ->whereNull('deleted_at')
+            ->where('status', 'active');
+        if ($allowed !== null) $allSchedules->whereIn('resource_id', $allowed);
+        $scheduleGrid = $allSchedules->get()->groupBy(function($s) {
+            return $s->resource_id . '_' . $s->day_of_week . '_' . $s->time_slot_id;
+        });
+        // ─────────────────────────────────────────────────────
+
         $resQuery = Resource::where('status','active')->orderBy('name');
         if ($allowed !== null) $resQuery->whereIn('id', $allowed);
         $resources = $resQuery->get();
 
-        $timeSlots     = TimeSlot::where('is_active',1)->where('is_break',0)->orderBy('slot_order')->get();
+        // TimeSlots dengan is_break juga (untuk baris istirahat di grid)
+        $timeSlots     = TimeSlot::where('is_active',1)->orderBy('slot_order')->get();
+        $timeSlotsForm = $timeSlots->where('is_break', false); // untuk dropdown form
+
         $organizations = Organization::where('is_active',1)->orderBy('name')->get();
+        $teachers      = Teacher::where('is_active',1)->orderBy('name')->get(['id','name','phone']);
 
         $baseStats = Schedule::whereNull('deleted_at');
         if ($allowed !== null) $baseStats->whereIn('resource_id', $allowed);
@@ -76,7 +83,8 @@ class ScheduleAdminController extends Controller
         ];
 
         return view('schedule.admin', compact(
-            'schedules','resources','timeSlots','organizations','stats'
+            'scheduleGrid','resources','timeSlots','timeSlotsForm',
+            'organizations','teachers','stats'
         ))->with('days', $this->days);
     }
 

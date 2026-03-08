@@ -12,6 +12,7 @@ body{font-family:'DM Sans',sans-serif;background:#f0f4ef;color:#1A2517;min-heigh
 a{text-decoration:none}
 @keyframes navSlideDown{from{transform:translateY(-64px);opacity:0}to{transform:none;opacity:1}}
 @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .pub-navbar{position:sticky;top:0;z-index:100;background:linear-gradient(135deg,#1A2517,#2a3826);box-shadow:0 2px 16px rgba(0,0,0,.28);animation:navSlideDown .4s cubic-bezier(.16,1,.3,1) both}
 .pub-inner{max-width:1280px;margin:0 auto;padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:60px}
 .pub-brand{display:flex;align-items:center;gap:10px;text-decoration:none;flex-shrink:0}
@@ -38,14 +39,28 @@ a{text-decoration:none}
 .wrap{max-width:900px;margin:0 auto;padding:24px 18px 48px;animation:fadeUp .4s ease both}
 
 /* FILTER */
-.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;align-items:center}
-.inp{border:1.5px solid #e5e7eb;border-radius:9px;padding:8px 12px;font-size:13px;background:#fff;outline:none;font-family:inherit;color:#1A2517;transition:border-color .15s}
-.inp:focus{border-color:#ACC8A2}
-.filter-label{font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.07em}
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;align-items:flex-end}
+.inp{border:1.5px solid #e5e7eb;border-radius:9px;padding:8px 12px;font-size:13px;background:#fff;outline:none;font-family:inherit;color:#1A2517;transition:border-color .15s,box-shadow .15s}
+.inp:focus{border-color:#ACC8A2;box-shadow:0 0 0 3px rgba(172,200,162,.12)}
+.inp:disabled{background:#f9fafb;color:#9ca3af;cursor:not-allowed}
+.filter-label{font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px}
+
+/* STATE PICK */
+.state-box{animation:fadeIn .3s ease both}
+.state-pick-wrap{text-align:center;padding:52px 24px}
+.state-pick-icon{font-size:56px;margin-bottom:18px;display:block}
+.state-pick-title{font-family:'Outfit',sans-serif;font-weight:700;font-size:20px;color:#374151;margin-bottom:7px}
+.state-pick-sub{font-size:13px;color:#9ca3af;max-width:340px;margin:0 auto;line-height:1.7}
+.state-steps{display:flex;justify-content:center;gap:8px;margin-top:22px;flex-wrap:wrap;align-items:center}
+.s-step{display:flex;align-items:center;gap:7px;padding:9px 15px;border-radius:11px;background:#fff;border:1px solid #e8f0e6;font-size:12px;color:#6b7280;font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.s-step-num{width:24px;height:24px;border-radius:7px;background:#f0f9f4;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;color:#3d5438}
+.s-step-done{background:#f0fdf4;border-color:#bbf7d0;color:#15803d}
+.s-step-done .s-step-num{background:#dcfce7;color:#15803d}
+.s-arrow{color:#c4cfc2;font-size:18px;line-height:1}
 
 /* CARDS */
 .assignment-grid{display:grid;gap:14px}
-.acard{background:#fff;border-radius:14px;border:1px solid #e8f0e6;box-shadow:0 1px 6px rgba(26,37,23,.06);overflow:hidden;transition:transform .18s,box-shadow .18s;display:flex;flex-direction:column}
+.acard{background:#fff;border-radius:14px;border:1px solid #e8f0e6;box-shadow:0 1px 6px rgba(26,37,23,.06);overflow:hidden;transition:transform .18s,box-shadow .18s;display:flex;flex-direction:column;animation:fadeIn .28s ease both}
 .acard:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(26,37,23,.1)}
 .acard-head{padding:16px 20px;background:linear-gradient(135deg,#1A2517,#2a3826);display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
 .acard-title{font-family:'Outfit',sans-serif;font-weight:700;font-size:16px;color:#fff}
@@ -57,21 +72,19 @@ a{text-decoration:none}
 .acard-meta{display:flex;flex-wrap:wrap;gap:8px}
 .meta-item{display:flex;align-items:center;gap:5px;font-size:12px;color:#6b7280;background:#f8faf7;padding:4px 10px;border-radius:7px;border:1px solid #e8f0e6}
 .acard-desc{font-size:12px;color:#9ca3af;line-height:1.6}
-.acard-foot{padding:12px 20px;border-top:1px solid #f0f4ee;display:flex;align-items:center;justify-content:space-between}
+.acard-foot{padding:12px 20px;border-top:1px solid #f0f4ee;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
 .sub-count{font-size:11px;color:#9ca3af}
 .btn-kumpul{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:9px;font-size:13px;font-weight:700;background:linear-gradient(135deg,#1A2517,#2d3d29);color:#ACC8A2;text-decoration:none;transition:transform .15s,box-shadow .15s}
 .btn-kumpul:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(26,37,23,.25)}
 .btn-kumpul-disabled{background:#f3f4f6;color:#9ca3af;cursor:not-allowed}
 .btn-kumpul-disabled:hover{transform:none;box-shadow:none}
-
-/* DEADLINE */
 .deadline-urgent{color:#ef4444!important}
 .deadline-soon{color:#f59e0b!important}
 .deadline-ok{color:#16a34a!important}
 
-/* EMPTY */
-.empty{text-align:center;padding:48px 24px;color:#9ca3af}
-.empty-icon{font-size:48px;margin-bottom:12px}
+/* EMPTY no result */
+.empty-noresult{text-align:center;padding:48px 24px;animation:fadeIn .3s ease both}
+.empty-noresult-icon{font-size:48px;margin-bottom:12px}
 
 /* FLASH */
 .flash{padding:11px 16px;border-radius:10px;font-size:13px;font-weight:600;margin-bottom:16px}
@@ -124,25 +137,23 @@ a{text-decoration:none}
     @endif
 
     {{-- Filter --}}
-    <div class="filter-row" style="gap:10px;margin-bottom:24px">
-        <div style="display:flex;flex-direction:column;gap:4px">
-            <span class="filter-label">Lembaga</span>
-            <select id="filter-org" class="inp" style="min-width:180px" onchange="filterByOrg(this.value)">
+    <div class="filter-row">
+        <div>
+            <label class="filter-label" for="filter-org">Lembaga</label>
+            <select id="filter-org" class="inp" style="min-width:190px" onchange="filterByOrg(this.value)">
                 <option value="">— Semua Lembaga —</option>
                 @foreach($organizations as $org)
                 <option value="{{ $org->id }}">{{ $org->name }}</option>
                 @endforeach
             </select>
         </div>
-        <div style="display:flex;flex-direction:column;gap:4px">
-            <span class="filter-label">Kelas</span>
-            <select id="filter-kelas" class="inp" style="min-width:180px" onchange="filterByKelas(this.value)" disabled>
+        <div>
+            <label class="filter-label" for="filter-kelas">Kelas</label>
+            <select id="filter-kelas" class="inp" style="min-width:190px" onchange="filterByKelas(this.value)" disabled>
                 <option value="">— Pilih Lembaga Dulu —</option>
             </select>
         </div>
-        <div style="display:flex;align-items:flex-end">
-            <span id="filter-count" style="font-size:12px;color:#9ca3af;padding-bottom:2px"></span>
-        </div>
+        <span id="filter-count" style="font-size:12px;color:#9ca3af;padding-bottom:10px"></span>
     </div>
 
     {{-- Data kelas per org untuk JS --}}
@@ -150,85 +161,123 @@ a{text-decoration:none}
     const CLASSES_BY_ORG = @json($classes->groupBy('organization_id'));
     </script>
 
-    {{-- Grid Tugas --}}
-    @if($assignments->isEmpty())
-        <div class="empty">
-            <div class="empty-icon">📭</div>
-            <div style="font-weight:700;color:#374151;margin-bottom:4px">Belum ada tugas</div>
-            <div style="font-size:13px">Tugas akan muncul di sini setelah guru menambahkan</div>
-        </div>
-    @else
-        <div class="assignment-grid" id="assignment-grid">
-            @foreach($assignments as $a)
-            @php
-                $expired  = $a->isExpired();
-                $diffMins = now()->diffInMinutes($a->deadline, false);
-                $diffHrs  = now()->diffInHours($a->deadline, false);
-                $deadlineClass = $expired ? 'deadline-urgent' : ($diffHrs < 24 ? 'deadline-soon' : 'deadline-ok');
-                $deadlineLabel = $expired
-                    ? 'Deadline terlewat'
-                    : ($diffHrs < 1 ? 'Kurang dari 1 jam!' : ($diffHrs < 24 ? "Sisa {$diffHrs} jam" : $a->deadline->translatedFormat('d M Y, H:i')));
-            @endphp
-            <div class="acard" data-kelas="{{ strtolower($a->class_name) }}">
-                <div class="acard-head">
-                    <div>
-                        <div class="acard-title">{{ $a->title }}</div>
-                        <div class="acard-subject">{{ $a->subject_name }} · {{ $a->teacher->name }}</div>
-                    </div>
-                    <span class="badge-status {{ $expired ? 'badge-closed' : 'badge-open' }}">
-                        {{ $expired ? 'Ditutup' : 'Buka' }}
-                    </span>
+    {{-- STATE 1: Belum pilih (default) --}}
+    <div id="state-pick" class="state-box">
+        <div class="state-pick-wrap">
+            <span class="state-pick-icon">🎓</span>
+            <div class="state-pick-title">Pilih kelas kamu dulu</div>
+            <div class="state-pick-sub">
+                Pilih <strong>Lembaga</strong> kemudian <strong>Kelas</strong> di atas
+                untuk melihat tugas yang perlu dikumpulkan
+            </div>
+            <div class="state-steps">
+                <div class="s-step">
+                    <span class="s-step-num">1</span>
+                    Pilih Lembaga
                 </div>
-                <div class="acard-body">
-                    <div class="acard-meta">
-                        <span class="meta-item">
-                            <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"/></svg>
-                            {{ $a->class_name }}
-                        </span>
-                        <span class="meta-item {{ $deadlineClass }}">
-                            <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            {{ $deadlineLabel }}
-                        </span>
-                        <span class="meta-item">
-                            <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                            {{ $a->submissions_count ?? $a->submissions->count() }} dikumpulkan
-                        </span>
-                    </div>
-                    @if($a->description)
-                    <div class="acard-desc">{{ Str::limit($a->description, 120) }}</div>
-                    @endif
+                <span class="s-arrow">›</span>
+                <div class="s-step">
+                    <span class="s-step-num">2</span>
+                    Pilih Kelas
                 </div>
-                <div class="acard-foot" style="flex-wrap:wrap;gap:8px">
-                    <span class="sub-count">PDF, Word, PPT, Excel, ZIP · maks 10MB</span>
-                    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-                        @if($a->attachment_path)
-                        <a href="{{ route('assignment.download.attachment', $a) }}" class="btn-kumpul" style="background:linear-gradient(135deg,#1e3a5f,#2563eb);color:#93c5fd">
-                            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4 4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                            📎 Unduh Soal ({{ $a->attachment_size }})
-                        </a>
-                        @endif
-                        @if(!$expired)
-                            <a href="{{ route('assignment.show', $a) }}" class="btn-kumpul">
-                                <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                                Kumpulkan
-                            </a>
-                        @else
-                            <span class="btn-kumpul btn-kumpul-disabled">Ditutup</span>
-                        @endif
-                    </div>
+                <span class="s-arrow">›</span>
+                <div class="s-step s-step-done">
+                    <span class="s-step-num">✓</span>
+                    Tugas Tampil
                 </div>
             </div>
-            @endforeach
         </div>
+    </div>
+
+    {{-- STATE 2: Tidak ada tugas untuk kelas ini --}}
+    <div id="state-empty" class="empty-noresult" style="display:none">
+        <div class="empty-noresult-icon">📭</div>
+        <div style="font-weight:700;color:#374151;margin-bottom:4px">Tidak ada tugas untuk kelas ini</div>
+        <div style="font-size:13px;color:#9ca3af">Belum ada tugas yang diberikan untuk kelas yang dipilih</div>
+    </div>
+
+    {{-- STATE 3: Grid tugas --}}
+    @if(!$assignments->isEmpty())
+    <div class="assignment-grid" id="assignment-grid" style="display:none">
+        @foreach($assignments as $a)
+        @php
+            $expired   = $a->isExpired();
+            $diffHrs   = now()->diffInHours($a->deadline, false);
+            $deadlineClass = $expired ? 'deadline-urgent' : ($diffHrs < 24 ? 'deadline-soon' : 'deadline-ok');
+            $deadlineLabel = $expired
+                ? 'Deadline terlewat'
+                : ($diffHrs < 1 ? 'Kurang dari 1 jam!' : ($diffHrs < 24 ? "Sisa {$diffHrs} jam" : $a->deadline->translatedFormat('d M Y, H:i')));
+        @endphp
+        <div class="acard" data-kelas="{{ strtolower($a->class_name) }}" style="display:none">
+            <div class="acard-head">
+                <div>
+                    <div class="acard-title">{{ $a->title }}</div>
+                    <div class="acard-subject">{{ $a->subject_name }} · {{ $a->teacher->name }}</div>
+                </div>
+                <span class="badge-status {{ $expired ? 'badge-closed' : 'badge-open' }}">
+                    {{ $expired ? 'Ditutup' : 'Buka' }}
+                </span>
+            </div>
+            <div class="acard-body">
+                <div class="acard-meta">
+                    <span class="meta-item">
+                        <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"/></svg>
+                        {{ $a->class_name }}
+                    </span>
+                    <span class="meta-item {{ $deadlineClass }}">
+                        <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        {{ $deadlineLabel }}
+                    </span>
+                    <span class="meta-item">
+                        <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        {{ $a->submissions_count ?? $a->submissions->count() }} dikumpulkan
+                    </span>
+                </div>
+                @if($a->description)
+                <div class="acard-desc">{{ Str::limit($a->description, 120) }}</div>
+                @endif
+            </div>
+            <div class="acard-foot">
+                <span class="sub-count">PDF, Word, PPT, Excel, ZIP · maks 10MB</span>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                    @if($a->attachment_path)
+                    <a href="{{ route('assignment.download.attachment', $a) }}" class="btn-kumpul" style="background:linear-gradient(135deg,#1e3a5f,#2563eb);color:#93c5fd">
+                        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4 4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        📎 Unduh Soal ({{ $a->attachment_size }})
+                    </a>
+                    @endif
+                    @if(!$expired)
+                        <a href="{{ route('assignment.show', $a) }}" class="btn-kumpul">
+                            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                            Kumpulkan
+                        </a>
+                    @else
+                        <span class="btn-kumpul btn-kumpul-disabled">Ditutup</span>
+                    @endif
+                </div>
+            </div>
+        </div>
+        @endforeach
+    </div>
     @endif
+
 </div>
 
 <div class="page-trans" id="pt"></div>
 <script>
+function showState(state) {
+    document.getElementById('state-pick').style.display  = state === 'pick'  ? '' : 'none';
+    document.getElementById('state-empty').style.display = state === 'empty' ? '' : 'none';
+    const grid = document.getElementById('assignment-grid');
+    if (grid) grid.style.display = state === 'grid' ? '' : 'none';
+}
+
 function filterByOrg(orgId) {
     const kelasSel = document.getElementById('filter-kelas');
-    kelasSel.innerHTML = '<option value="">— Semua Kelas —</option>';
+    document.getElementById('filter-count').textContent = '';
+
     if (orgId && CLASSES_BY_ORG[orgId]) {
+        kelasSel.innerHTML = '<option value="">— Pilih Kelas —</option>';
         CLASSES_BY_ORG[orgId].forEach(k => {
             kelasSel.innerHTML += `<option value="${k.name.toLowerCase()}">${k.name}</option>`;
         });
@@ -237,39 +286,47 @@ function filterByOrg(orgId) {
         kelasSel.innerHTML = '<option value="">— Pilih Lembaga Dulu —</option>';
         kelasSel.disabled = true;
     }
-    filterByKelas('');
+    showState('pick');
 }
 
 function filterByKelas(val) {
+    document.getElementById('filter-count').textContent = '';
+
+    if (!val) {
+        showState('pick');
+        return;
+    }
+
     const cards = document.querySelectorAll('.acard');
     let shown = 0;
     cards.forEach(c => {
-        const match = !val || c.dataset.kelas.includes(val.toLowerCase());
+        const match = c.dataset.kelas === val.toLowerCase();
         c.style.display = match ? '' : 'none';
         if (match) shown++;
     });
-    const total = document.querySelectorAll('.acard').length;
-    document.getElementById('filter-count').textContent = val ? `${shown} tugas ditemukan` : (total ? `${total} tugas` : '');
+
+    if (shown === 0) {
+        showState('empty');
+    } else {
+        showState('grid');
+        document.getElementById('filter-count').textContent = `${shown} tugas ditemukan`;
+    }
 }
 
-// Init count
-document.addEventListener('DOMContentLoaded', () => {
-    const total = document.querySelectorAll('.acard').length;
-    if (total) document.getElementById('filter-count').textContent = `${total} tugas`;
-});
+// Selalu mulai state pick
+document.addEventListener('DOMContentLoaded', () => showState('pick'));
 
+// Page transition
 document.querySelectorAll('a.pub-link, a.pub-btn, a.pub-brand, a.btn-kumpul').forEach(a => {
     const href = a.getAttribute('href');
     if (!href || href.startsWith('#') || href.startsWith('javascript') || a.getAttribute('target') === '_blank') return;
     a.addEventListener('click', function(e) {
-        const current = window.location.pathname;
         try {
             const target = new URL(href, window.location.href).pathname;
-            if (target === current) return;
+            if (target === window.location.pathname) return;
         } catch(err) {}
         e.preventDefault();
-        const pt = document.getElementById('pt');
-        pt.classList.add('go');
+        document.getElementById('pt').classList.add('go');
         setTimeout(() => { window.location.href = href; }, 220);
     });
 });
