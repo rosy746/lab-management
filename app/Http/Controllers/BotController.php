@@ -144,15 +144,15 @@ class BotController extends Controller
             'subject'    => 'required|string|max:100',
         ]);
 
+        $phone   = $this->normalizePhone($request->phone);
         $teacher = Teacher::whereRaw(
-            "REPLACE(REPLACE(phone, '+', ''), ' ', '') = ?",
-            [$request->phone]
-        )->first();
+            "REPLACE(REPLACE(phone, '+', ''), ' ', '') = ?", [$phone]
+        )->where('is_active', 1)->first();
 
         if (!$teacher) {
             return response()->json([
                 'success' => false,
-                'message' => 'Guru tidak ditemukan untuk nomor: ' . $request->phone,
+                'message' => 'Guru tidak ditemukan untuk nomor: ' . $phone,
             ], 404);
         }
 
@@ -229,9 +229,9 @@ class BotController extends Controller
             return response()->json(['success' => false, 'message' => "Booking #$id sudah berstatus {$booking->status}."], 409);
         }
 
-        $approver = User::whereRaw(
-            "REPLACE(REPLACE(phone, '+', ''), ' ', '') = ?",
-            [$request->approver_phone ?? '']
+        $approverPhone = $this->normalizePhone($request->approver_phone ?? '');
+        $approver      = User::whereRaw(
+            "REPLACE(REPLACE(phone, '+', ''), ' ', '') = ?", [$approverPhone]
         )->first();
 
         $booking->update([
@@ -240,10 +240,9 @@ class BotController extends Controller
             'approved_at' => now(),
         ]);
 
-        // Generate session lalu kirim WA dengan data fresh
         $session = \App\Http\Controllers\LabControlController::generateFromBooking($booking);
         if ($session) {
-            (new LabControlController)->sendWebhookPublic($session->fresh()); // ← fresh() seperti web
+            (new LabControlController)->sendWebhookPublic($session->fresh());
         }
 
         return response()->json([
@@ -266,10 +265,10 @@ class BotController extends Controller
             return response()->json(['success' => false, 'message' => "Booking #$id sudah berstatus {$booking->status}."], 409);
         }
 
-        $alasan   = $request->alasan ?? 'Ditolak oleh admin';
-        $approver = User::whereRaw(
-            "REPLACE(REPLACE(phone, '+', ''), ' ', '') = ?",
-            [$request->approver_phone ?? '']
+        $alasan        = $request->alasan ?? 'Ditolak oleh admin';
+        $approverPhone = $this->normalizePhone($request->approver_phone ?? '');
+        $approver      = User::whereRaw(
+            "REPLACE(REPLACE(phone, '+', ''), ' ', '') = ?", [$approverPhone]
         )->first();
 
         $booking->update([
@@ -312,14 +311,12 @@ class BotController extends Controller
         $tanggal = Carbon::createFromFormat('d/m/Y', $request->tanggal)->toDateString();
         $dayEn   = Carbon::parse($tanggal)->format('l');
 
-        // Slot terpakai via booking
         $bookedByBooking = Booking::where('resource_id', $labId)
             ->whereDate('booking_date', $tanggal)
             ->whereIn('status', ['pending', 'approved'])
             ->pluck('time_slot_id')
             ->toArray();
 
-        // Slot terpakai via jadwal rutin
         $bookedBySchedule = Schedule::where('resource_id', $labId)
             ->where('day_of_week', $dayEn)
             ->where('status', 'active')
@@ -369,7 +366,7 @@ class BotController extends Controller
                 'session_start' => $s->session_start->format('H:i'),
                 'session_end'   => $s->session_end->format('H:i'),
                 'sisa_menit'    => (int) $s->session_end->diffInMinutes($now),
-                'checked_in'    => !is_null($s->checked_in_at),
+                'checked_in'    => !is_null($s->used_at),
             ]);
 
         return response()->json([
@@ -389,25 +386,8 @@ class BotController extends Controller
 
         $phone = $this->normalizePhone($request->phone);
 
-        // Cek tabel users (admin/operator/teknisi) — pakai is_active
-        $user = User::whereRaw(
-            "REPLACE(REPLACE(phone, '+', ''), ' ', '') = ?", [$phone]
-        )->where('is_active', 1)->whereNull('deleted_at')->first();
-
-        if ($user) {
-            return response()->json([
-                'success'  => true,
-                'found'    => true,
-                'id'       => $user->id,
-                'name'     => $user->full_name,
-                'role'     => $user->role,
-                'phone'    => $phone,
-                'source'   => 'users',
-                'metadata' => $user->metadata,
-            ]);
-        }
-
-        // Cek tabel teachers (guru) — pakai is_active
+        // ── 1. Cek teachers DULU (guru) ──────────────────────────
+        // Priority: guru lebih spesifik dari users
         $teacher = Teacher::whereRaw(
             "REPLACE(REPLACE(phone, '+', ''), ' ', '') = ?", [$phone]
         )->where('is_active', 1)->first();
@@ -425,6 +405,25 @@ class BotController extends Controller
             ]);
         }
 
+        // ── 2. Cek users (admin/operator/teknisi) ─────────────────
+        $user = User::whereRaw(
+            "REPLACE(REPLACE(phone, '+', ''), ' ', '') = ?", [$phone]
+        )->where('is_active', 1)->whereNull('deleted_at')->first();
+
+        if ($user) {
+            return response()->json([
+                'success'  => true,
+                'found'    => true,
+                'id'       => $user->id,
+                'name'     => $user->full_name,
+                'role'     => $user->role,   // admin | operator | teknisi
+                'phone'    => $phone,
+                'source'   => 'users',
+                'metadata' => $user->metadata ? json_decode($user->metadata, true) : null,
+            ]);
+        }
+
+        // ── 3. Tidak ditemukan ────────────────────────────────────
         return response()->json([
             'success' => true,
             'found'   => false,
@@ -438,6 +437,7 @@ class BotController extends Controller
     private function normalizePhone(string $phone): string
     {
         $phone = ltrim(trim($phone), '+');
+        $phone = preg_replace('/[^0-9]/', '', $phone);
         $phone = explode('@', $phone)[0];
         if (str_starts_with($phone, '0')) {
             $phone = '62' . substr($phone, 1);

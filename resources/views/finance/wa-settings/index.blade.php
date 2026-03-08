@@ -300,17 +300,17 @@
 
         {{-- Status Card --}}
         @php
-            $targets    = $setting->getAllTargets();
+            $targets      = $setting->getAllTargets();
             $totalTargets = count($targets);
-            $connected  = !empty($setting->fonnte_token);
+            $connected    = !empty($setting->fonnte_token);
         @endphp
         <div class="status-card float-in" style="animation-delay:.05s">
             <div class="sc-inner">
                 <div class="sc-top">
                     <div class="sc-icon">💬</div>
                     <div>
-                        <div class="sc-title">Fonnte WhatsApp</div>
-                        <div class="sc-sub">Broadcast notifikasi ke tim</div>
+                        <div class="sc-title">Baileys WhatsApp</div>
+                        <div class="sc-sub">Broadcast notifikasi ke tim & grup</div>
                     </div>
                 </div>
                 <div class="conn-badge {{ $connected ? 'ok' : 'off' }}">
@@ -349,12 +349,12 @@
 
                     {{-- Token --}}
                     <div class="form-group">
-                        <label class="form-label" for="fonnte_token">API Token Fonnte</label>
+                        <label class="form-label" for="fonnte_token">API Token</label>
                         <div class="token-wrap">
                             <input type="password" name="fonnte_token" id="fonnte_token"
                                    class="form-control token-inp {{ $errors->has('fonnte_token') ? 'is-invalid' : '' }}"
                                    value="{{ old('fonnte_token', $setting->fonnte_token ?? '') }}"
-                                   placeholder="Token dari dashboard Fonnte" required>
+                                   placeholder="Token API Baileys / Fonnte" required>
                             <button type="button" class="token-eye" onclick="toggleToken(this)">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                             </button>
@@ -368,7 +368,7 @@
                         <input type="text" name="device_number" id="device_number"
                                class="form-control" style="font-family:'JetBrains Mono',monospace;"
                                value="{{ old('device_number', $setting->device_number ?? '') }}"
-                               placeholder="628xxx (nomor yang connect ke Fonnte)">
+                               placeholder="628xxx (nomor yang terhubung ke Baileys)">
                     </div>
 
                     <div class="form-divider">Target Notifikasi</div>
@@ -383,12 +383,8 @@
                         </div>
 
                         <div class="target-box" id="targetBox" onclick="focusInput()">
-                            {{-- Hidden inputs akan diisi JS --}}
                             <div id="hiddenInputs"></div>
-
-                            <div class="tags-area" id="tagsArea">
-                                {{-- Tags existing --}}
-                            </div>
+                            <div class="tags-area" id="tagsArea"></div>
                             <div class="add-row">
                                 <input type="text" id="targetInput" class="add-input"
                                        placeholder="Ketik nomor/ID grup lalu Enter atau klik Tambah...">
@@ -401,7 +397,7 @@
                             <span class="type-chip" onclick="fillExample('6281234567890')">📱 6281234567890</span>
                             <span class="type-chip" onclick="fillExample('120363xxxxxxxx@g.us')">👥 GroupID@g.us</span>
                         </div>
-                        <p class="form-hint">Bisa input beberapa nomor HP sekaligus dan/atau ID grup WhatsApp</p>
+                        <p class="form-hint">Bisa input nomor HP (628xxx / 08xxx) dan/atau ID grup WhatsApp (xxx@g.us)</p>
                     </div>
 
                     <div class="form-divider">Pengaturan Notif</div>
@@ -520,7 +516,9 @@
                                     <td style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--muted);white-space:nowrap;">
                                         {{ $log->created_at->format('d/m H:i') }}
                                     </td>
-                                    <td class="log-phone">{{ $log->phone }}</td>
+                                    <td class="log-phone">
+                                        {{ str_contains($log->phone, '@g.us') ? '👥 ' : '📱 ' }}{{ $log->phone }}
+                                    </td>
                                     <td class="log-msg">{{ Str::limit($log->message, 40) }}</td>
                                     <td>
                                         <span class="log-status {{ $log->status }}">
@@ -571,11 +569,29 @@
 /* ── State ── */
 let targets = @json($targets);
 
-/* ── Init tags dari state ── */
+/* ── Init ── */
 function init() {
     renderTags();
     updateHiddenInputs();
     updateCount();
+}
+
+/* ── Deteksi tipe target ── */
+function detectType(val) {
+    if (val.includes('@g.us'))          return 'group';  // Grup Baileys: 120363xxx@g.us
+    if (/^628\d{8,13}$/.test(val))      return 'phone';  // Format 628xxx
+    if (/^08\d{8,12}$/.test(val))       return 'phone';  // Format 08xxx
+    if (/^\d{10,15}$/.test(val))        return 'phone';  // Digit lainnya
+    return null;
+}
+
+/* ── Normalisasi nomor HP ── */
+function normalizePhone(val) {
+    if (val.includes('@g.us')) return val;     // grup, kembalikan apa adanya
+    val = val.replace(/\D/g, '');              // hapus non-digit
+    if (val.startsWith('0'))  val = '62' + val.slice(1);
+    if (!val.startsWith('62')) val = '62' + val;
+    return val;
 }
 
 /* ── Render tags ── */
@@ -595,14 +611,14 @@ function renderTags() {
     });
 }
 
-/* ── Update hidden inputs untuk form submit ── */
+/* ── Update hidden inputs ── */
 function updateHiddenInputs() {
     const wrap = document.getElementById('hiddenInputs');
     wrap.innerHTML = '';
     targets.forEach((t, i) => {
         const inp = document.createElement('input');
-        inp.type = 'hidden';
-        inp.name = `target_phones[${i}]`;
+        inp.type  = 'hidden';
+        inp.name  = `target_phones[${i}]`;
         inp.value = t;
         wrap.appendChild(inp);
     });
@@ -611,9 +627,9 @@ function updateHiddenInputs() {
 /* ── Count badge ── */
 function updateCount() {
     const badge = document.getElementById('targetCount');
-    badge.textContent = targets.length + ' target';
+    badge.textContent      = targets.length + ' target';
     badge.style.background = targets.length ? 'rgba(0,196,104,0.1)' : 'var(--bg)';
-    badge.style.color = targets.length ? 'var(--accent2)' : 'var(--muted)';
+    badge.style.color      = targets.length ? 'var(--accent2)' : 'var(--muted)';
 
     const preview = document.getElementById('previewTarget');
     if (preview) {
@@ -622,30 +638,35 @@ function updateCount() {
             : 'Belum ada target';
     }
 
-    // Modal info
     const mc = document.getElementById('modalTargetCount');
     if (mc) mc.textContent = targets.length + ' target';
 }
 
-/* ── Add ── */
+/* ── Add target ── */
 function addTarget() {
     const inp = document.getElementById('targetInput');
-    const val = inp.value.trim();
+    let val   = inp.value.trim();
     if (!val) { inp.focus(); return; }
 
-    // Basic validation
-    const isPhone = /^628\d{8,13}$/.test(val);
-    const isGroup = val.endsWith('@g.us');
-    if (!isPhone && !isGroup) {
+    const type = detectType(val);
+
+    if (!type) {
         inp.style.animation = 'shake .3s ease';
-        inp.title = 'Format: 628xxxxxx atau GroupID@g.us';
-        setTimeout(() => { inp.style.animation = ''; inp.title = ''; }, 400);
+        inp.placeholder     = '⚠ Format: 628xxx / 08xxx / GroupID@g.us';
+        setTimeout(() => {
+            inp.style.animation = '';
+            inp.placeholder     = 'Ketik nomor/ID grup lalu Enter atau klik Tambah...';
+        }, 2000);
         inp.focus();
         return;
     }
 
+    // Normalisasi nomor HP
+    if (type === 'phone') val = normalizePhone(val);
+
     if (targets.includes(val)) {
         inp.value = '';
+        inp.focus();
         return;
     }
 
@@ -673,8 +694,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-function focusInput() { document.getElementById('targetInput').focus(); }
-
+function focusInput()     { document.getElementById('targetInput').focus(); }
 function fillExample(val) {
     document.getElementById('targetInput').value = val;
     document.getElementById('targetInput').focus();
@@ -683,7 +703,7 @@ function fillExample(val) {
 /* ── Token toggle ── */
 function toggleToken(btn) {
     const inp = document.getElementById('fonnte_token');
-    inp.type = inp.type === 'password' ? 'text' : 'password';
+    inp.type  = inp.type === 'password' ? 'text' : 'password';
     btn.querySelector('svg').style.opacity = inp.type === 'text' ? '0.5' : '1';
 }
 
@@ -691,8 +711,8 @@ function toggleToken(btn) {
 function openTestModal() {
     document.getElementById('testModal').classList.add('open');
     document.getElementById('testResultsWrap').style.display = 'none';
-    document.getElementById('testBtn').disabled = false;
-    document.getElementById('testBtn').textContent = 'Kirim Test Sekarang';
+    document.getElementById('testBtn').disabled  = false;
+    document.getElementById('testBtn').innerHTML = 'Kirim Test Sekarang';
 }
 function closeModal() {
     document.getElementById('testModal').classList.remove('open');
@@ -702,25 +722,29 @@ async function runTest() {
     const btn  = document.getElementById('testBtn');
     const wrap = document.getElementById('testResultsWrap');
 
-    btn.disabled = true;
+    btn.disabled  = true;
     btn.innerHTML = `<svg style="animation:spin .8s linear infinite;width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Mengirim ke ${targets.length} target...`;
 
     try {
         const resp = await fetch('{{ route("finance.wa-settings.test") }}', {
-            method: 'POST',
-            headers: { 'Content-Type':'application/json', 'X-CSRF-TOKEN':'{{ csrf_token() }}' }
+            method : 'POST',
+            headers: {
+                'Content-Type' : 'application/json',
+                'X-CSRF-TOKEN' : '{{ csrf_token() }}'
+            }
         });
         const data = await resp.json();
 
         wrap.style.display = 'block';
-        wrap.innerHTML = '';
+        wrap.innerHTML     = '';
 
         if (data.results && data.results.length) {
             data.results.forEach(r => {
-                const row = document.createElement('div');
+                const isGroup = r.phone.includes('@g.us');
+                const row     = document.createElement('div');
                 row.className = `test-result-row ${r.ok ? 'ok' : 'err'}`;
                 row.innerHTML = `
-                    <span class="test-phone">${r.phone.includes('@g.us') ? '👥' : '📱'} ${r.phone}</span>
+                    <span class="test-phone">${isGroup ? '👥' : '📱'} ${r.phone}</span>
                     <span style="font-size:11px;font-weight:700;color:${r.ok ? '#16a34a' : 'var(--red)'}">
                         ${r.ok ? '✓ Terkirim' : '✗ Gagal'}
                     </span>
@@ -732,13 +756,13 @@ async function runTest() {
         }
 
         btn.innerHTML = data.success ? '✓ Semua Terkirim' : '⚠ Ada yang Gagal';
-        btn.disabled = false;
+        btn.disabled  = false;
 
     } catch(e) {
         wrap.style.display = 'block';
-        wrap.innerHTML = `<div class="test-result-row err">❌ Koneksi gagal</div>`;
-        btn.innerHTML = 'Coba Lagi';
-        btn.disabled = false;
+        wrap.innerHTML     = `<div class="test-result-row err">❌ Koneksi gagal: ${e.message}</div>`;
+        btn.innerHTML      = 'Coba Lagi';
+        btn.disabled       = false;
     }
 }
 
