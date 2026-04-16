@@ -88,7 +88,12 @@ try {
     } else if ($export_format === 'docx') {
         exportToWord($inventories, $filename, $lab_name, $lab_filter, $all_labs);
     } else {
-        exportToExcel($inventories, $filename, $lab_name, $lab_filter, $all_labs, $db);
+        // Group data by lab_id for efficient Excel processing
+        $grouped_data = [];
+        foreach ($inventories as $item) {
+            $grouped_data[$item['lab_id']][] = $item;
+        }
+        exportToExcel($grouped_data, $inventories, $filename, $lab_name, $lab_filter, $all_labs, $db);
     }
 
 } catch (PDOException $e) {
@@ -111,12 +116,12 @@ function exportToWord($data, $filename, $lab_name, $lab_filter, $all_labs) {
 /**
  * Export to Excel using PhpSpreadsheet
  */
-function exportToExcel($data, $filename, $lab_name, $lab_filter, $all_labs, $db) {
+function exportToExcel($grouped_data, $all_inventories, $filename, $lab_name, $lab_filter, $all_labs, $db) {
     // Load autoload
     $autoload = __DIR__ . '/vendor/autoload.php';
     if (!file_exists($autoload)) {
         // If vendor not available, fallback to CSV
-        exportToCSV($data, $filename);
+        exportToCSV($all_inventories, $filename);
         return;
     }
     
@@ -125,7 +130,7 @@ function exportToExcel($data, $filename, $lab_name, $lab_filter, $all_labs, $db)
     // Check if PhpSpreadsheet is available
     if (!class_exists('PhpOffice\PhpSpreadsheet\Spreadsheet')) {
         // If not available, fallback to CSV
-        exportToCSV($data, $filename);
+        exportToCSV($all_inventories, $filename);
         return;
     }
 
@@ -144,19 +149,8 @@ function exportToExcel($data, $filename, $lab_name, $lab_filter, $all_labs, $db)
         $sheetIndex = 0;
         
         foreach ($all_labs as $lab) {
-            // Get data for this specific lab
-            $sql = "SELECT 
-                        li.*,
-                        r.name AS lab_name
-                    FROM lab_inventory li
-                    JOIN resources r ON li.resource_id = r.id
-                    WHERE li.deleted_at IS NULL 
-                    AND li.resource_id = :lab_id
-                    ORDER BY li.category, li.item_name";
-            
-            $stmt = $db->prepare($sql);
-            $stmt->execute([':lab_id' => $lab['id']]);
-            $lab_data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            // Get data for this specific lab from pre-grouped data
+            $lab_data = $grouped_data[$lab['id']] ?? [];
             
             // Create sheet
             if ($sheetIndex === 0) {
@@ -176,7 +170,7 @@ function exportToExcel($data, $filename, $lab_name, $lab_filter, $all_labs, $db)
         // Add Summary Sheet
         $summarySheet = $spreadsheet->createSheet();
         $summarySheet->setTitle('Ringkasan');
-        createSummarySheet($summarySheet, $all_labs, $db);
+        createSummarySheet($summarySheet, $all_labs, $grouped_data);
         
         // Set first sheet as active
         $spreadsheet->setActiveSheetIndex(0);
@@ -185,7 +179,7 @@ function exportToExcel($data, $filename, $lab_name, $lab_filter, $all_labs, $db)
         // SINGLE SHEET - Normal export for single lab
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle(substr($lab_name, 0, 31));
-        createLabSheet($sheet, $data, $lab_name);
+        createLabSheet($sheet, $all_inventories, $lab_name);
     }
 
     // Output
@@ -318,7 +312,7 @@ function createLabSheet($sheet, $data, $lab_name) {
 /**
  * Create summary sheet for all labs
  */
-function createSummarySheet($sheet, $all_labs, $db) {
+function createSummarySheet($sheet, $all_labs, $grouped_data) {
     // Title
     $sheet->mergeCells('A1:F1');
     $sheet->setCellValue('A1', 'RINGKASAN INVENTARIS SEMUA LAB');
@@ -359,31 +353,26 @@ function createSummarySheet($sheet, $all_labs, $db) {
     $grand_total_backup = 0;
     
     foreach ($all_labs as $lab) {
-        $sql = "SELECT 
-                    COUNT(*) as total_items,
-                    SUM(quantity) as total_quantity,
-                    SUM(quantity_good) as total_good,
-                    SUM(quantity_broken) as total_broken,
-                    SUM(quantity_backup) as total_backup
-                FROM lab_inventory
-                WHERE deleted_at IS NULL AND resource_id = :lab_id";
+        $lab_data = $grouped_data[$lab['id']] ?? [];
         
-        $stmt = $db->prepare($sql);
-        $stmt->execute([':lab_id' => $lab['id']]);
-        $summary = $stmt->fetch(PDO::FETCH_ASSOC);
+        $total_items = count($lab_data);
+        $total_quantity = array_sum(array_column($lab_data, 'quantity'));
+        $total_good = array_sum(array_column($lab_data, 'quantity_good'));
+        $total_broken = array_sum(array_column($lab_data, 'quantity_broken'));
+        $total_backup = array_sum(array_column($lab_data, 'quantity_backup'));
         
         $sheet->setCellValue('A' . $row, $lab['name']);
-        $sheet->setCellValue('B' . $row, $summary['total_items'] ?? 0);
-        $sheet->setCellValue('C' . $row, $summary['total_quantity'] ?? 0);
-        $sheet->setCellValue('D' . $row, $summary['total_good'] ?? 0);
-        $sheet->setCellValue('E' . $row, $summary['total_broken'] ?? 0);
-        $sheet->setCellValue('F' . $row, $summary['total_backup'] ?? 0);
+        $sheet->setCellValue('B' . $row, $total_items);
+        $sheet->setCellValue('C' . $row, $total_quantity);
+        $sheet->setCellValue('D' . $row, $total_good);
+        $sheet->setCellValue('E' . $row, $total_broken);
+        $sheet->setCellValue('F' . $row, $total_backup);
         
-        $grand_total_items += $summary['total_items'] ?? 0;
-        $grand_total_quantity += $summary['total_quantity'] ?? 0;
-        $grand_total_good += $summary['total_good'] ?? 0;
-        $grand_total_broken += $summary['total_broken'] ?? 0;
-        $grand_total_backup += $summary['total_backup'] ?? 0;
+        $grand_total_items += $total_items;
+        $grand_total_quantity += $total_quantity;
+        $grand_total_good += $total_good;
+        $grand_total_broken += $total_broken;
+        $grand_total_backup += $total_backup;
         
         $row++;
     }

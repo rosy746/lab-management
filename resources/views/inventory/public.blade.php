@@ -137,7 +137,7 @@
         }
         .view-btn.active { background: var(--white); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.1); }
 
-        .export-group { display: flex; gap: 5px; margin-left: auto; }
+        .export-group { display: flex; gap: 5px; margin-left: auto; position: relative; }
         .btn-export {
             display: inline-flex; align-items: center; gap: 5px;
             font-size: 12px; font-weight: 700; padding: 7px 12px;
@@ -146,9 +146,34 @@
             transition: transform .15s, filter .15s;
         }
         .btn-export:hover { transform: translateY(-1px); filter: brightness(1.08); }
-        .btn-excel { background: #16a34a; color: #fff; }
+        .btn-excel { background: #16a34a; color: #fff; position: relative; }
         .btn-pdf   { background: #dc2626; color: #fff; }
         .btn-print { background: var(--g9); color: var(--acc); }
+
+        /* Dropdown Styles */
+        .dropdown { position: relative; display: inline-block; }
+        .dropdown-content {
+            display: none; position: absolute; right: 0; top: 100%;
+            background-color: #fff; min-width: 180px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1000; border-radius: 8px; margin-top: 5px;
+            overflow: hidden; border: 1px solid var(--border);
+        }
+        .dropdown-content a {
+            color: var(--text); padding: 10px 14px;
+            text-decoration: none; display: block;
+            font-size: 12px; font-weight: 600;
+            transition: background .15s;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .dropdown-content a:last-child { border-bottom: none; }
+        .dropdown-content a:hover { background-color: #f9fafb; color: #16a34a; }
+        .dropdown-content.show { display: block; animation: panelIn .2s ease; }
+        .dropdown-header {
+            padding: 8px 14px; font-size: 10px; font-weight: 700;
+            color: var(--muted); text-transform: uppercase;
+            background: #f8faf7; border-bottom: 1px solid var(--border);
+        }
 
         /* ─── TABS ──────────────────────────── */
         .tab-bar {
@@ -423,10 +448,17 @@
             <button class="view-btn" id="btn-card"  onclick="setView('card')">⊞ Kartu</button>
         </div>
         <div class="export-group">
-            <button class="btn-export btn-excel" onclick="exportExcel()">
-                <svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM8.5 17l1.5-2.5L8.5 12H10l.75 1.5L11.5 12H13l-1.5 2.5L13 17h-1.5l-.75-1.5-.75 1.5H8.5z"/></svg>
-                Excel
-            </button>
+            <div class="dropdown">
+                <button class="btn-export btn-excel" onclick="toggleExcelDropdown(event)">
+                    <svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM8.5 17l1.5-2.5L8.5 12H10l.75 1.5L11.5 12H13l-1.5 2.5L13 17h-1.5l-.75-1.5-.75 1.5H8.5z"/></svg>
+                    Excel
+                </button>
+                <div id="excelDropdown" class="dropdown-content">
+                    <div class="dropdown-header">Pilihan Export Excel</div>
+                    <a href="javascript:void(0)" onclick="exportExcel()">📗 Lab Aktif Saja</a>
+                    <a href="javascript:void(0)" onclick="exportAllExcel()" style="color: #16a34a; font-weight: 700;">📊 Semua Lab (Multi-Sheet)</a>
+                </div>
+            </div>
             <button class="btn-export btn-pdf" onclick="exportPDF()">
                 <svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5z"/></svg>
                 PDF
@@ -630,6 +662,19 @@ function setView(v) {
     filterTable();
 }
 
+// ─── DROPDOWN ────────────────────────────────────────────
+function toggleExcelDropdown(event) {
+    event.stopPropagation();
+    document.getElementById('excelDropdown').classList.toggle('show');
+}
+
+window.addEventListener('click', function(e) {
+    const dropdown = document.getElementById('excelDropdown');
+    if (dropdown && dropdown.classList.contains('show') && !dropdown.contains(e.target)) {
+        dropdown.classList.remove('show');
+    }
+});
+
 // ─── FILTER ──────────────────────────────────────────────
 function filterTable() {
     const search = document.getElementById('search-inp').value.toLowerCase();
@@ -680,6 +725,38 @@ function exportExcel() {
     ws['!cols'] = [5,25,14,16,14,20,7,7,7,9,12,20].map(w => ({wch:w}));
     XLSX.utils.book_append_sheet(wb, ws, labName.substring(0,31));
     XLSX.writeFile(wb, `Inventaris_${labName.replace(/\s+/g,'_')}_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+function exportAllExcel() {
+    const wb = XLSX.utils.book_new();
+    const panels = document.querySelectorAll('.lab-panel');
+    
+    panels.forEach(panel => {
+        const labName = panel.querySelector('.panel-title').textContent.trim();
+        const rows = [['No','Nama Barang','Kategori','Merk','Model','Spesifikasi','Total','Baik','Rusak','Cadangan','Kondisi','Catatan']];
+        
+        panel.querySelectorAll('tbody tr:not(.empty-row)').forEach((row, idx) => {
+            const c = row.querySelectorAll('td');
+            const bm = c[3].textContent.trim().split('/');
+            rows.push([
+                idx + 1,
+                c[1].textContent.trim(), c[2].textContent.trim(),
+                bm[0]?.trim()||'', bm[1]?.trim()||'',
+                c[4].textContent.trim(),
+                parseInt(c[5].textContent)||0, parseInt(c[6].textContent)||0,
+                parseInt(c[7].textContent)||0, parseInt(c[8].textContent)||0,
+                c[9].textContent.trim(), c[10].textContent.trim(),
+            ]);
+        });
+        
+        if (rows.length > 1) {
+            const ws = XLSX.utils.aoa_to_sheet(rows);
+            ws['!cols'] = [5,25,14,16,14,20,7,7,7,9,12,20].map(w => ({wch:w}));
+            XLSX.utils.book_append_sheet(wb, ws, labName.substring(0,31));
+        }
+    });
+
+    XLSX.writeFile(wb, `Inventaris_Semua_Lab_${new Date().toISOString().slice(0,10)}.xlsx`);
 }
 
 // ─── PDF EXPORT ───────────────────────────────────────────

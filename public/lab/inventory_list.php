@@ -802,17 +802,25 @@ tbody tr:hover { background:var(--cream); }
             <i class="fas fa-download"></i> Export
           </button>
           <div id="exportDropdown" class="dropdown-menu">
-            <a href="inventory_export.php?format=docx&<?= http_build_query($_GET) ?>" class="dropdown-item">
-              📘 Word (.docx)
-            </a>
+            <h6 style="padding:.5rem 1rem; font-size:.7rem; text-transform:uppercase; color:var(--text-light); border-bottom:1px solid var(--border);">Filter Saat Ini</h6>
             <a href="inventory_export.php?format=xlsx&<?= http_build_query($_GET) ?>" class="dropdown-item">
               📗 Excel (.xlsx)
             </a>
-            <a href="inventory_export.php?format=csv&<?= http_build_query($_GET) ?>" class="dropdown-item">
-              📄 CSV
-            </a>
             <a href="inventory_export.php?format=pdf&<?= http_build_query($_GET) ?>" class="dropdown-item" target="_blank">
               📕 PDF / Print
+            </a>
+            
+            <h6 style="padding:.5rem 1rem; font-size:.7rem; text-transform:uppercase; color:var(--text-light); border-bottom:1px solid var(--border); border-top:1px solid var(--border);">Global</h6>
+            <a href="inventory_export.php?format=xlsx&lab=all" class="dropdown-item" style="font-weight:600; color:var(--blue);">
+              📊 Export Semua Lab (Excel)
+            </a>
+            
+            <div style="border-top:1px solid var(--border); margin-top:5px;"></div>
+            <a href="inventory_export.php?format=docx&<?= http_build_query($_GET) ?>" class="dropdown-item">
+              📘 Word (.docx)
+            </a>
+            <a href="inventory_export.php?format=csv&<?= http_build_query($_GET) ?>" class="dropdown-item">
+              📄 CSV
             </a>
           </div>
         </div>
@@ -900,18 +908,24 @@ tbody tr:hover { background:var(--cream); }
 </div><!-- /page -->
 
 <script>
-function toggleDropdown(event){
+function toggleDropdown(event) {
+  event.preventDefault();
   event.stopPropagation();
-  document.getElementById('exportDropdown').classList.toggle('show');
+  const dropdown = document.getElementById('exportDropdown');
+  dropdown.classList.toggle('show');
 }
-window.onclick = function(e){
-  if(!e.target.matches('.dropdown-toggle')){
-    const drops = document.getElementsByClassName('dropdown-menu');
-    for(let i=0; i<drops.length; i++){
-      if(drops[i].classList.contains('show')) drops[i].classList.remove('show');
+
+// Close dropdown when clicking outside
+window.addEventListener('click', function(e) {
+  const dropdown = document.getElementById('exportDropdown');
+  const toggleBtn = document.querySelector('.dropdown-toggle');
+  
+  if (dropdown && dropdown.classList.contains('show')) {
+    if (!dropdown.contains(e.target) && !toggleBtn.contains(e.target)) {
+      dropdown.classList.remove('show');
     }
   }
-}
+});
 </script>
 </body>
 </html>
