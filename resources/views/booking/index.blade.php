@@ -2,45 +2,226 @@
 <x-slot name="title">Manajemen Booking</x-slot>
 
 <style>
-.stat-card { background:#fff; border-radius:14px; padding:18px 20px; border:1px solid #e8f0e6; box-shadow:0 1px 4px rgba(26,37,23,.05); }
-.badge { display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700; }
-.badge-pending  { background:#fef3c7;color:#92400e; }
-.badge-approved { background:#dcfce7;color:#166534; }
-.badge-rejected { background:#fee2e2;color:#991b1b; }
-.btn-approve { background:linear-gradient(135deg,#1A2517,#2d3d29);color:#ACC8A2;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;transition:opacity .15s; }
-.btn-approve:hover { opacity:.85; }
-.btn-reject  { background:#fff;color:#dc2626;border:1.5px solid #fecaca;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s; }
-.btn-reject:hover  { background:#fef2f2; }
-.btn-delete  { background:#fff;color:#9ca3af;border:1.5px solid #f3f4f6;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;transition:all .15s; }
-.btn-delete:hover  { color:#dc2626;border-color:#fecaca; }
-.filter-inp { border:1.5px solid #e5e7eb;border-radius:9px;padding:8px 12px;font-size:13px;background:#fafcf9;outline:none;transition:border-color .15s; }
-.filter-inp:focus { border-color:#ACC8A2; }
+/* ─── VARS ───────────────────────────────────── */
+:root {
+    --g9:#1A2517;--g8:#2d3d29;--g7:#3d5438;
+    --acc:#ACC8A2;--acc2:#8ab87e;
+    --border:#e8f0e6;--text:#374151;--muted:#9ca3af;
+    --shadow:0 2px 12px rgba(0,0,0,.08);
+    --pending-bg:#fffbeb;  --pending-c:#d97706;  --pending-b:#fde68a;
+    --approve-bg:#f0fdf4;  --approve-c:#15803d;  --approve-b:#bbf7d0;
+    --reject-bg:#fef2f2;   --reject-c:#dc2626;   --reject-b:#fecaca;
+}
 
-/* Modal */
-#reject-modal { display:none;position:fixed;inset:0;z-index:50;background:rgba(26,37,23,.75);backdrop-filter:blur(5px);align-items:center;justify-content:center;padding:1rem; }
-#reject-modal.open { display:flex; }
-#reject-box { background:#fff;border-radius:16px;width:100%;max-width:440px;padding:28px;animation:su .2s cubic-bezier(.16,1,.3,1); }
-@keyframes su { from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none} }
+/* ─── ANIMATIONS ─────────────────────────────── */
+@keyframes fadeUp   { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+@keyframes modalIn  { from{opacity:0;transform:translateY(16px) scale(.97)} to{opacity:1;transform:none} }
+@keyframes pulse    { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+/* ─── STATS ──────────────────────────────────── */
+.stat-grid { display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px; }
+.stat-card {
+    background:#fff;border-radius:16px;padding:18px 20px;
+    border:1px solid var(--border);box-shadow:0 1px 6px rgba(26,37,23,.05);
+    position:relative;overflow:hidden;
+    animation:fadeUp .4s cubic-bezier(.16,1,.3,1) both;
+}
+.stat-card::after {
+    content:'';position:absolute;bottom:-18px;right:-18px;
+    width:64px;height:64px;border-radius:50%;opacity:.06;
+}
+.stat-card:nth-child(1)::after { background:#6b7280; }
+.stat-card:nth-child(2)::after { background:#d97706; }
+.stat-card:nth-child(3)::after { background:#16a34a; }
+.stat-card:nth-child(4)::after { background:#dc2626; }
+.stat-label { font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px; }
+.stat-val   { font-size:30px;font-family:'Outfit',sans-serif;font-weight:800;line-height:1; }
+
+/* ─── FILTER ─────────────────────────────────── */
+.filter-bar {
+    background:#fff;border-radius:14px;padding:13px 16px;
+    border:1px solid var(--border);margin-bottom:16px;
+    display:flex;flex-wrap:wrap;gap:9px;align-items:center;
+}
+.filter-inp {
+    border:1.5px solid #e5e7eb;border-radius:9px;padding:8px 12px;
+    font-size:13px;background:#fafcf9;outline:none;
+    transition:border-color .15s;font-family:inherit;
+}
+.filter-inp:focus { border-color:var(--acc); }
+.btn-filter {
+    background:linear-gradient(135deg,var(--g9),var(--g8));color:var(--acc);
+    border:none;border-radius:9px;padding:9px 18px;font-size:13px;
+    font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .15s;
+}
+.btn-filter:hover { opacity:.85; }
+
+/* ─── TABLE WRAPPER ──────────────────────────── */
+.table-card {
+    background:#fff;border-radius:14px;border:1px solid var(--border);
+    box-shadow:var(--shadow);overflow:hidden;
+}
+.table-head-bar {
+    padding:15px 20px;border-bottom:1px solid #f0f4ee;
+    display:flex;align-items:center;justify-content:space-between;
+}
+.table-title { font-family:'Outfit',sans-serif;font-weight:700;color:var(--g9);font-size:15px; }
+.table-count { font-size:12px;color:var(--muted);font-weight:400;font-family:'DM Sans',sans-serif; }
+.tbl-scroll  { overflow-x:auto;-webkit-overflow-scrolling:touch; }
+.tbl-scroll::-webkit-scrollbar { height:3px; }
+.tbl-scroll::-webkit-scrollbar-thumb { background:var(--acc);border-radius:3px; }
+
+table { width:100%;border-collapse:collapse;font-size:13px; }
+thead tr { background:#f8faf7;border-bottom:2px solid var(--border); }
+thead th {
+    padding:10px 14px;text-align:left;
+    font-size:10px;font-weight:700;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.09em;white-space:nowrap;
+}
+thead th.th-center { text-align:center; }
+tbody tr { border-top:1px solid #f5f5f5;transition:background .12s; }
+tbody tr:hover { background:#fafcf9; }
+td { padding:13px 14px;vertical-align:middle; }
+td.td-center { text-align:center; }
+
+/* ─── ROW HIGHLIGHT by STATUS ────────────────── */
+tbody tr.row-pending  { border-left:3px solid var(--pending-c); }
+tbody tr.row-approved { border-left:3px solid var(--approve-c); }
+tbody tr.row-rejected { border-left:3px solid #d1d5db;opacity:.75; }
+
+/* ─── BADGE ──────────────────────────────────── */
+.badge {
+    display:inline-flex;align-items:center;gap:4px;
+    padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap;
+}
+.badge-pending  { background:var(--pending-bg);color:var(--pending-c);border:1px solid var(--pending-b); }
+.badge-approved { background:var(--approve-bg);color:var(--approve-c);border:1px solid var(--approve-b); }
+.badge-rejected { background:var(--reject-bg);color:var(--reject-c);border:1px solid var(--reject-b); }
+.badge-pending .dot { width:6px;height:6px;border-radius:50%;background:currentColor;animation:pulse 1.6s ease-in-out infinite; }
+
+/* ─── INFO CELLS ─────────────────────────────── */
+.cell-primary   { font-weight:700;color:var(--g9);font-size:13px; }
+.cell-secondary { font-size:11px;color:var(--muted);margin-top:2px; }
+.cell-accent    { font-size:11px;color:var(--acc2);font-weight:600;margin-top:2px; }
+.cell-slot      { font-weight:700;color:var(--text);font-size:12px; }
+.cell-time      { font-size:10px;color:var(--muted);margin-top:2px; }
+
+/* ─── ACTION BUTTONS ─────────────────────────── */
+.act-wrap { display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:wrap; }
+
+.btn-approve-single {
+    display:inline-flex;align-items:center;gap:4px;
+    background:linear-gradient(135deg,var(--g9),var(--g8));color:var(--acc);
+    border:none;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;
+    cursor:pointer;font-family:inherit;transition:transform .15s,box-shadow .15s;white-space:nowrap;
+}
+.btn-approve-single:hover { transform:translateY(-1px);box-shadow:0 4px 12px rgba(26,37,23,.25); }
+
+.btn-approve-group {
+    display:inline-flex;align-items:center;gap:4px;
+    background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#bfdbfe;
+    border:none;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;
+    cursor:pointer;font-family:inherit;transition:transform .15s,box-shadow .15s;white-space:nowrap;
+}
+.btn-approve-group:hover { transform:translateY(-1px);box-shadow:0 4px 12px rgba(37,99,235,.3); }
+
+.btn-reject-act {
+    display:inline-flex;align-items:center;gap:4px;
+    background:#fff;color:#dc2626;border:1.5px solid #fecaca;
+    border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;
+    cursor:pointer;font-family:inherit;transition:background .15s,transform .15s;white-space:nowrap;
+}
+.btn-reject-act:hover { background:#fef2f2;transform:translateY(-1px); }
+
+.btn-detail {
+    display:inline-flex;align-items:center;gap:3px;
+    background:#f3f4f6;color:#374151;border:1.5px solid #e5e7eb;
+    border-radius:8px;padding:5px 11px;font-size:11px;font-weight:600;
+    text-decoration:none;transition:border-color .15s,background .15s;white-space:nowrap;
+}
+.btn-detail:hover { border-color:var(--acc);background:#f0f9f4;color:var(--g7); }
+
+.btn-del {
+    background:#fff;color:#d1d5db;border:1.5px solid #f3f4f6;
+    border-radius:8px;padding:5px 8px;cursor:pointer;
+    transition:color .15s,border-color .15s,background .15s;
+}
+.btn-del:hover { color:#dc2626;border-color:#fecaca;background:#fef2f2; }
+
+/* ─── PAGINATION ─────────────────────────────── */
+.pagi-wrap { padding:13px 20px;border-top:1px solid #f0f4ee; }
+
+/* ─── EMPTY ──────────────────────────────────── */
+.empty-state { text-align:center;padding:56px 20px;color:var(--muted);font-size:14px; }
+.empty-icon  { font-size:44px;margin-bottom:12px; }
+
+/* ─── FLASH ──────────────────────────────────── */
+.flash { padding:12px 16px;border-radius:10px;font-size:13px;font-weight:600;margin-bottom:16px; }
+.flash-ok  { color:#166534;background:#f0fdf4;border:1px solid #bbf7d0; }
+.flash-err { color:#991b1b;background:#fef2f2;border:1px solid #fecaca; }
+
+/* ─── MODAL ──────────────────────────────────── */
+.modal-overlay {
+    display:none;position:fixed;inset:0;z-index:50;
+    background:rgba(26,37,23,.82);backdrop-filter:blur(5px);
+    align-items:center;justify-content:center;padding:1rem;
+}
+.modal-overlay.open { display:flex; }
+.modal-box {
+    background:#fff;border-radius:16px;width:100%;max-width:440px;
+    overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3);
+    animation:modalIn .22s cubic-bezier(.16,1,.3,1);
+}
+.modal-head { padding:20px 22px 16px;background:linear-gradient(135deg,#7f1d1d,#991b1b); }
+.modal-head-title { font-family:'Outfit',sans-serif;font-weight:700;font-size:18px;color:#fff;margin:0; }
+.modal-head-sub   { font-size:12px;color:rgba(255,255,255,.5);margin-top:3px; }
+.modal-body { padding:20px 22px; }
+.field-label { display:block;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px; }
+.inp-textarea {
+    width:100%;border:1.5px solid #e5e7eb;border-radius:10px;
+    padding:10px 13px;font-size:13px;font-family:inherit;outline:none;
+    resize:none;box-sizing:border-box;transition:border-color .15s;background:#fafcf9;
+}
+.inp-textarea:focus { border-color:var(--acc);box-shadow:0 0 0 3px rgba(172,200,162,.12); }
+.modal-actions { display:flex;gap:9px;margin-top:16px; }
+.btn-cancel { flex:1;background:#f3f4f6;color:#374151;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;transition:background .15s;font-family:inherit; }
+.btn-cancel:hover { background:#e5e7eb; }
+.btn-reject-submit { flex:1;background:#dc2626;color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .15s;font-family:inherit; }
+.btn-reject-submit:hover { opacity:.85; }
+
+@media(max-width:768px) {
+    .stat-grid { grid-template-columns:repeat(2,1fr); }
+    .act-wrap  { flex-direction:column;align-items:stretch; }
+}
 </style>
 
-{{-- Stats --}}
-<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px">
+{{-- Flash --}}
+@if(session('success'))
+<div class="flash flash-ok">✓ {{ session('success') }}</div>
+@endif
+@if(session('error'))
+<div class="flash flash-err">⚠ {{ session('error') }}</div>
+@endif
+
+{{-- ─── STATS ─── --}}
+<div class="stat-grid">
     @foreach([
-        ['label'=>'Total','value'=>$stats['total'],'color'=>'#6b7280','bg'=>'#f9fafb'],
-        ['label'=>'Pending','value'=>$stats['pending'],'color'=>'#d97706','bg'=>'#fffbeb'],
-        ['label'=>'Disetujui','value'=>$stats['approved'],'color'=>'#16a34a','bg'=>'#f0fdf4'],
-        ['label'=>'Ditolak','value'=>$stats['rejected'],'color'=>'#dc2626','bg'=>'#fef2f2'],
-    ] as $s)
-    <div class="stat-card">
-        <p style="font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">{{ $s['label'] }}</p>
-        <p style="font-size:28px;font-family:Outfit,sans-serif;font-weight:800;color:{{ $s['color'] }}">{{ $s['value'] }}</p>
+        ['label'=>'Total',    'value'=>$stats['total'],    'color'=>'#6b7280'],
+        ['label'=>'Pending',  'value'=>$stats['pending'],  'color'=>'#d97706'],
+        ['label'=>'Disetujui','value'=>$stats['approved'], 'color'=>'#16a34a'],
+        ['label'=>'Ditolak',  'value'=>$stats['rejected'], 'color'=>'#dc2626'],
+    ] as $i => $s)
+    <div class="stat-card" style="animation-delay:{{ $i*60 }}ms">
+        <div class="stat-label">{{ $s['label'] }}</div>
+        <div class="stat-val" style="color:{{ $s['color'] }}">{{ $s['value'] }}</div>
     </div>
     @endforeach
 </div>
 
-{{-- Filter bar --}}
-<div style="background:#fff;border-radius:14px;padding:16px 20px;border:1px solid #e8f0e6;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center">
-    <form method="GET" action="{{ route('booking.index') }}" style="display:flex;flex-wrap:wrap;gap:10px;width:100%;align-items:center">
+{{-- ─── FILTER ─── --}}
+<div class="filter-bar">
+    <form method="GET" action="{{ route('booking.index') }}"
+          style="display:flex;flex-wrap:wrap;gap:9px;width:100%;align-items:center">
 
         <input type="text" name="search" value="{{ request('search') }}"
                placeholder="🔍 Cari nama, kelas, judul..."
@@ -62,73 +243,102 @@
 
         <input type="date" name="date" value="{{ request('date') }}" class="filter-inp">
 
-        <button type="submit" style="background:linear-gradient(135deg,#1A2517,#2d3d29);color:#ACC8A2;border:none;border-radius:9px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer">
-            Filter
-        </button>
+        <button type="submit" class="btn-filter">Filter</button>
+
         @if(request()->hasAny(['search','status','resource_id','date']))
-        <a href="{{ route('booking.index') }}" style="font-size:13px;color:#9ca3af;text-decoration:none">× Reset</a>
+        <a href="{{ route('booking.index') }}"
+           style="font-size:13px;color:var(--muted);text-decoration:none;padding:4px 8px">× Reset</a>
         @endif
     </form>
 </div>
 
-{{-- Table --}}
-<div style="background:#fff;border-radius:14px;border:1px solid #e8f0e6;box-shadow:0 1px 4px rgba(26,37,23,.05);overflow:hidden">
-    <div style="padding:16px 20px;border-bottom:1px solid #f0f4ee;display:flex;align-items:center;justify-content:space-between">
-        <h2 style="font-family:Outfit,sans-serif;font-weight:700;color:#1A2517;font-size:15px">
-            Daftar Booking
+{{-- ─── TABLE ─── --}}
+<div class="table-card">
+    <div class="table-head-bar">
+        <div>
+            <span class="table-title">Daftar Booking</span>
             @if($bookings->total() > 0)
-            <span style="font-size:12px;color:#9ca3af;font-weight:400;font-family:DM Sans,sans-serif">({{ $bookings->total() }} data)</span>
+            <span class="table-count">&nbsp;({{ $bookings->total() }} data)</span>
             @endif
-        </h2>
+        </div>
+        @if($stats['pending'] > 0)
+        <span class="badge badge-pending">
+            <span class="dot"></span>
+            {{ $stats['pending'] }} menunggu persetujuan
+        </span>
+        @endif
     </div>
 
     @if($bookings->isEmpty())
-    <div style="text-align:center;padding:48px;color:#9ca3af;font-size:14px">
-        <div style="font-size:40px;margin-bottom:12px">📋</div>
+    <div class="empty-state">
+        <div class="empty-icon">📋</div>
         Belum ada booking ditemukan
     </div>
     @else
-    <div style="overflow-x:auto">
-        <table style="width:100%;border-collapse:collapse;font-size:13px">
+    <div class="tbl-scroll">
+        <table>
             <thead>
-                <tr style="background:#f8faf7;border-bottom:1.5px solid #e8f0e6">
-                    <th style="padding:11px 16px;text-align:left;font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.08em">Tanggal & Lab</th>
-                    <th style="padding:11px 16px;text-align:left;font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.08em">Pemohon</th>
-                    <th style="padding:11px 16px;text-align:left;font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.08em">Kegiatan</th>
-                    <th style="padding:11px 16px;text-align:left;font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.08em">Slot</th>
-                    <th style="padding:11px 16px;text-align:center;font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.08em">Status</th>
-                    <th style="padding:11px 16px;text-align:center;font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.08em">Aksi</th>
+                <tr>
+                    <th>Tanggal & Lab</th>
+                    <th>Pemohon</th>
+                    <th>Kegiatan</th>
+                    <th>Slot Waktu</th>
+                    <th class="th-center">Status</th>
+                    <th class="th-center">Aksi</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($bookings as $b)
-                <tr style="border-top:1px solid #f5f5f5;transition:background .1s" onmouseover="this.style.background='#fafcf9'" onmouseout="this.style.background=''">
+                @php
+                    $rowClass = match($b->status) {
+                        'pending'  => 'row-pending',
+                        'approved' => 'row-approved',
+                        default    => 'row-rejected',
+                    };
+                    $groupCount = $b->status === 'pending'
+                        ? $bookings->where('teacher_name', $b->teacher_name)
+                            ->where('resource_id', $b->resource_id)
+                            ->where('booking_date', $b->booking_date)
+                            ->where('status', 'pending')->count()
+                        : 0;
+                @endphp
+                <tr class="{{ $rowClass }}">
 
                     {{-- Tanggal & Lab --}}
-                    <td style="padding:13px 16px">
-                        <div style="font-weight:700;color:#1A2517">
+                    <td>
+                        <div class="cell-primary">
                             {{ \Carbon\Carbon::parse($b->booking_date)->translatedFormat('d M Y') }}
                         </div>
-                        <div style="font-size:11px;color:#ACC8A2;margin-top:2px">🖥 {{ $b->resource->name ?? '-' }}</div>
+                        <div class="cell-accent">🖥 {{ $b->resource->name ?? '-' }}</div>
                     </td>
 
                     {{-- Pemohon --}}
-                    <td style="padding:13px 16px">
-                        <div style="font-weight:600;color:#374151">{{ $b->teacher_name }}</div>
-                        <div style="font-size:11px;color:#9ca3af;margin-top:2px">{{ $b->class_name }} · {{ $b->teacher_phone }}</div>
+                    <td>
+                        <div class="cell-primary">{{ $b->teacher_name }}</div>
+                        <div class="cell-secondary">{{ $b->class_name }}</div>
+                        @if($b->teacher_phone)
+                        <div class="cell-secondary">📱 {{ $b->teacher_phone }}</div>
+                        @endif
                     </td>
 
                     {{-- Kegiatan --}}
-                    <td style="padding:13px 16px;max-width:200px">
-                        <div style="font-weight:600;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ $b->title }}</div>
-                        <div style="font-size:11px;color:#9ca3af;margin-top:2px">{{ $b->subject_name }} · {{ $b->participant_count }} peserta</div>
+                    <td style="max-width:190px">
+                        <div class="cell-primary" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+                            {{ $b->title }}
+                        </div>
+                        <div class="cell-secondary">
+                            {{ $b->subject_name ?? '-' }}
+                            @if($b->participant_count)
+                            · <span style="font-weight:600;color:#6b7280">{{ $b->participant_count }} peserta</span>
+                            @endif
+                        </div>
                     </td>
 
                     {{-- Slot --}}
-                    <td style="padding:13px 16px">
+                    <td>
                         @if($b->timeSlot)
-                        <div style="font-size:12px;color:#374151;font-weight:600">{{ $b->timeSlot->name }}</div>
-                        <div style="font-size:11px;color:#9ca3af">
+                        <div class="cell-slot">{{ $b->timeSlot->name }}</div>
+                        <div class="cell-time">
                             {{ \Carbon\Carbon::parse($b->timeSlot->start_time)->format('H:i') }}–{{ \Carbon\Carbon::parse($b->timeSlot->end_time)->format('H:i') }}
                         </div>
                         @else
@@ -137,13 +347,15 @@
                     </td>
 
                     {{-- Status --}}
-                    <td style="padding:13px 16px;text-align:center">
+                    <td class="td-center">
                         @if($b->status === 'pending')
-                            <span class="badge badge-pending">⏳ Pending</span>
+                            <span class="badge badge-pending"><span class="dot"></span>Pending</span>
                         @elseif($b->status === 'approved')
                             <span class="badge badge-approved">✓ Disetujui</span>
                             @if($b->approved_at)
-                            <div style="font-size:10px;color:#9ca3af;margin-top:3px">{{ \Carbon\Carbon::parse($b->approved_at)->format('d/m H:i') }}</div>
+                            <div style="font-size:10px;color:var(--muted);margin-top:3px">
+                                {{ \Carbon\Carbon::parse($b->approved_at)->format('d/m H:i') }}
+                            </div>
                             @endif
                         @else
                             <span class="badge badge-rejected">✗ Ditolak</span>
@@ -151,98 +363,99 @@
                     </td>
 
                     {{-- Aksi --}}
-                    <td style="padding:13px 16px;text-align:center">
-                        <div style="display:flex;align-items:center;justify-content:center;gap:6px">
+                    <td class="td-center">
+                        <div class="act-wrap">
                             @if($b->status === 'pending')
-                            @php
-                                $groupCount = $bookings->where('teacher_name', $b->teacher_name)
-                                    ->where('resource_id', $b->resource_id)
-                                    ->where('booking_date', $b->booking_date)
-                                    ->where('status', 'pending')
-                                    ->count();
-                            @endphp
-                            {{-- Approve Semua jika ada lebih dari 1 slot --}}
-                            @if($groupCount > 1)
-                            <form method="POST" action="{{ route('booking.approve.group') }}" onsubmit="return confirm('Setujui semua {{ $groupCount }} slot booking {{ $b->teacher_name }} sekaligus?')">
-                                @csrf
-                                <input type="hidden" name="teacher_name" value="{{ $b->teacher_name }}">
-                                <input type="hidden" name="resource_id" value="{{ $b->resource_id }}">
-                                <input type="hidden" name="booking_date" value="{{ $b->booking_date }}">
-                                <button type="submit" class="btn-approve" style="background:linear-gradient(135deg,#1e3a5f,#2563eb);white-space:nowrap">✓ Setujui {{ $groupCount }} Slot</button>
-                            </form>
+
+                                @if($groupCount > 1)
+                                {{-- Approve Group --}}
+                                <form method="POST" action="{{ route('booking.approve.group') }}"
+                                      onsubmit="return confirm('Setujui semua {{ $groupCount }} slot booking {{ $b->teacher_name }} sekaligus?')">
+                                    @csrf
+                                    <input type="hidden" name="teacher_name" value="{{ $b->teacher_name }}">
+                                    <input type="hidden" name="resource_id"  value="{{ $b->resource_id }}">
+                                    <input type="hidden" name="booking_date" value="{{ $b->booking_date }}">
+                                    <button type="submit" class="btn-approve-group">
+                                        ✓ {{ $groupCount }} Slot
+                                    </button>
+                                </form>
+                                @else
+                                {{-- Approve Single --}}
+                                <form method="POST" action="{{ route('booking.approve', $b->id) }}"
+                                      onsubmit="return confirm('Setujui booking ini?')">
+                                    @csrf @method('PATCH')
+                                    <button type="submit" class="btn-approve-single">✓ Setujui</button>
+                                </form>
+                                @endif
+
+                                {{-- Reject --}}
+                                <button class="btn-reject-act"
+                                    onclick="openReject({{ $b->id }}, '{{ addslashes($b->title) }}', '{{ addslashes($b->teacher_name) }}')">
+                                    ✗ Tolak
+                                </button>
+
                             @else
-                            <form method="POST" action="{{ route('booking.approve', $b->id) }}" onsubmit="return confirm('Setujui booking ini?')">
-                                @csrf @method('PATCH')
-                                <button type="submit" class="btn-approve">✓ Setujui</button>
-                            </form>
+                                {{-- Detail --}}
+                                <a href="{{ route('booking.show', $b->id) }}" class="btn-detail">
+                                    <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    </svg>
+                                    Detail
+                                </a>
                             @endif
-                            {{-- Reject --}}
-                            <button class="btn-reject" onclick="openReject({{ $b->id }}, '{{ addslashes($b->title) }}')">✗ Tolak</button>
-                            @else
-                            {{-- Detail --}}
-                            <a href="{{ route('booking.show', $b->id) }}"
-                               style="background:#f3f4f6;color:#374151;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;text-decoration:none;display:inline-block">
-                               Detail
-                            </a>
-                            @endif
+
                             {{-- Delete --}}
-                            <form method="POST" action="{{ route('booking.destroy', $b->id) }}" onsubmit="return confirm('Hapus booking ini?')">
+                            <form method="POST" action="{{ route('booking.destroy', $b->id) }}"
+                                  onsubmit="return confirm('Hapus booking ini?')">
                                 @csrf @method('DELETE')
-                                <button type="submit" class="btn-delete" title="Hapus">
-                                    <svg style="width:14px;height:14px" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <button type="submit" class="btn-del" title="Hapus">
+                                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                     </svg>
                                 </button>
                             </form>
                         </div>
                     </td>
+
                 </tr>
                 @endforeach
             </tbody>
         </table>
     </div>
 
-    {{-- Pagination --}}
     @if($bookings->hasPages())
-    <div style="padding:14px 20px;border-top:1px solid #f0f4ee">
-        {{ $bookings->links() }}
-    </div>
+    <div class="pagi-wrap">{{ $bookings->links() }}</div>
     @endif
     @endif
 </div>
 
-{{-- REJECT MODAL --}}
-<div id="reject-modal" onclick="if(event.target===this)closeReject()">
-    <div id="reject-box">
-        <h3 style="font-family:Outfit,sans-serif;font-weight:700;font-size:17px;color:#1A2517;margin-bottom:4px">Tolak Booking</h3>
-        <p id="reject-title" style="font-size:13px;color:#9ca3af;margin-bottom:18px"></p>
 
-        <form id="reject-form" method="POST">
-            @csrf @method('PATCH')
-            <label style="display:block;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px">
-                Alasan Penolakan *
-            </label>
-            <textarea name="notes" rows="3" required
-                style="width:100%;border:1.5px solid #e5e7eb;border-radius:10px;padding:10px 13px;font-size:13px;font-family:DM Sans,sans-serif;outline:none;resize:none;box-sizing:border-box;transition:border-color .15s"
-                onfocus="this.style.borderColor='#ACC8A2'" onblur="this.style.borderColor='#e5e7eb'"
-                placeholder="Contoh: Slot sudah terpakai untuk kegiatan lain..."></textarea>
-            <div style="display:flex;gap:10px;margin-top:16px">
-                <button type="button" onclick="closeReject()"
-                    style="flex:1;background:#f3f4f6;color:#374151;border:none;border-radius:10px;padding:11px;font-size:13px;font-weight:700;cursor:pointer">
-                    Batal
-                </button>
-                <button type="submit"
-                    style="flex:1;background:#dc2626;color:#fff;border:none;border-radius:10px;padding:11px;font-size:13px;font-weight:700;cursor:pointer">
-                    ✗ Tolak Booking
-                </button>
-            </div>
-        </form>
+{{-- ═══ MODAL REJECT ═══ --}}
+<div id="reject-modal" class="modal-overlay" onclick="if(event.target===this)closeReject()">
+    <div class="modal-box">
+        <div class="modal-head">
+            <h3 class="modal-head-title">Tolak Booking</h3>
+            <p id="reject-subtitle" class="modal-head-sub"></p>
+        </div>
+        <div class="modal-body">
+            <form id="reject-form" method="POST">
+                @csrf @method('PATCH')
+                <label class="field-label">Alasan Penolakan *</label>
+                <textarea name="notes" rows="3" required class="inp-textarea"
+                    placeholder="Contoh: Slot sudah terpakai untuk kegiatan lain..."></textarea>
+                <div class="modal-actions">
+                    <button type="button" onclick="closeReject()" class="btn-cancel">Batal</button>
+                    <button type="submit" class="btn-reject-submit">✗ Tolak Booking</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
 <script>
-function openReject(id, title) {
-    document.getElementById('reject-title').textContent = '"' + title + '"';
+function openReject(id, title, teacher) {
+    document.getElementById('reject-subtitle').textContent = teacher + ' — ' + title;
     document.getElementById('reject-form').action = '/booking/' + id + '/reject';
     document.getElementById('reject-modal').classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -251,7 +464,7 @@ function closeReject() {
     document.getElementById('reject-modal').classList.remove('open');
     document.body.style.overflow = '';
 }
-document.addEventListener('keydown', e => { if(e.key==='Escape') closeReject(); });
+document.addEventListener('keydown', e => { if(e.key === 'Escape') closeReject(); });
 </script>
 
 </x-app-layout>
