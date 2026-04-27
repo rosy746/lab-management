@@ -56,19 +56,33 @@ a{text-decoration:none}
 .btn-create{padding:11px 24px;border-radius:10px;border:none;background:linear-gradient(135deg,#1A2517,#2d3d29);color:#ACC8A2;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;transition:transform .15s,box-shadow .15s}
 .btn-create:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(26,37,23,.25)}
 
+/* PROGRESS UI */
+.prog-wrap{width:100%;height:6px;background:#f3f4f6;border-radius:99px;overflow:hidden;margin:10px 0 5px}
+.prog-bar{height:100%;background:linear-gradient(90deg,#ACC8A2,#3d5438);border-radius:99px;transition:width .6s ease}
+.prog-text{font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.05em}
+
+/* TAB STATUS */
+.status-tabs{display:flex;gap:8px;margin-bottom:18px;border-bottom:1px solid #e8f0e6;padding-bottom:10px}
+.s-tab{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;color:#9ca3af;transition:all .15s}
+.s-tab:hover{background:#fff;color:#1A2517}
+.s-tab.active{background:#1A2517;color:#ACC8A2}
+
 /* ASSIGNMENT CARDS */
 .section-title{font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px}
-.acard{background:#fff;border-radius:14px;border:1px solid #e8f0e6;box-shadow:0 1px 6px rgba(26,37,23,.06);overflow:hidden;margin-bottom:16px}
-.acard-head{padding:14px 18px;background:linear-gradient(135deg,#1A2517,#2a3826);display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
-.acard-title{font-family:'Outfit',sans-serif;font-weight:700;font-size:15px;color:#fff}
-.acard-meta-head{font-size:11px;color:rgba(172,200,162,.45);margin-top:3px}
+.acard{background:#fff;border-radius:16px;border:1px solid #e8f0e6;box-shadow:0 1px 6px rgba(26,37,23,.05);overflow:hidden;margin-bottom:20px;transition:transform .2s}
+.acard:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(26,37,23,.08)}
+.acard-head{padding:16px 20px;background:#fcfdfb;border-bottom:1px solid #f0f4ee;display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.acard-title{font-family:'Outfit',sans-serif;font-weight:800;font-size:16px;color:#1A2517}
+.acard-meta-head{font-size:12px;color:#9ca3af;margin-top:4px;display:flex;align-items:center;gap:8px}
+.meta-dot{width:4px;height:4px;border-radius:50%;background:#e5e7eb}
 .acard-actions{display:flex;gap:6px;flex-shrink:0}
-.btn-del{padding:5px 11px;border-radius:7px;font-size:11px;font-weight:700;border:1px solid rgba(248,113,113,.3);background:rgba(248,113,113,.1);color:#f87171;cursor:pointer;font-family:inherit;transition:background .15s}
-.btn-del:hover{background:rgba(248,113,113,.2)}
-.acard-stats{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid #f0f4ee}
-.stat-cell{padding:12px 16px;text-align:center}
-.stat-val{font-family:'Outfit',sans-serif;font-size:20px;font-weight:800}
-.stat-key{font-size:10px;color:#9ca3af;margin-top:2px}
+.btn-del{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:9px;border:1px solid #fecaca;background:#fff;color:#ef4444;cursor:pointer;transition:all .15s}
+.btn-del:hover{background:#fef2f2;transform:scale(1.05)}
+.acard-stats{display:grid;grid-template-columns:repeat(4,1fr);background:#fff}
+.stat-cell{padding:14px 16px;text-align:center;border-right:1px solid #f9fafb}
+.stat-cell:last-child{border-right:none}
+.stat-val{font-family:'Outfit',sans-serif;font-size:22px;font-weight:800;color:#1A2517}
+.stat-key{font-size:10px;color:#9ca3af;margin-top:3px;font-weight:700;text-transform:uppercase}
 
 /* SUBMISSIONS TABLE */
 .subs-wrap{overflow-x:auto}
@@ -169,15 +183,11 @@ a{text-decoration:none}
                             @endforeach
                         </select>
                     </div>
-                    <div class="field">
-                        <label class="field-label">Kelas *</label>
-                        <select name="class_name" id="adm_kelas" class="inp" required disabled style="appearance:auto">
-                            <option value="">— Pilih Lembaga Dulu —</option>
-                        </select>
-                    </div>
-                    <div class="field">
-                        <label class="field-label">Deadline *</label>
-                        <input name="deadline" type="datetime-local" class="inp" required value="{{ old('deadline') }}">
+                    <div class="field" style="grid-column: span 2">
+                        <label class="field-label">Kelas * (Bisa pilih lebih dari satu)</label>
+                        <div id="kelas_checkbox_container" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(120px, 1fr));gap:8px;background:#fafcf9;border:1.5px solid #e5e7eb;border-radius:9px;padding:12px;max-height:150px;overflow-y:auto">
+                            <div style="color:#9ca3af;font-size:12px;grid-column:1/-1">Pilih lembaga terlebih dahulu</div>
+                        </div>
                     </div>
                 </div>
                 <div class="field-row-3">
@@ -185,20 +195,28 @@ a{text-decoration:none}
                         <label class="field-label">Mata Pelajaran *</label>
                         <input name="subject_name" type="text" class="inp" placeholder="Contoh: TIK" required value="{{ old('subject_name') }}">
                     </div>
+                    <div class="field" style="grid-column: span 2">
+                        <label class="field-label">Deadline *</label>
+                        <input name="deadline" type="datetime-local" class="inp" required value="{{ old('deadline') }}">
+                    </div>
                 </div>
                 <script>
                 const ADM_CLASSES = @json($classes->groupBy('organization_id'));
                 function loadAdmKelas(orgId) {
-                    const sel = document.getElementById('adm_kelas');
-                    sel.innerHTML = '<option value="">— Pilih Kelas —</option>';
+                    const container = document.getElementById('kelas_checkbox_container');
+                    container.innerHTML = '';
+                    
                     if (orgId && ADM_CLASSES[orgId]) {
                         ADM_CLASSES[orgId].forEach(k => {
-                            sel.innerHTML += `<option value="${k.name}">${k.name}</option>`;
+                            container.innerHTML += `
+                                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#1A2517;padding:4px">
+                                    <input type="checkbox" name="class_names[]" value="${k.name}" style="width:16px;height:16px;accent-color:#1A2517">
+                                    ${k.name}
+                                </label>
+                            `;
                         });
-                        sel.disabled = false;
                     } else {
-                        sel.innerHTML = '<option value="">— Pilih Lembaga Dulu —</option>';
-                        sel.disabled = true;
+                        container.innerHTML = '<div style="color:#9ca3af;font-size:12px;grid-column:1/-1">Pilih lembaga terlebih dahulu</div>';
                     }
                 }
                 </script>
@@ -219,7 +237,11 @@ a{text-decoration:none}
     </div>
 
     {{-- DAFTAR TUGAS --}}
-    <div class="section-title">Daftar Tugas ({{ $assignments->count() }})</div>
+    <div class="status-tabs">
+        <div class="s-tab active" onclick="filterStatus('all')">Semua</div>
+        <div class="s-tab" onclick="filterStatus('active')">Aktif (Buka)</div>
+        <div class="s-tab" onclick="filterStatus('expired')">Arsip (Tutup)</div>
+    </div>
 
     @forelse($assignments as $a)
     @php
@@ -227,17 +249,40 @@ a{text-decoration:none}
         $graded    = $a->submissions->where('status','graded')->count();
         $submitted = $a->submissions->where('status','submitted')->count();
         $expired   = $a->isExpired();
+        
+        // Dapatkan estimasi jumlah siswa (bisa dari model LabClass jika relasi ada)
+        // Untuk sementara kita gunakan angka statis atau biarkan dinamis
+        $estimatedStudents = 36; 
+        $progress = ($total / $estimatedStudents) * 100;
     @endphp
-    <div class="acard">
+    <div class="acard assignment-item" data-expired="{{ $expired ? '1' : '0' }}">
         <div class="acard-head">
-            <div>
+            <div style="flex:1">
                 <div class="acard-title">{{ $a->title }}</div>
-                <div class="acard-meta-head">{{ $a->subject_name }} · {{ $a->class_name }} · Deadline: {{ $a->deadline->translatedFormat('d M Y, H:i') }}</div>
+                <div class="acard-meta-head">
+                    <span>{{ $a->subject_name }}</span>
+                    <div class="meta-dot"></div>
+                    <span>{{ $a->class_name }}</span>
+                    <div class="meta-dot"></div>
+                    <span style="color:{{ $expired ? '#ef4444' : '#16a34a' }};font-weight:700">
+                        {{ $expired ? 'Selesai' : 'Deadline: ' . $a->deadline->translatedFormat('d M Y, H:i') }}
+                    </span>
+                </div>
+                
+                {{-- PROGRESS BAR --}}
+                <div style="max-width:300px;margin-top:12px">
+                    <div class="prog-text">Progress Pengumpulan: {{ $total }} Siswa</div>
+                    <div class="prog-wrap">
+                        <div class="prog-bar" style="width: {{ min($progress, 100) }}%"></div>
+                    </div>
+                </div>
             </div>
             <div class="acard-actions">
                 <form method="POST" action="{{ route('assignment.destroy', $a) }}" onsubmit="return confirm('Hapus tugas ini beserta semua file submission?')">
                     @csrf @method('DELETE')
-                    <button type="submit" class="btn-del">Hapus</button>
+                    <button type="submit" class="btn-del" title="Hapus Tugas">
+                        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </button>
                 </form>
             </div>
         </div>
@@ -344,6 +389,25 @@ function toggleCreate() {
     const toggle  = document.getElementById('create-toggle');
     const isOpen  = body.classList.toggle('open');
     toggle.classList.toggle('open', isOpen);
+}
+
+function filterStatus(status) {
+    // Update tabs UI
+    document.querySelectorAll('.s-tab').forEach(tab => tab.classList.remove('active'));
+    event.target.classList.add('active');
+
+    // Filter items
+    const items = document.querySelectorAll('.assignment-item');
+    items.forEach(item => {
+        const isExpired = item.dataset.expired === '1';
+        if (status === 'all') {
+            item.style.display = 'block';
+        } else if (status === 'active') {
+            item.style.display = isExpired ? 'none' : 'block';
+        } else if (status === 'expired') {
+            item.style.display = isExpired ? 'block' : 'none';
+        }
+    });
 }
 
 // Auto buka form jika ada error validasi

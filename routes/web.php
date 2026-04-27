@@ -11,6 +11,8 @@ use App\Http\Controllers\AssignmentPublicController;
 use App\Http\Controllers\AssignmentAdminController;
 use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\LabControlController;
+use App\Http\Controllers\OrganizationController;
+use App\Http\Controllers\LabClassController;
 
 // ═══ PUBLIK ═══
 Route::get('/', [ScheduleController::class, 'index'])->name('home');
@@ -82,6 +84,17 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/guru', [TeacherController::class, 'store'])->name('teacher.store');
     Route::patch('/guru/{teacher}', [TeacherController::class, 'update'])->name('teacher.update');
     Route::delete('/guru/{teacher}', [TeacherController::class, 'destroy'])->name('teacher.destroy');
+
+    // Sekolah & Kelas (perlu login admin)
+    Route::get('/sekolah', [OrganizationController::class, 'index'])->name('organization.index');
+    Route::post('/sekolah', [OrganizationController::class, 'store'])->name('organization.store');
+    Route::patch('/sekolah/{organization}', [OrganizationController::class, 'update'])->name('organization.update');
+    Route::delete('/sekolah/{organization}', [OrganizationController::class, 'destroy'])->name('organization.destroy');
+
+    Route::get('/kelas-admin', [LabClassController::class, 'index'])->name('class.index');
+    Route::post('/kelas-admin', [LabClassController::class, 'store'])->name('class.store');
+    Route::patch('/kelas-admin/{class}', [LabClassController::class, 'update'])->name('class.update');
+    Route::delete('/kelas-admin/{class}', [LabClassController::class, 'destroy'])->name('class.destroy');
 
     // Lab control admin (generate token manual)
     Route::post('/lab-control-admin/generate', [LabControlController::class, 'generateToken'])->name('lab.generate');

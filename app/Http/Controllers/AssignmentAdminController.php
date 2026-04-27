@@ -37,14 +37,16 @@ class AssignmentAdminController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'teacher_token' => 'required|string',
-            'title'         => 'required|string|max:200',
-            'description'   => 'nullable|string',
-            'subject_name'  => 'required|string|max:100',
-            'class_name'    => 'required|string|max:100',
-            'deadline'      => 'required|date|after:now',
+            'teacher_token'   => 'required|string',
+            'title'           => 'required|string|max:200',
+            'description'     => 'nullable|string',
+            'subject_name'    => 'required|string|max:100',
+            'class_names'     => 'required|array|min:1',
+            'deadline'        => 'required|date|after:now',
             'attachment'      => 'nullable|file|max:20480',
-            'organization_id' => 'nullable|exists:organizations,id',
+            'organization_id' => 'required|exists:organizations,id',
+        ], [
+            'class_names.required' => 'Pilih minimal satu kelas.',
         ]);
 
         $teacher = Teacher::where('token', strtoupper($request->teacher_token))
@@ -61,21 +63,24 @@ class AssignmentAdminController extends Controller
             $attachmentSize = round($file->getSize() / 1024, 1) . ' KB';
         }
 
-        Assignment::create([
-            'teacher_id'      => $teacher->id,
-            'title'           => $request->title,
-            'description'     => $request->description,
-            'subject_name'    => $request->subject_name,
-            'class_name'      => $request->class_name,
-            'deadline'        => $request->deadline,
-            'is_active'       => true,
-            'organization_id' => $request->organization_id,
-            'attachment_path' => $attachmentPath,
-            'attachment_name' => $attachmentName,
-            'attachment_size' => $attachmentSize,
-        ]);
+        // Buat satu record tugas untuk setiap kelas yang dipilih
+        foreach ($request->class_names as $className) {
+            Assignment::create([
+                'teacher_id'      => $teacher->id,
+                'title'           => $request->title,
+                'description'     => $request->description,
+                'subject_name'    => $request->subject_name,
+                'class_name'      => $className,
+                'deadline'        => $request->deadline,
+                'is_active'       => true,
+                'organization_id' => $request->organization_id,
+                'attachment_path' => $attachmentPath,
+                'attachment_name' => $attachmentName,
+                'attachment_size' => $attachmentSize,
+            ]);
+        }
 
-        return back()->with('success', 'Tugas berhasil dibuat.');
+        return back()->with('success', count($request->class_names) . ' Tugas berhasil dibuat.');
     }
 
     public function destroy(Assignment $assignment)
