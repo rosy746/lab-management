@@ -268,6 +268,22 @@
         .qty-backup { color: #0369a1; font-weight: 700; text-align: center; }
         .qty-zero   { color: var(--muted); text-align: center; }
 
+        /* ─── PROGRESS BAR ──────────────────── */
+        .progress-wrap { width: 80px; height: 6px; background: #fee2e2; border-radius: 999px; overflow: hidden; margin-top: 4px; }
+        .progress-bar  { height: 100%; background: #16a34a; border-radius: 999px; transition: width .6s cubic-bezier(.16,1,.3,1); }
+        .progress-text { font-size: 9px; font-weight: 700; color: var(--muted); margin-top: 2px; }
+
+        /* ─── HIGHLIGHT ─────────────────────── */
+        mark.search-match { background: #fef08a; color: #854d0e; padding: 0 2px; border-radius: 2px; box-shadow: 0 0 0 1px #fde047; }
+        
+        /* ─── COUNTDOWN ─────────────────────── */
+        .cd-unit { display: inline-flex; flex-direction: column; align-items: center; background: rgba(255,255,255,0.1); padding: 4px 6px; border-radius: 6px; min-width: 32px; }
+        .cd-val { font-size: 11px; font-weight: 800; line-height: 1; }
+        .cd-lbl { font-size: 7px; text-transform: uppercase; margin-top: 2px; opacity: 0.7; }
+
+        /* ─── CATEGORY ICONS ────────────────── */
+        .cat-icon { width: 16px; height: 16px; margin-right: 6px; vertical-align: middle; opacity: .7; }
+
         /* ─── CARD VIEW ─────────────────────── */
         .cards-grid {
             display: none; padding: 16px;
@@ -558,18 +574,34 @@
                             data-category="{{ $item->category }}"
                             data-condition="{{ $item->condition }}">
                             <td class="no-col">{{ $idx + 1 }}</td>
-                            <td class="item-name">{{ ucwords($item->item_name) }}</td>
+                            <td class="item-name">
+                                <div style="display:flex;align-items:center">
+                                    <span style="font-size:16px;margin-right:8px">{{ $catIcons[$item->category] ?? '' }}</span>
+                                    <div>
+                                        <div class="search-target">{{ ucwords($item->item_name) }}</div>
+                                        @if($item->quantity_broken > 0)
+                                        <div class="progress-wrap">
+                                            @php $goodPerc = ($item->quantity_good / $item->quantity) * 100; @endphp
+                                            <div class="progress-bar" style="width: {{ $goodPerc }}%"></div>
+                                        </div>
+                                        <div class="progress-text">{{ round($goodPerc) }}% Baik</div>
+                                        @endif
+                                    </div>
+                                </div>
+                            </td>
                             <td>
                                 <span class="badge cat-{{ $item->category }}">
-                                    {{ $catIcons[$item->category] ?? '' }} {{ $catLabels[$item->category] ?? $item->category }}
+                                    {{ $catLabels[$item->category] ?? $item->category }}
                                 </span>
                             </td>
                             <td class="item-brand">
-                                {{ $item->brand ? ucwords($item->brand) : '' }}
-                                {{ $item->model ? '/ '.$item->model : '' }}
+                                <div class="search-target">{{ $item->brand ? ucwords($item->brand) : '' }}</div>
+                                <div class="search-target" style="font-size:10px;color:var(--muted)">{{ $item->model ? $item->model : '' }}</div>
                                 @if(!$item->brand && !$item->model)<span style="color:#e5e7eb">—</span>@endif
                             </td>
-                            <td class="item-specs">{{ $item->specifications ?: '—' }}</td>
+                            <td class="item-specs">
+                                <div class="search-target">{{ $item->specifications ?: '—' }}</div>
+                            </td>
                             <td class="qty-center qty-total">{{ $item->quantity }}</td>
                             <td class="qty-good">{{ $item->quantity_good }}</td>
                             <td class="{{ $item->quantity_broken > 0 ? 'qty-broken' : 'qty-zero' }}">{{ $item->quantity_broken }}</td>
@@ -683,6 +715,11 @@ function filterTable() {
     const panel  = document.querySelector('.lab-panel.active');
     if (!panel) return;
 
+    // Clear previous highlights
+    panel.querySelectorAll('.search-target').forEach(el => {
+        el.innerHTML = el.innerText;
+    });
+
     // Table rows
     let n = 1;
     panel.querySelectorAll('tbody tr:not(.empty-row)').forEach(row => {
@@ -690,7 +727,18 @@ function filterTable() {
                    && (!cat   || row.dataset.category  === cat)
                    && (!cond  || row.dataset.condition === cond);
         row.style.display = match ? '' : 'none';
-        if (match) row.querySelector('.no-col').textContent = n++;
+        
+        if (match) {
+            row.querySelector('.no-col').textContent = n++;
+            // Apply highlighting if search exists
+            if (search && search.length > 1) {
+                row.querySelectorAll('.search-target').forEach(el => {
+                    const text = el.innerText;
+                    const regex = new RegExp(`(${search})`, 'gi');
+                    el.innerHTML = text.replace(regex, '<mark class="search-match">$1</mark>');
+                });
+            }
+        }
     });
 
     // Cards
@@ -705,24 +753,34 @@ function filterTable() {
 // ─── EXCEL EXPORT ─────────────────────────────────────────
 function exportExcel() {
     const labName = document.querySelector('.tab-btn.active').textContent.trim().split('\n')[0].trim();
-    const rows = [['No','Nama Barang','Kategori','Merk','Model','Spesifikasi','Total','Baik','Rusak','Cadangan','Kondisi','Catatan']];
+    const rows = [['No','Nama Barang','Kategori','Merk','Model','Spesifikasi','Total','Baik','Rusak','Cadangan','Catatan']];
     document.querySelector('.lab-panel.active tbody').querySelectorAll('tr:not(.empty-row)').forEach(row => {
         if (row.style.display === 'none') return;
         const c = row.querySelectorAll('td');
-        const bm = c[3].textContent.trim().split('/');
+        
+        // Extract clean text (exclude emojis and progress bar)
+        const itemName = c[1].querySelector('.search-target')?.innerText || '';
+        const category = c[2].querySelector('.badge')?.innerText || '';
+        const brandDivs = c[3].querySelectorAll('.search-target');
+        const brand = brandDivs[0]?.innerText || '';
+        const model = brandDivs[1]?.innerText || '';
+        const specs = c[4].querySelector('.search-target')?.innerText || '';
+
         rows.push([
             parseInt(c[0].textContent) || '',
-            c[1].textContent.trim(), c[2].textContent.trim(),
-            bm[0]?.trim()||'', bm[1]?.trim()||'',
-            c[4].textContent.trim(),
+            itemName.trim(), 
+            category.trim(),
+            brand.trim(),
+            model.trim(),
+            specs.trim(),
             parseInt(c[5].textContent)||0, parseInt(c[6].textContent)||0,
             parseInt(c[7].textContent)||0, parseInt(c[8].textContent)||0,
-            c[9].textContent.trim(), c[10].textContent.trim(),
+            c[10].textContent.trim(), // Catatan (Kondisi di c[9] dihapus)
         ]);
     });
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(rows);
-    ws['!cols'] = [5,25,14,16,14,20,7,7,7,9,12,20].map(w => ({wch:w}));
+    ws['!cols'] = [5,25,14,16,14,20,7,7,7,9,20].map(w => ({wch:w}));
     XLSX.utils.book_append_sheet(wb, ws, labName.substring(0,31));
     XLSX.writeFile(wb, `Inventaris_${labName.replace(/\s+/g,'_')}_${new Date().toISOString().slice(0,10)}.xlsx`);
 }
@@ -733,25 +791,35 @@ function exportAllExcel() {
     
     panels.forEach(panel => {
         const labName = panel.querySelector('.panel-title').textContent.trim();
-        const rows = [['No','Nama Barang','Kategori','Merk','Model','Spesifikasi','Total','Baik','Rusak','Cadangan','Kondisi','Catatan']];
+        const rows = [['No','Nama Barang','Kategori','Merk','Model','Spesifikasi','Total','Baik','Rusak','Cadangan','Catatan']];
         
         panel.querySelectorAll('tbody tr:not(.empty-row)').forEach((row, idx) => {
             const c = row.querySelectorAll('td');
-            const bm = c[3].textContent.trim().split('/');
+            
+            // Extract clean text
+            const itemName = c[1].querySelector('.search-target')?.innerText || '';
+            const category = c[2].querySelector('.badge')?.innerText || '';
+            const brandDivs = c[3].querySelectorAll('.search-target');
+            const brand = brandDivs[0]?.innerText || '';
+            const model = brandDivs[1]?.innerText || '';
+            const specs = c[4].querySelector('.search-target')?.innerText || '';
+
             rows.push([
                 idx + 1,
-                c[1].textContent.trim(), c[2].textContent.trim(),
-                bm[0]?.trim()||'', bm[1]?.trim()||'',
-                c[4].textContent.trim(),
+                itemName.trim(), 
+                category.trim(),
+                brand.trim(),
+                model.trim(),
+                specs.trim(),
                 parseInt(c[5].textContent)||0, parseInt(c[6].textContent)||0,
                 parseInt(c[7].textContent)||0, parseInt(c[8].textContent)||0,
-                c[9].textContent.trim(), c[10].textContent.trim(),
+                c[10].textContent.trim(), // Catatan (Kondisi di c[9] dihapus)
             ]);
         });
         
         if (rows.length > 1) {
             const ws = XLSX.utils.aoa_to_sheet(rows);
-            ws['!cols'] = [5,25,14,16,14,20,7,7,7,9,12,20].map(w => ({wch:w}));
+            ws['!cols'] = [5,25,14,16,14,20,7,7,7,9,20].map(w => ({wch:w}));
             XLSX.utils.book_append_sheet(wb, ws, labName.substring(0,31));
         }
     });

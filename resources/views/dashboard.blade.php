@@ -37,6 +37,9 @@ $todayBook     = (clone $bq)->whereDate('booking_date', today())->whereIn('statu
 $thisWeekBook  = (clone $bq)->whereBetween('booking_date',[now()->startOfWeek(),now()->endOfWeek()])->count();
 $approvedToday = (clone $bq)->whereDate('updated_at', today())->where('status','approved')->count();
 
+$totalBroken = \App\Models\LabInventory::where('quantity_broken', '>', 0)->count();
+$totalLowStock = \App\Models\LabInventory::whereRaw('quantity <= 2')->where('quantity', '>', 0)->count();
+
 $dayNames = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'];
 $dayKeys  = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 $bookingPerDay = [];
@@ -58,6 +61,54 @@ $labStats = (clone $bq)->whereBetween('booking_date',[now()->startOfWeek(),now()
     ->selectRaw('resource_id, count(*) as cnt')
     ->groupBy('resource_id')->with('resource')
     ->orderByDesc('cnt')->take(5)->get();
+
+// Dapatkan Status Lab Saat Ini (Real-time)
+$allLabs = \App\Models\Resource::where('status','active')->orderBy('name')->get();
+$currentDay = now()->translatedFormat('l'); // Senin, Selasa, dll
+$currentTime = now()->format('H:i:s');
+
+// Cari slot waktu sekarang
+$currentSlot = \App\Models\TimeSlot::where('day_of_week', $currentDay)
+    ->where('start_time', '<=', $currentTime)
+    ->where('end_time', '>=', $currentTime)
+    ->where('is_active', true)
+    ->first();
+
+$labStatuses = [];
+foreach ($allLabs as $lab) {
+    $activity = null;
+    $type = null;
+
+    // 1. Cek Booking yang disetujui untuk hari ini & jam ini
+    $booking = \App\Models\Booking::where('resource_id', $lab->id)
+        ->whereDate('booking_date', today())
+        ->where('status', 'approved')
+        ->whereHas('timeSlot', function($q) use ($currentTime) {
+            $q->where('start_time', '<=', $currentTime)->where('end_time', '>=', $currentTime);
+        })->first();
+
+    if ($booking) {
+        $activity = $booking->title . ' (' . $booking->teacher_name . ')';
+        $type = 'booking';
+    } else if ($currentSlot) {
+        // 2. Cek Jadwal Tetap
+        $schedule = \App\Models\Schedule::where('resource_id', $lab->id)
+            ->where('time_slot_id', $currentSlot->id)
+            ->where('status', 'active')
+            ->first();
+        if ($schedule) {
+            $activity = $schedule->title . ' (' . $schedule->teacher_name . ')';
+            $type = 'schedule';
+        }
+    }
+
+    $labStatuses[] = [
+        'lab' => $lab,
+        'activity' => $activity,
+        'type' => $type,
+        'is_occupied' => !empty($activity)
+    ];
+}
 @endphp
 
 {{-- HEADER --}}
@@ -76,6 +127,37 @@ $labStats = (clone $bq)->whereBetween('booking_date',[now()->startOfWeek(),now()
     </a>
     @endif
 </div>
+
+{{-- ALERTS --}}
+@if($totalBroken > 0 || $pendingBook > 0)
+<div style="display:flex;gap:14px;margin-bottom:20px;flex-wrap:wrap">
+    @if($pendingBook > 0)
+    <div style="flex:1;min-width:300px;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px">
+        <div style="width:36px;height:36px;border-radius:50%;background:#fef3c7;display:flex;align-items:center;justify-content:center;color:#d97706">
+            <svg style="width:20px;height:20px" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <div style="flex:1">
+            <p style="margin:0;font-size:13px;font-weight:700;color:#92400e">Ada {{ $pendingBook }} Booking Menunggu</p>
+            <p style="margin:2px 0 0;font-size:11px;color:#b45309">Segera periksa dan berikan persetujuan di menu Booking.</p>
+        </div>
+        <a href="{{ route('booking.index') }}?status=pending" style="font-size:11px;font-weight:700;color:#92400e;text-decoration:none;background:#fef3c7;padding:6px 12px;border-radius:8px">Periksa</a>
+    </div>
+    @endif
+
+    @if($totalBroken > 0)
+    <div style="flex:1;min-width:300px;background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px">
+        <div style="width:36px;height:36px;border-radius:50%;background:#fee2e2;display:flex;align-items:center;justify-content:center;color:#dc2626">
+            <svg style="width:20px;height:20px" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        </div>
+        <div style="flex:1">
+            <p style="margin:0;font-size:13px;font-weight:700;color:#991b1b">Perhatian: {{ $totalBroken }} Barang Rusak</p>
+            <p style="margin:2px 0 0;font-size:11px;color:#b91c1c">Ditemukan barang dengan kondisi rusak di inventaris lab.</p>
+        </div>
+        <a href="{{ route('inventory.admin') }}" style="font-size:11px;font-weight:700;color:#991b1b;text-decoration:none;background:#fee2e2;padding:6px 12px;border-radius:8px">Lihat Detail</a>
+    </div>
+    @endif
+</div>
+@endif
 
 {{-- STATS --}}
 <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:20px">
@@ -121,6 +203,45 @@ $labStats = (clone $bq)->whereBetween('booking_date',[now()->startOfWeek(),now()
         </div>
         <p style="font-size:32px;font-family:Outfit,sans-serif;font-weight:800;color:#1A2517;line-height:1">{{ $todayBook }}</p>
         <p style="font-size:11px;color:#9ca3af;margin-top:6px">{{ $thisWeekBook }} booking minggu ini</p>
+    </div>
+</div>
+
+{{-- STATUS LAB REAL-TIME --}}
+<div style="background:#fff;border-radius:14px;border:1px solid #e8f0e6;padding:20px;box-shadow:0 1px 4px rgba(26,37,23,.05);margin-bottom:20px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+        <h2 style="font-family:Outfit,sans-serif;font-weight:700;color:#1A2517;font-size:15px;margin:0">
+            📡 Status Lab Saat Ini
+            <span style="font-size:11px;font-weight:600;color:#9ca3af;margin-left:8px">{{ now()->format('H:i') }} WIB</span>
+        </h2>
+        <div style="display:flex;gap:12px">
+            <div style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:#16a34a">
+                <div style="width:8px;height:8px;border-radius:50%;background:#16a34a"></div> Tersedia
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:#ef4444">
+                <div style="width:8px;height:8px;border-radius:50%;background:#ef4444"></div> Terpakai
+            </div>
+        </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(240px, 1fr));gap:12px">
+        @foreach($labStatuses as $ls)
+        <div style="padding:14px;border-radius:12px;border:1px solid #f0f4ee;background:{{ $ls['is_occupied'] ? '#fffcfc' : '#fcfdfb' }};display:flex;align-items:center;gap:12px;position:relative;overflow:hidden">
+            <div style="position:absolute;top:0;left:0;bottom:0;width:4px;background:{{ $ls['is_occupied'] ? '#ef4444' : '#16a34a' }}"></div>
+            <div style="width:40px;height:40px;border-radius:10px;background:{{ $ls['is_occupied'] ? '#fef2f2' : '#f0fdf4' }};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <svg style="width:20px;height:20px;color:{{ $ls['is_occupied'] ? '#ef4444' : '#16a34a' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            </div>
+            <div style="flex:1;min-width:0">
+                <p style="font-size:13px;font-weight:800;color:#1A2517;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ $ls['lab']->name }}</p>
+                <p style="font-size:11px;color:{{ $ls['is_occupied'] ? '#ef4444' : '#16a34a' }};font-weight:700;margin:2px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+                    {{ $ls['activity'] ?? 'Lab Tersedia' }}
+                </p>
+                @if($ls['type'])
+                <span style="font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;font-weight:800">
+                    via {{ $ls['type'] === 'booking' ? 'Booking' : 'Jadwal' }}
+                </span>
+                @endif
+            </div>
+        </div>
+        @endforeach
     </div>
 </div>
 
@@ -208,6 +329,18 @@ $labStats = (clone $bq)->whereBetween('booking_date',[now()->startOfWeek(),now()
                         <svg style="width:15px;height:15px;color:#3d5438" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                     </div>
                     <span>Jadwal Tetap</span>
+                </a>
+                <a href="{{ route('teacher.index') }}" class="quick-btn">
+                    <div style="width:32px;height:32px;border-radius:9px;background:rgba(172,200,162,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                        <svg style="width:15px;height:15px;color:#3d5438" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    </div>
+                    <span>Data Guru</span>
+                </a>
+                <a href="{{ route('organization.index') }}" class="quick-btn">
+                    <div style="width:32px;height:32px;border-radius:9px;background:rgba(172,200,162,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                        <svg style="width:15px;height:15px;color:#3d5438" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                    </div>
+                    <span>Sekolah & Kelas</span>
                 </a>
                 <a href="{{ route('inventory.public') }}" class="quick-btn">
                     <div style="width:32px;height:32px;border-radius:9px;background:rgba(172,200,162,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0">

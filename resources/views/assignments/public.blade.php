@@ -138,22 +138,30 @@ a{text-decoration:none}
 
     {{-- Filter --}}
     <div class="filter-row">
-        <div>
-            <label class="filter-label" for="filter-org">Lembaga</label>
-            <select id="filter-org" class="inp" style="min-width:190px" onchange="filterByOrg(this.value)">
-                <option value="">— Semua Lembaga —</option>
-                @foreach($organizations as $org)
-                <option value="{{ $org->id }}">{{ $org->name }}</option>
-                @endforeach
-            </select>
+        <div style="flex:1;min-width:240px">
+            <label class="filter-label">Cari Tugas (Kelas / Guru / Judul)</label>
+            <div style="position:relative">
+                <input type="text" id="search-global" class="inp" style="width:100%;padding-left:36px" placeholder="Ketik nama kelas atau guru..." oninput="filterGlobal()">
+                <svg style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:#9ca3af" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            </div>
         </div>
-        <div>
-            <label class="filter-label" for="filter-kelas">Kelas</label>
-            <select id="filter-kelas" class="inp" style="min-width:190px" onchange="filterByKelas(this.value)" disabled>
-                <option value="">— Pilih Lembaga Dulu —</option>
-            </select>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <div>
+                <label class="filter-label" for="filter-org">Lembaga</label>
+                <select id="filter-org" class="inp" style="min-width:180px" onchange="filterByOrg(this.value)">
+                    <option value="">— Semua Lembaga —</option>
+                    @foreach($organizations as $org)
+                    <option value="{{ $org->id }}">{{ $org->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
+                <label class="filter-label" for="filter-kelas">Kelas</label>
+                <select id="filter-kelas" class="inp" style="min-width:180px" onchange="filterByKelas(this.value)" disabled>
+                    <option value="">— Pilih Lembaga Dulu —</option>
+                </select>
+            </div>
         </div>
-        <span id="filter-count" style="font-size:12px;color:#9ca3af;padding-bottom:10px"></span>
     </div>
 
     {{-- Data kelas per org untuk JS --}}
@@ -163,27 +171,25 @@ a{text-decoration:none}
 
     {{-- STATE 1: Belum pilih (default) --}}
     <div id="state-pick" class="state-box">
-        <div class="state-pick-wrap">
-            <span class="state-pick-icon">🎓</span>
-            <div class="state-pick-title">Pilih kelas kamu dulu</div>
-            <div class="state-pick-sub">
-                Pilih <strong>Lembaga</strong> kemudian <strong>Kelas</strong> di atas
-                untuk melihat tugas yang perlu dikumpulkan
+        <div class="state-pick-wrap" style="background:#fff;border-radius:24px;border:1px solid #e8f0e6;box-shadow:0 1px 10px rgba(26,37,23,.04)">
+            <div style="font-size:64px;margin-bottom:20px;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.1))">✨</div>
+            <div class="state-pick-title" style="font-size:24px;color:#1A2517">Halo, Selamat Datang!</div>
+            <div class="state-pick-sub" style="font-size:14px;color:#6b7280;margin-top:10px">
+                Gunakan <strong>Pencarian Cepat</strong> di atas atau pilih <strong>Lembaga & Kelas</strong> untuk melihat daftar tugas yang harus kamu kumpulkan hari ini.
             </div>
-            <div class="state-steps">
-                <div class="s-step">
-                    <span class="s-step-num">1</span>
-                    Pilih Lembaga
+            
+            <div style="display:flex;flex-direction:column;gap:12px;max-width:400px;margin:32px auto 0;text-align:left">
+                <div style="display:flex;align-items:center;gap:14px;padding:16px;background:#fcfdfb;border-radius:16px;border:1px solid #f0f4ee">
+                    <div style="width:32px;height:32px;border-radius:10px;background:#1A2517;color:#ACC8A2;display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0">1</div>
+                    <div style="font-size:13px;font-weight:600;color:#1A2517">Cari kelas atau namamu di kolom pencarian</div>
                 </div>
-                <span class="s-arrow">›</span>
-                <div class="s-step">
-                    <span class="s-step-num">2</span>
-                    Pilih Kelas
+                <div style="display:flex;align-items:center;gap:14px;padding:16px;background:#fcfdfb;border-radius:16px;border:1px solid #f0f4ee">
+                    <div style="width:32px;height:32px;border-radius:10px;background:#1A2517;color:#ACC8A2;display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0">2</div>
+                    <div style="font-size:13px;font-weight:600;color:#1A2517">Pilih tugas yang sesuai dan klik "Kumpulkan"</div>
                 </div>
-                <span class="s-arrow">›</span>
-                <div class="s-step s-step-done">
-                    <span class="s-step-num">✓</span>
-                    Tugas Tampil
+                <div style="display:flex;align-items:center;gap:14px;padding:16px;background:#fcfdfb;border-radius:16px;border:1px solid #f0f4ee">
+                    <div style="width:32px;height:32px;border-radius:10px;background:#1A2517;color:#ACC8A2;display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0">3</div>
+                    <div style="font-size:13px;font-weight:600;color:#1A2517">Upload file tugasmu dan selesai!</div>
                 </div>
             </div>
         </div>
@@ -208,7 +214,10 @@ a{text-decoration:none}
                 ? 'Deadline terlewat'
                 : ($diffHrs < 1 ? 'Kurang dari 1 jam!' : ($diffHrs < 24 ? "Sisa {$diffHrs} jam" : $a->deadline->translatedFormat('d M Y, H:i')));
         @endphp
-        <div class="acard" data-kelas="{{ strtolower($a->class_name) }}" style="display:none">
+        <div class="acard" data-kelas="{{ strtolower($a->class_name) }}" 
+             data-search="{{ strtolower($a->title . ' ' . $a->subject_name . ' ' . $a->teacher->name . ' ' . $a->class_name) }}"
+             data-deadline="{{ $a->deadline->toISOString() }}"
+             style="display:none">
             <div class="acard-head">
                 <div>
                     <div class="acard-title">{{ $a->title }}</div>
@@ -224,9 +233,9 @@ a{text-decoration:none}
                         <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"/></svg>
                         {{ $a->class_name }}
                     </span>
-                    <span class="meta-item {{ $deadlineClass }}">
+                    <span class="meta-item {{ $deadlineClass }} countdown-timer" data-time="{{ $a->deadline->toISOString() }}">
                         <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        {{ $deadlineLabel }}
+                        <span>{{ $deadlineLabel }}</span>
                     </span>
                     <span class="meta-item">
                         <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
@@ -290,12 +299,12 @@ function filterByOrg(orgId) {
 }
 
 function filterByKelas(val) {
-    document.getElementById('filter-count').textContent = '';
-
     if (!val) {
         showState('pick');
         return;
     }
+    // Clear global search
+    document.getElementById('search-global').value = '';
 
     const cards = document.querySelectorAll('.acard');
     let shown = 0;
@@ -309,12 +318,78 @@ function filterByKelas(val) {
         showState('empty');
     } else {
         showState('grid');
-        document.getElementById('filter-count').textContent = `${shown} tugas ditemukan`;
     }
 }
 
+function filterGlobal() {
+    const search = document.getElementById('search-global').value.toLowerCase();
+    if (!search || search.length < 2) {
+        // Reset filters if empty
+        document.getElementById('filter-org').value = '';
+        document.getElementById('filter-kelas').value = '';
+        document.getElementById('filter-kelas').disabled = true;
+        showState('pick');
+        return;
+    }
+
+    // Reset dropdowns when searching
+    document.getElementById('filter-org').value = '';
+    document.getElementById('filter-kelas').value = '';
+
+    const cards = document.querySelectorAll('.acard');
+    let shown = 0;
+    cards.forEach(c => {
+        const match = c.dataset.search.includes(search);
+        c.style.display = match ? '' : 'none';
+        if (match) shown++;
+    });
+
+    if (shown === 0) {
+        showState('empty');
+    } else {
+        showState('grid');
+    }
+}
+
+// ─── COUNTDOWN TIMER ──────────────────────────────────────
+function updateCountdowns() {
+    const now = new Date();
+    document.querySelectorAll('.countdown-timer').forEach(el => {
+        const deadline = new Date(el.dataset.time);
+        const diff = deadline - now;
+        
+        if (diff < 0) {
+            el.querySelector('span').textContent = 'Deadline terlewat';
+            el.className = 'meta-item deadline-urgent';
+            return;
+        }
+
+        const hrs = Math.floor(diff / (1000 * 60 * 60));
+        const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const secs = Math.floor((diff % (1000 * 60)) / 1000);
+
+        let label = '';
+        if (hrs > 48) {
+            // Biarkan label default jika masih lama
+            return;
+        } else if (hrs > 0) {
+            label = `Sisa ${hrs}j ${mins}m`;
+        } else {
+            label = `Sisa ${mins}m ${secs}d`;
+        }
+
+        el.querySelector('span').textContent = label;
+        el.className = 'meta-item ' + (hrs < 24 ? 'deadline-soon' : 'deadline-ok');
+    });
+}
+
+setInterval(updateCountdowns, 1000);
+
 // Selalu mulai state pick
-document.addEventListener('DOMContentLoaded', () => showState('pick'));
+document.addEventListener('DOMContentLoaded', () => {
+    showState('pick');
+    updateCountdowns();
+});
 
 // Page transition
 document.querySelectorAll('a.pub-link, a.pub-btn, a.pub-brand, a.btn-kumpul').forEach(a => {
