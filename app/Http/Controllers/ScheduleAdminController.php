@@ -157,7 +157,7 @@ class ScheduleAdminController extends Controller
         if (!$this->checkResourceAccess($schedule->resource_id)) {
             return back()->with('error', 'Anda tidak memiliki akses ke lab ini.');
         }
-        $schedule->update(['deleted_at' => now()]);
+        $schedule->delete(); // ← ganti ini
         return back()->with('success', 'Jadwal berhasil dihapus.');
     }
 

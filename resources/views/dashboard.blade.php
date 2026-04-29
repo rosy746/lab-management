@@ -159,6 +159,37 @@ foreach ($allLabs as $lab) {
 </div>
 @endif
 
+{{-- QUICK ACTIONS --}}
+<div style="margin-bottom:24px">
+    <h2 style="font-family:Outfit,sans-serif;font-weight:700;color:#1A2517;font-size:14px;margin:0 0 12px">⚡ Akses Cepat</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));gap:12px">
+        <a href="{{ route('booking.index') }}" class="quick-btn">
+            <div style="width:32px;height:32px;border-radius:8px;background:#f0fdf4;display:flex;align-items:center;justify-content:center;color:#16a34a">
+                <svg style="width:18px;height:18px" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            </div>
+            Manajemen Booking
+        </a>
+        <a href="{{ route('schedule.index') }}" class="quick-btn">
+            <div style="width:32px;height:32px;border-radius:8px;background:#eff6ff;display:flex;align-items:center;justify-content:center;color:#2563eb">
+                <svg style="width:18px;height:18px" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            Jadwal Rutin
+        </a>
+        <a href="{{ route('inventory.admin') }}" class="quick-btn">
+            <div style="width:32px;height:32px;border-radius:8px;background:#fff7ed;display:flex;align-items:center;justify-content:center;color:#ea580c">
+                <svg style="width:18px;height:18px" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+            </div>
+            Data Inventaris
+        </a>
+        <a href="{{ route('organization.index') }}" class="quick-btn">
+            <div style="width:32px;height:32px;border-radius:8px;background:#f5f3ff;display:flex;align-items:center;justify-content:center;color:#7c3aed">
+                <svg style="width:18px;height:18px" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+            </div>
+            Sekolah & Kelas
+        </a>
+    </div>
+</div>
+
 {{-- STATS --}}
 <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:20px">
     <div class="stat-card">
@@ -224,26 +255,40 @@ foreach ($allLabs as $lab) {
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(240px, 1fr));gap:12px">
         @foreach($labStatuses as $ls)
-        <div style="padding:14px;border-radius:12px;border:1px solid #f0f4ee;background:{{ $ls['is_occupied'] ? '#fffcfc' : '#fcfdfb' }};display:flex;align-items:center;gap:12px;position:relative;overflow:hidden">
+        <div style="padding:14px;border-radius:12px;border:1px solid #f0f4ee;background:{{ $ls['is_occupied'] ? '#fffcfc' : '#fcfdfb' }};display:flex;align-items:center;gap:12px;position:relative;overflow:hidden;transition:all .2s" onmouseover="this.style.borderColor='#ACC8A2';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='#f0f4ee';this.style.transform='none'">
             <div style="position:absolute;top:0;left:0;bottom:0;width:4px;background:{{ $ls['is_occupied'] ? '#ef4444' : '#16a34a' }}"></div>
             <div style="width:40px;height:40px;border-radius:10px;background:{{ $ls['is_occupied'] ? '#fef2f2' : '#f0fdf4' }};display:flex;align-items:center;justify-content:center;flex-shrink:0">
                 <svg style="width:20px;height:20px;color:{{ $ls['is_occupied'] ? '#ef4444' : '#16a34a' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
             </div>
             <div style="flex:1;min-width:0">
-                <p style="font-size:13px;font-weight:800;color:#1A2517;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ $ls['lab']->name }}</p>
+                <div style="display:flex;align-items:center;gap:6px">
+                    <p style="font-size:13px;font-weight:800;color:#1A2517;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ $ls['lab']->name }}</p>
+                    @if(!$ls['is_occupied'])
+                    <span style="width:6px;height:6px;border-radius:50%;background:#16a34a;display:inline-block" title="Tersedia"></span>
+                    @endif
+                </div>
                 <p style="font-size:11px;color:{{ $ls['is_occupied'] ? '#ef4444' : '#16a34a' }};font-weight:700;margin:2px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
-                    {{ $ls['activity'] ?? 'Lab Tersedia' }}
+                    {{ $ls['activity'] ?? 'Tersedia Sekarang' }}
                 </p>
                 @if($ls['type'])
-                <span style="font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;font-weight:800">
-                    via {{ $ls['type'] === 'booking' ? 'Booking' : 'Jadwal' }}
-                </span>
+                <div style="display:flex;align-items:center;gap:4px;margin-top:2px">
+                    <span style="font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;font-weight:800">
+                        via {{ $ls['type'] === 'booking' ? 'Booking' : 'Jadwal' }}
+                    </span>
+                </div>
                 @endif
             </div>
+            @if(!$ls['is_occupied'])
+            <a href="{{ route('booking.index') }}?resource_id={{ $ls['lab']->id }}" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);opacity:0;transition:opacity .2s;background:#1A2517;color:#fff;padding:4px 8px;border-radius:6px;font-size:10px;text-decoration:none;font-weight:700" class="hover-action">Booking</a>
+            @endif
         </div>
         @endforeach
     </div>
 </div>
+
+<style>
+.stat-card:hover .hover-action, div:hover .hover-action { opacity:1 !important; }
+</style>
 
 {{-- MAIN GRID --}}
 <div style="display:grid;grid-template-columns:1fr 320px;gap:16px;align-items:start">

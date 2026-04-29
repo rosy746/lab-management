@@ -54,6 +54,17 @@
         <div style="padding:12px 16px;border-radius:12px;background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;font-size:13px;font-weight:600;margin-bottom:20px">✓ {{ session('success') }}</div>
     @endif
 
+    {{-- SEARCH & FILTER --}}
+    <div style="margin-bottom:20px;display:flex;gap:12px;flex-wrap:wrap">
+        <div style="flex:1;min-width:260px;position:relative">
+            <input type="text" id="org-search" onkeyup="filterOrgs()" placeholder="Cari nama sekolah atau alamat..." 
+                   style="width:100%;padding:10px 16px 10px 40px;border-radius:12px;border:1.5px solid #e8f0e6;background:#fff;font-size:13px;outline:none;transition:border-color .15s">
+            <svg style="position:absolute;left:14px;top:50%;transform:translateY(-50%);width:18px;height:18px;color:#9ca3af" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+        </div>
+    </div>
+
     {{-- FORM TAMBAH SEKOLAH --}}
     <div class="add-card">
         <div class="add-head" onclick="toggleAdd('school-form')">
@@ -90,14 +101,25 @@
     </div>
 
     {{-- LIST SEKOLAH --}}
+    <div id="org-list">
     @foreach($organizations as $org)
-    <div class="org-card">
+    <div class="org-card" data-name="{{ strtolower($org->name) }}" data-address="{{ strtolower($org->address) }}">
         {{-- Org Header --}}
         <div class="org-head">
             <div>
                 <div class="org-name">
                     <span>🏢 {{ $org->name }}</span>
-                    <span class="org-type">{{ $org->type }}</span>
+                    @php
+                        $badgeColor = match($org->type) {
+                            'SMK' => ['bg'=>'#eff6ff', 'text'=>'#1e40af'],
+                            'SMA' => ['bg'=>'#f0fdf4', 'text'=>'#166534'],
+                            'MA' => ['bg'=>'#fff7ed', 'text'=>'#9a3412'],
+                            'SMP' => ['bg'=>'#f5f3ff', 'text'=>'#5b21b6'],
+                            'MTs' => ['bg'=>'#fdf2f8', 'text'=>'#9d174d'],
+                            default => ['bg'=>'#f3f4f6', 'text'=>'#374151']
+                        };
+                    @endphp
+                    <span class="org-type" style="background:{{ $badgeColor['bg'] }};color:{{ $badgeColor['text'] }};border:1px solid {{ $badgeColor['text'] }}20">{{ $org->type }}</span>
                 </div>
                 <div class="org-meta">
                     <span>✉ {{ $org->email ?? '-' }}</span>
@@ -244,9 +266,23 @@
         </div>
     </div>
     @endforeach
+    </div>
 </div>
 
 <script>
+function filterOrgs() {
+    const query = document.getElementById('org-search').value.toLowerCase();
+    const cards = document.querySelectorAll('.org-card');
+    cards.forEach(card => {
+        const name = card.getAttribute('data-name') || '';
+        const addr = card.getAttribute('data-address') || '';
+        if (name.includes(query) || addr.includes(query)) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
 function toggleAdd(id) {
     const el = document.getElementById(id);
     const toggle = document.getElementById('toggle-' + id);
