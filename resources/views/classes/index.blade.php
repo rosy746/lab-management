@@ -40,6 +40,24 @@ tbody td{padding:11px 14px;vertical-align:middle}
 </style>
 
 <div class="wrap">
+    {{-- SEARCH & FILTER --}}
+    <div style="margin-bottom:20px;display:flex;gap:12px;flex-wrap:wrap">
+        <div style="flex:1;min-width:260px;position:relative">
+            <input type="text" id="cls-search" onkeyup="filterClasses()" placeholder="Cari nama kelas atau jurusan..." 
+                   style="width:100%;padding:10px 16px 10px 40px;border-radius:12px;border:1.5px solid #e8f0e6;background:#fff;font-size:13px;outline:none;transition:border-color .15s">
+            <svg style="position:absolute;left:14px;top:50%;transform:translateY(-50%);width:18px;height:18px;color:#9ca3af" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+        </div>
+        <select id="school-filter" onchange="filterClasses()" 
+                style="padding:10px 16px;border-radius:12px;border:1.5px solid #e8f0e6;background:#fff;font-size:13px;outline:none;color:#1A2517">
+            <option value="">Semua Sekolah</option>
+            @foreach($organizations as $org)
+            <option value="{{ $org->id }}">{{ $org->name }}</option>
+            @endforeach
+        </select>
+    </div>
+
     {{-- FORM TAMBAH --}}
     <div class="add-card">
         <div class="add-head" onclick="toggleAdd()">
@@ -110,9 +128,9 @@ tbody td{padding:11px 14px;vertical-align:middle}
                         <th>Aksi</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="cls-tbody">
                     @forelse($classes as $idx => $cls)
-                    <tr>
+                    <tr class="cls-row" data-school-id="{{ $cls->organization_id }}" data-search="{{ strtolower($cls->name . ' ' . $cls->major . ' ' . ($cls->organization->name ?? '')) }}">
                         <td>{{ $idx + 1 }}</td>
                         <td><span style="font-weight:600;color:#1A2517">{{ $cls->organization->name ?? '-' }}</span></td>
                         <td>
@@ -157,6 +175,25 @@ tbody td{padding:11px 14px;vertical-align:middle}
 </div>
 
 <script>
+function filterClasses() {
+    const query = document.getElementById('cls-search').value.toLowerCase();
+    const schoolId = document.getElementById('school-filter').value;
+    const rows = document.querySelectorAll('.cls-row');
+    
+    rows.forEach(row => {
+        const searchData = row.getAttribute('data-search') || '';
+        const rowSchoolId = row.getAttribute('data-school-id') || '';
+        
+        const matchQuery = searchData.includes(query);
+        const matchSchool = schoolId === '' || rowSchoolId === schoolId;
+        
+        if (matchQuery && matchSchool) {
+            row.style.display = 'table-row';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
 function toggleAdd() {
     document.getElementById('add-body').classList.toggle('open');
     document.getElementById('add-toggle').classList.toggle('open');

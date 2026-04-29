@@ -16,9 +16,24 @@
 @keyframes shimmer { 0%{background-position:-600px 0} 100%{background-position:600px 0} }
 
 /* ─── STATS ─────────────────────────────────── */
-.stat-card { background:#fff;border-radius:14px;padding:18px 20px;border:1px solid var(--border);box-shadow:0 1px 4px rgba(26,37,23,.05); }
+.stat-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px; }
+.stat-card {
+    background:#fff;border-radius:14px;padding:18px 20px;
+    border:1px solid var(--border);box-shadow:0 1px 4px rgba(26,37,23,.05);
+}
+.stat-label { font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px; }
+.stat-val   { font-size:28px;font-family:Outfit,sans-serif;font-weight:800; }
 
-
+/* ─── LEGEND ────────────────────────────────── */
+.legend-bar { display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px;align-items:center; }
+.legend-item {
+    display:flex;align-items:center;gap:7px;padding:5px 11px;
+    border-radius:8px;background:#f8faf7;border:1px solid #e8f0e6;
+    transition:transform .15s;cursor:default;
+}
+.legend-item:hover { transform:translateY(-1px); }
+.legend-dot { width:13px;height:13px;border-radius:4px; }
+.legend-text { font-size:11px;color:#6b7280;font-weight:600; }
 
 /* ─── TABS ──────────────────────────────────── */
 .tabs { display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px; }
@@ -26,7 +41,7 @@
     display:flex;align-items:center;gap:7px;padding:8px 15px;border-radius:11px;
     font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;
     border:1.5px solid #e5e7eb;background:#fff;color:#6b7280;
-    transition:border-color .18s,color .18s,transform .18s,box-shadow .18s,background .18s;white-space:nowrap;
+    transition:all .2s cubic-bezier(.4,0,.2,1);white-space:nowrap;
 }
 .tab-btn:hover:not(.tab-active) { border-color:var(--acc);color:var(--g7);transform:translateY(-1px);box-shadow:0 3px 10px rgba(172,200,162,.18); }
 .tab-btn.tab-active { background:linear-gradient(135deg,var(--g9),var(--g8));color:var(--acc);border-color:transparent;box-shadow:0 4px 14px rgba(26,37,23,.28);transform:translateY(-1px); }
@@ -48,12 +63,19 @@
 .panel-cap  { font-size:11px;color:rgba(172,200,162,.5);margin-top:2px; }
 
 /* ─── TABLE ─────────────────────────────────── */
-.tbl-wrap { overflow-x:auto;-webkit-overflow-scrolling:touch; }
-.tbl-wrap::-webkit-scrollbar { height:4px; }
-.tbl-wrap::-webkit-scrollbar-thumb { background:var(--acc);border-radius:4px; }
-table { width:100%;border-collapse:collapse;min-width:700px;font-size:12px; }
-thead tr { background:#f8faf7;border-bottom:2px solid var(--border); }
-thead th { padding:9px 7px;text-align:center;font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.1em;text-transform:uppercase; }
+.tbl-wrap { overflow-x:auto;-webkit-overflow-scrolling:touch;max-height:calc(100vh - 350px); }
+.tbl-wrap::-webkit-scrollbar { height:6px;width:6px; }
+.tbl-wrap::-webkit-scrollbar-thumb { background:#e5e7eb;border-radius:10px; }
+.tbl-wrap::-webkit-scrollbar-thumb:hover { background:var(--acc); }
+
+table { width:100%;border-collapse:separate;border-spacing:0;min-width:700px;font-size:12px; }
+thead { position:sticky;top:0;z-index:10; }
+thead tr { background:#f8faf7; }
+thead th {
+    padding:10px 7px;text-align:center;font-size:10px;font-weight:700;color:var(--muted);
+    letter-spacing:.1em;text-transform:uppercase;background:#f8faf7;
+    border-bottom:2px solid var(--border);
+}
 thead th.col-time { text-align:left;padding-left:13px;width:78px; }
 thead th.th-sun { color:#dc2626; }
 tbody tr { border-top:1px solid #f3f4f6;transition:background .12s; }
@@ -169,15 +191,15 @@ td.slot-td.td-sun { background:rgba(254,226,226,.15); }
 </style>
 
 {{-- ─── STATS ─── --}}
-<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px">
+<div class="stat-grid">
     @foreach([
         ['label'=>'Total Jadwal','value'=>$stats['total'],   'color'=>'#6b7280'],
         ['label'=>'Aktif',       'value'=>$stats['active'],  'color'=>'#16a34a'],
         ['label'=>'Nonaktif',    'value'=>$stats['inactive'],'color'=>'#9ca3af'],
     ] as $s)
     <div class="stat-card">
-        <p style="font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">{{ $s['label'] }}</p>
-        <p style="font-size:28px;font-family:Outfit,sans-serif;font-weight:800;color:{{ $s['color'] }}">{{ $s['value'] }}</p>
+        <div class="stat-label">{{ $s['label'] }}</div>
+        <div class="stat-val" style="color:{{ $s['color'] }}">{{ $s['value'] }}</div>
     </div>
     @endforeach
 </div>
@@ -190,21 +212,19 @@ td.slot-td.td-sun { background:rgba(254,226,226,.15); }
 <div style="margin-bottom:16px;padding:12px 16px;border-radius:10px;font-size:13px;font-weight:600;color:#991b1b;background:#fef2f2;border:1px solid #fecaca">⚠ {{ $errors->first('error') }}</div>
 @endif
 
-
-
 {{-- ─── LEGEND ─── --}}
-<div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px;align-items:center">
-    <div style="display:flex;align-items:center;gap:7px;padding:5px 11px;border-radius:8px;background:#f8faf7;border:1px solid #e8f0e6">
-        <div style="width:13px;height:13px;border-radius:4px;background:linear-gradient(135deg,#d6ead2,#ACC8A2)"></div>
-        <span style="font-size:11px;color:#6b7280;font-weight:600">Jadwal Aktif — klik untuk edit</span>
+<div class="legend-bar">
+    <div class="legend-item">
+        <div class="legend-dot" style="background:linear-gradient(135deg,#d6ead2,#ACC8A2)"></div>
+        <span class="legend-text">Jadwal Aktif — klik untuk edit</span>
     </div>
-    <div style="display:flex;align-items:center;gap:7px;padding:5px 11px;border-radius:8px;background:#f8faf7;border:1px solid #e8f0e6">
-        <div style="width:13px;height:13px;border-radius:4px;background:#e5e7eb;border:1.5px dashed #9ca3af"></div>
-        <span style="font-size:11px;color:#6b7280;font-weight:600">Nonaktif</span>
+    <div class="legend-item">
+        <div class="legend-dot" style="background:#e5e7eb;border:1.5px dashed #9ca3af"></div>
+        <span class="legend-text">Nonaktif</span>
     </div>
-    <div style="display:flex;align-items:center;gap:7px;padding:5px 11px;border-radius:8px;background:#f8faf7;border:1px solid #e8f0e6">
-        <div style="width:13px;height:13px;border-radius:4px;background:transparent;border:2px dashed rgba(172,200,162,.5)"></div>
-        <span style="font-size:11px;color:#6b7280;font-weight:600">Kosong — klik untuk tambah</span>
+    <div class="legend-item">
+        <div class="legend-dot" style="background:transparent;border:2px dashed rgba(172,200,162,.5)"></div>
+        <span class="legend-text">Kosong — klik untuk tambah</span>
     </div>
 </div>
 
@@ -325,13 +345,13 @@ td.slot-td.td-sun { background:rgba(254,226,226,.15); }
                                 <div class="sc-name">{{ $sched->teacher_name }}</div>
                                 <div class="sc-class">{{ $sched->labClass?->name ?? '-' }}</div>
                                 @if($sched->subject_name)<div class="sc-subject">{{ $sched->subject_name }}</div>@endif
-                                <div class="sc-footer" onclick="event.stopPropagation()">
+                                <div class="sc-footer">
                                     <span class="sc-status-dot" style="color:{{ $sched->status === 'active' ? '#7a9475' : '#9ca3af' }}">
-                                        {{ $sched->status === 'active' ? '● Aktif' : '○ Nonaktif' }}
+                                            {{ $sched->status === 'active' ? '● Aktif' : '○ Nonaktif' }}
                                     </span>
                                     <button class="sc-del-btn"
-                                        onclick="confirmDelete({{ $sched->id }}, '{{ addslashes($sched->teacher_name) }}')">
-                                        🗑
+                                    onclick="event.stopPropagation(); confirmDelete({{ $sched->id }}, '{{ addslashes($sched->teacher_name) }}')">
+                                     🗑
                                     </button>
                                 </div>
                             </div>

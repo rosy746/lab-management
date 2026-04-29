@@ -43,18 +43,28 @@
     border:1px solid var(--border);margin-bottom:16px;
     display:flex;flex-wrap:wrap;gap:9px;align-items:center;
 }
+.search-container { position:relative;flex:1;min-width:200px; }
+.search-clear {
+    position:absolute;right:10px;top:50%;transform:translateY(-50%);
+    width:20px;height:20px;display:flex;align-items:center;justify-content:center;
+    background:#e5e7eb;color:#6b7280;border-radius:50%;font-size:14px;
+    cursor:pointer;opacity:0;transition:all .2s;z-index:2;
+}
+.search-container:hover .search-clear { opacity:1; }
+.search-clear:hover { background:#d1d5db;color:var(--g9); }
+
 .filter-inp {
     border:1.5px solid #e5e7eb;border-radius:9px;padding:8px 12px;
     font-size:13px;background:#fafcf9;outline:none;
-    transition:border-color .15s;font-family:inherit;
+    transition:border-color .15s;font-family:inherit;width:100%;
 }
-.filter-inp:focus { border-color:var(--acc); }
+.filter-inp:focus { border-color:var(--acc);background:#fff; }
 .btn-filter {
     background:linear-gradient(135deg,var(--g9),var(--g8));color:var(--acc);
-    border:none;border-radius:9px;padding:9px 18px;font-size:13px;
-    font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .15s;
+    border:none;border-radius:9px;padding:9px 22px;font-size:13px;
+    font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;
 }
-.btn-filter:hover { opacity:.85; }
+.btn-filter:hover { opacity:.9;transform:translateY(-1px);box-shadow:0 4px 12px rgba(26,37,23,.15); }
 
 /* ─── TABLE WRAPPER ──────────────────────────── */
 .table-card {
@@ -67,16 +77,19 @@
 }
 .table-title { font-family:'Outfit',sans-serif;font-weight:700;color:var(--g9);font-size:15px; }
 .table-count { font-size:12px;color:var(--muted);font-weight:400;font-family:'DM Sans',sans-serif; }
-.tbl-scroll  { overflow-x:auto;-webkit-overflow-scrolling:touch; }
-.tbl-scroll::-webkit-scrollbar { height:3px; }
-.tbl-scroll::-webkit-scrollbar-thumb { background:var(--acc);border-radius:3px; }
+.tbl-scroll  { overflow-x:auto;-webkit-overflow-scrolling:touch;max-height:calc(100vh - 350px); }
+.tbl-scroll::-webkit-scrollbar { height:6px;width:6px; }
+.tbl-scroll::-webkit-scrollbar-thumb { background:#e5e7eb;border-radius:10px; }
+.tbl-scroll::-webkit-scrollbar-thumb:hover { background:var(--acc); }
 
-table { width:100%;border-collapse:collapse;font-size:13px; }
-thead tr { background:#f8faf7;border-bottom:2px solid var(--border); }
+table { width:100%;border-collapse:separate;border-spacing:0;font-size:13px; }
+thead { position:sticky;top:0;z-index:10; }
+thead tr { background:#f8faf7; }
 thead th {
-    padding:10px 14px;text-align:left;
+    padding:12px 14px;text-align:left;
     font-size:10px;font-weight:700;color:var(--muted);
     text-transform:uppercase;letter-spacing:.09em;white-space:nowrap;
+    border-bottom:2px solid var(--border);background:#f8faf7;
 }
 thead th.th-center { text-align:center; }
 tbody tr { border-top:1px solid #f5f5f5;transition:background .12s; }
@@ -107,7 +120,11 @@ tbody tr.row-rejected { border-left:3px solid #d1d5db;opacity:.75; }
 .cell-time      { font-size:10px;color:var(--muted);margin-top:2px; }
 
 /* ─── ACTION BUTTONS ─────────────────────────── */
-.act-wrap { display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:wrap; }
+.act-wrap {
+    display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:wrap;
+    opacity:.3;transition:opacity .2s cubic-bezier(.4,0,.2,1);
+}
+tbody tr:hover .act-wrap { opacity:1; }
 
 .btn-approve-single {
     display:inline-flex;align-items:center;gap:4px;
@@ -223,31 +240,42 @@ tbody tr.row-rejected { border-left:3px solid #d1d5db;opacity:.75; }
     <form method="GET" action="{{ route('booking.index') }}"
           style="display:flex;flex-wrap:wrap;gap:9px;width:100%;align-items:center">
 
-        <input type="text" name="search" value="{{ request('search') }}"
-               placeholder="🔍 Cari nama, kelas, judul..."
-               class="filter-inp" style="flex:1;min-width:200px">
+        <div class="search-container">
+            <input type="text" name="search" value="{{ request('search') }}"
+                   placeholder="🔍 Cari nama, kelas, judul..."
+                   class="filter-inp" id="booking-search">
+            @if(request('search'))
+            <span class="search-clear" onclick="document.getElementById('booking-search').value='';this.closest('form').submit()">×</span>
+            @endif
+        </div>
 
-        <select name="status" class="filter-inp">
-            <option value="all" {{ request('status','all')==='all'?'selected':'' }}>Semua Status</option>
-            <option value="pending"  {{ request('status')==='pending' ?'selected':'' }}>⏳ Pending</option>
-            <option value="approved" {{ request('status')==='approved'?'selected':'' }}>✓ Disetujui</option>
-            <option value="rejected" {{ request('status')==='rejected'?'selected':'' }}>✗ Ditolak</option>
-        </select>
+        <div style="flex:0 0 auto">
+            <select name="status" class="filter-inp" style="width:auto">
+                <option value="all" {{ request('status','all')==='all'?'selected':'' }}>Semua Status</option>
+                <option value="pending"  {{ request('status')==='pending' ?'selected':'' }}>⏳ Pending</option>
+                <option value="approved" {{ request('status')==='approved'?'selected':'' }}>✓ Disetujui</option>
+                <option value="rejected" {{ request('status')==='rejected'?'selected':'' }}>✗ Ditolak</option>
+            </select>
+        </div>
 
-        <select name="resource_id" class="filter-inp">
-            <option value="">Semua Lab</option>
-            @foreach($resources as $r)
-            <option value="{{ $r->id }}" {{ request('resource_id')==$r->id?'selected':'' }}>{{ $r->name }}</option>
-            @endforeach
-        </select>
+        <div style="flex:0 0 auto">
+            <select name="resource_id" class="filter-inp" style="width:auto">
+                <option value="">Semua Lab</option>
+                @foreach($resources as $r)
+                <option value="{{ $r->id }}" {{ request('resource_id')==$r->id?'selected':'' }}>{{ $r->name }}</option>
+                @endforeach
+            </select>
+        </div>
 
-        <input type="date" name="date" value="{{ request('date') }}" class="filter-inp">
+        <div style="flex:0 0 auto">
+            <input type="date" name="date" value="{{ request('date') }}" class="filter-inp" style="width:auto">
+        </div>
 
         <button type="submit" class="btn-filter">Filter</button>
 
         @if(request()->hasAny(['search','status','resource_id','date']))
         <a href="{{ route('booking.index') }}"
-           style="font-size:13px;color:var(--muted);text-decoration:none;padding:4px 8px">× Reset</a>
+           style="font-size:12px;color:var(--muted);text-decoration:none;padding:4px 8px;font-weight:600">Reset</a>
         @endif
     </form>
 </div>
