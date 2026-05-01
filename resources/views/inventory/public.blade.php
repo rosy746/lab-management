@@ -28,7 +28,7 @@
         /* ─── ANIMATIONS ────────────────────── */
         @keyframes slideDown { from { transform: translateY(-60px); opacity: 0; } to { transform: none; opacity: 1; } }
         @keyframes fadeUp    { from { transform: translateY(18px);  opacity: 0; } to { transform: none; opacity: 1; } }
-        @keyframes panelIn   { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+        @keyframes panelIn   { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
         @keyframes shimmer   { 0% { background-position: -600px 0; } 100% { background-position: 600px 0; } }
         @keyframes countUp   { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
@@ -115,6 +115,7 @@
             gap: 8px; align-items: center;
             box-shadow: var(--shadow);
             animation: fadeUp .5s .25s both;
+            position: relative; z-index: 10;
         }
         .filter-inp {
             border: 1.5px solid #e5e7eb; border-radius: 9px;
@@ -150,10 +151,40 @@
         .btn-pdf   { background: #dc2626; color: #fff; }
         .btn-print { background: var(--g9); color: var(--acc); }
 
+<<<<<<< Updated upstream
         /* ─── TABS ──────────────────────────── */
         .tab-bar {
+=======
+        /* Dropdown Styles */
+        .dropdown { position: relative; display: inline-block; }
+        .dropdown-content {
+            display: none; position: absolute; right: 0; top: 100%;
+            background-color: #fff; min-width: 180px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1000; border-radius: 8px; margin-top: 5px;
+            overflow: hidden; border: 1px solid var(--border);
+        }
+        .dropdown-content a {
+            color: var(--text); padding: 10px 14px;
+            text-decoration: none; display: block;
+            font-size: 12px; font-weight: 600;
+            transition: background .15s;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .dropdown-content a:last-child { border-bottom: none; }
+        .dropdown-content a:hover { background-color: #f9fafb; color: #16a34a; }
+        .dropdown-content.show { display: block; animation: panelIn .2s ease; }
+        .dropdown-header {
+            padding: 8px 14px; font-size: 10px; font-weight: 700;
+            color: var(--muted); text-transform: uppercase;
+            background: #f8faf7; border-bottom: 1px solid var(--border);
+        }
+
+       .tab-bar {
+>>>>>>> Stashed changes
             display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 14px;
             animation: fadeUp .5s .3s both;
+            position: relative; z-index: 1;
         }
         .tab-btn {
             background: var(--white); border: 1.5px solid var(--border);
@@ -193,7 +224,7 @@
         .skel-head-cell { height: 22px; }
 
         /* ─── PANEL ─────────────────────────── */
-        .lab-panel { display: none; animation: panelIn .28s cubic-bezier(.16,1,.3,1) both; }
+        .lab-panel { display: none; animation: panelIn .2s cubic-bezier(.16,1,.3,1) both; }
         .lab-panel.active { display: block; }
 
         .panel-wrap { background: var(--white); border-radius: var(--r); border: 1px solid var(--border); overflow: hidden; box-shadow: var(--shadow); }
@@ -340,20 +371,55 @@
             *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
         }
     
-.pub-navbar{position:sticky;top:0;z-index:100;background:linear-gradient(135deg,#1A2517,#2a3826);box-shadow:0 2px 16px rgba(0,0,0,.28);animation:navSlideDown .4s cubic-bezier(.16,1,.3,1) both}
-.pub-inner{max-width:1280px;margin:0 auto;padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:60px}
-.pub-brand{display:flex;align-items:center;gap:10px;text-decoration:none;flex-shrink:0}
-.pub-brand-icon{width:34px;height:34px;border-radius:9px;background:rgba(172,200,162,.12);border:1.5px solid rgba(172,200,162,.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .18s}
-.pub-brand-icon:hover{background:rgba(172,200,162,.22)}
-.pub-brand-name{font-family:'Outfit',sans-serif;font-weight:700;font-size:15px;color:#fff;line-height:1.2}
-.pub-brand-sub{font-size:10px;color:rgba(172,200,162,.4)}
-.pub-links{display:flex;align-items:center;gap:4px}
-.pub-link{font-size:13px;font-weight:600;color:rgba(172,200,162,.55);text-decoration:none;padding:7px 13px;border-radius:8px;transition:color .15s,background .15s;white-space:nowrap}
-.pub-link:hover,.pub-link.on{color:#ACC8A2;background:rgba(172,200,162,.1)}
-.pub-btn{font-size:12px;font-weight:700;padding:7px 15px;border-radius:8px;color:#ACC8A2;border:1.5px solid rgba(172,200,162,.3);text-decoration:none;margin-left:6px;transition:background .15s,transform .15s;white-space:nowrap}
-.pub-btn:hover{background:rgba(172,200,162,.08);transform:translateY(-1px)}
-@keyframes navSlideDown{from{transform:translateY(-64px);opacity:0}to{transform:none;opacity:1}}
-@media(max-width:600px){.pub-inner{padding:0 1rem}.pub-brand-sub{display:none}.pub-link{padding:6px 9px;font-size:12px}.pub-btn{padding:6px 11px;font-size:12px;margin-left:3px}}
+    .pub-navbar{position:sticky;top:0;z-index:100;background:linear-gradient(135deg,#1A2517,#2a3826);box-shadow:0 2px 16px rgba(0,0,0,.28);animation:navSlideDown .4s cubic-bezier(.16,1,.3,1) both}
+    .pub-inner{max-width:1280px;margin:0 auto;padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:60px}
+    .pub-brand{display:flex;align-items:center;gap:10px;text-decoration:none;flex-shrink:0}
+    .pub-brand-icon{width:34px;height:34px;border-radius:9px;background:rgba(172,200,162,.12);border:1.5px solid rgba(172,200,162,.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .18s}
+    .pub-brand-icon:hover{background:rgba(172,200,162,.22)}
+    .pub-brand-name{font-family:'Outfit',sans-serif;font-weight:700;font-size:15px;color:#fff;line-height:1.2}
+    .pub-brand-sub{font-size:10px;color:rgba(172,200,162,.4)}
+    .pub-links{display:flex;align-items:center;gap:4px}
+    .pub-link{font-size:13px;font-weight:600;color:rgba(172,200,162,.55);text-decoration:none;padding:7px 13px;border-radius:8px;transition:color .15s,background .15s;white-space:nowrap}
+    .pub-link:hover,.pub-link.on{color:#ACC8A2;background:rgba(172,200,162,.1)}
+    .pub-btn{font-size:12px;font-weight:700;padding:7px 15px;border-radius:8px;color:#ACC8A2;border:1.5px solid rgba(172,200,162,.3);text-decoration:none;margin-left:6px;transition:background .15s,transform .15s;white-space:nowrap}
+    .pub-btn:hover{background:rgba(172,200,162,.08);transform:translateY(-1px)}
+    @keyframes navSlideDown{from{transform:translateY(-64px);opacity:0}to{transform:none;opacity:1}}
+    @media(max-width:600px){.pub-inner{padding:0 1rem}.pub-brand-sub{display:none}.pub-link{padding:6px 9px;font-size:12px}.pub-btn{padding:6px 11px;font-size:12px;margin-left:3px}}
+
+    .empty-state {
+        display: flex; flex-direction: column; align-items: center;
+        justify-content: center; padding: 48px 24px; text-align: center;
+    }
+    .empty-icon { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+    .empty-icon.no-data   { background: #f0f4ee; }
+    .empty-icon.no-result { background: #fef3c7; }
+    .empty-title { font-size: 15px; font-weight: 700; color: var(--text); margin: 0 0 6px; }
+    .empty-desc  { font-size: 13px; color: var(--sub); margin: 0 0 20px; max-width: 280px; line-height: 1.6; }
+    .btn-group   { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+    .empty-btn {
+        display: inline-flex; align-items: center; gap: 6px;
+        font-size: 12px; font-weight: 600; padding: 8px 16px;
+        border-radius: 9px; border: 1.5px solid var(--border);
+        background: var(--white); color: var(--text);
+        cursor: pointer; text-decoration: none; transition: background .15s;
+    }
+    .empty-btn.primary { background: var(--g9); color: var(--acc); border-color: transparent; }
+    .empty-btn.primary:hover { background: var(--g8); }
+
+    /* ─── TOAST ─────────────────────────── */
+    .toast {
+        position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+        background: var(--g9); color: var(--acc);
+        padding: 10px 16px; border-radius: 10px;
+        font-size: 13px; font-weight: 600;
+        border: 1px solid rgba(172,200,162,.2);
+        box-shadow: 0 4px 20px rgba(0,0,0,.2);
+        display: flex; align-items: center; gap: 8px;
+        transform: translateY(80px); opacity: 0;
+        transition: transform .3s cubic-bezier(.16,1,.3,1), opacity .3s;
+        pointer-events: none;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
 </style>
 </head>
 <body>
@@ -439,10 +505,24 @@
             <button class="view-btn" id="btn-card"  onclick="setView('card')">⊞ Kartu</button>
         </div>
         <div class="export-group">
+<<<<<<< Updated upstream
             <button class="btn-export btn-excel" onclick="exportExcel()">
                 <svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM8.5 17l1.5-2.5L8.5 12H10l.75 1.5L11.5 12H13l-1.5 2.5L13 17h-1.5l-.75-1.5-.75 1.5H8.5z"/></svg>
                 Excel
             </button>
+=======
+            <div class="dropdown">
+                <button class="btn-export btn-excel" onclick="toggleExcelDropdown(event)">
+                    <svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM8.5 17l1.5-2.5L8.5 12H10l.75 1.5L11.5 12H13l-1.5 2.5L13 17h-1.5l-.75-1.5-.75 1.5H8.5z"/></svg>
+                    Excel
+                </button>
+                <div id="excelDropdown" class="dropdown-content">
+                    <div class="dropdown-header">Pilihan Export Excel</div>
+                    <a href="javascript:void(0)" onclick="exportExcel()">📗 Lab Yang Dipilih Saja</a>
+                    <a href="javascript:void(0)" onclick="exportAllExcel()" style="color: #16a34a; font-weight: 700;">📊 Semua Lab (Multi-Sheet)</a>
+                </div>
+            </div>
+>>>>>>> Stashed changes
             <button class="btn-export btn-pdf" onclick="exportPDF()">
                 <svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5z"/></svg>
                 PDF
@@ -578,7 +658,27 @@
                             <td class="item-specs">{{ $item->notes ?: '—' }}</td>
                         </tr>
                         @empty
-                        <tr class="empty-row"><td colspan="11">📦 Belum ada data inventaris untuk lab ini</td></tr>
+                        <tr class="empty-row">
+                            <td colspan="11">
+                                <div class="empty-state">
+                                    <div class="empty-icon no-data">
+                                        <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="#ACC8A2" stroke-width="1.5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M20 7H4a2 2 0 00-2 2v6a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M16 3H8a2 2 0 00-2 2v2h12V5a2 2 0 00-2-2zM8 21h8M12 17v4"/>
+                                        </svg>
+                                    </div>
+                                    <p class="empty-title">Belum ada data inventaris</p>
+                                    <p class="empty-desc">Data perangkat untuk lab ini belum diinput. Hubungi admin untuk menambahkan inventaris.</p>
+                                    <div class="btn-group">
+                                        @auth
+                                            <a href="{{ route('dashboard') }}" class="empty-btn primary">Tambah Inventaris →</a>
+                                        @else
+                                            <a href="{{ route('login') }}" class="empty-btn primary">Login sebagai Admin →</a>
+                                        @endauth
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -623,6 +723,13 @@
 
 <footer>© {{ date('Y') }} Lab Management – Nuris Jember · Dicetak: {{ now()->translatedFormat('d F Y, H:i') }}</footer>
 
+<div class="toast" id="toast">
+    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+    </svg>
+    <span id="toast-msg">Berhasil diunduh</span>
+</div>
+
 <script>
 let currentView = 'table';
 let currentLab  = {{ $resources->first()->id ?? 0 }};
@@ -649,7 +756,7 @@ function switchLab(id, btn) {
         void panel.offsetWidth;
         panel.style.animation = '';
         filterTable();
-    }, 360);
+    }, 180);
 }
 
 // ─── VIEW TOGGLE ─────────────────────────────────────────
@@ -677,7 +784,7 @@ function filterTable() {
 
     // Table rows
     let n = 1;
-    panel.querySelectorAll('tbody tr:not(.empty-row)').forEach(row => {
+    panel.querySelectorAll('tbody tr:not(.empty-row):not(.no-result-row)').forEach(row => {
         const match = (!search || row.dataset.name.includes(search) || row.dataset.brand.includes(search) || row.dataset.specs.includes(search))
                    && (!cat   || row.dataset.category  === cat)
                    && (!cond  || row.dataset.condition === cond);
@@ -703,13 +810,60 @@ function filterTable() {
                    && (!cond  || card.dataset.condition === cond);
         card.style.display = match ? '' : 'none';
     });
+
+    // Deteksi hasil filter kosong
+    const tbody = panel.querySelector('tbody');
+    const visibleRows = [...tbody.querySelectorAll('tr:not(.empty-row):not(.no-result-row)')]
+        .filter(r => r.style.display !== 'none');
+    let noResultRow = tbody.querySelector('.no-result-row');
+
+    if (visibleRows.length === 0 && !tbody.querySelector('.empty-row')) {
+        if (!noResultRow) {
+            noResultRow = document.createElement('tr');
+            noResultRow.className = 'no-result-row';
+            noResultRow.innerHTML = `<td colspan="11">
+                <div class="empty-state">
+                    <div class="empty-icon no-result">
+                        <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="#92400e" stroke-width="1.5">
+                            <circle cx="11" cy="11" r="8"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M8 11h6"/>
+                        </svg>
+                    </div>
+                    <p class="empty-title">Tidak ada barang yang cocok</p>
+                    <p class="empty-desc">Coba ubah kata kunci atau reset filter.</p>
+                    <div class="btn-group">
+                        <button class="empty-btn primary" onclick="resetFilter()">Reset Filter</button>
+                    </div>
+                </div>
+            </td>`;
+            tbody.appendChild(noResultRow);
+        }
+        noResultRow.style.display = '';
+    } else if (noResultRow) {
+        noResultRow.style.display = 'none';
+    }
+}
+
+function resetFilter() {
+    document.getElementById('search-inp').value = '';
+    document.getElementById('cat-filter').value = '';
+    document.getElementById('cond-filter').value = '';
+    filterTable();
+}
+
+// ─── TOAST ───────────────────────────────────────────────
+function showToast(msg) {
+    const toast = document.getElementById('toast');
+    document.getElementById('toast-msg').textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
 }
 
 // ─── EXCEL EXPORT ─────────────────────────────────────────
 function exportExcel() {
     const labName = document.querySelector('.tab-btn.active').textContent.trim().split('\n')[0].trim();
     const rows = [['No','Nama Barang','Kategori','Merk','Model','Spesifikasi','Total','Baik','Rusak','Cadangan','Catatan']];
-    document.querySelector('.lab-panel.active tbody').querySelectorAll('tr:not(.empty-row)').forEach(row => {
+    document.querySelector('.lab-panel.active tbody').querySelectorAll('tr:not(.empty-row):not(.no-result-row)').forEach(row => {
         if (row.style.display === 'none') return;
         const c = row.querySelectorAll('td');
         
@@ -738,6 +892,7 @@ function exportExcel() {
     ws['!cols'] = [5,25,14,16,14,20,7,7,7,9,20].map(w => ({wch:w}));
     XLSX.utils.book_append_sheet(wb, ws, labName.substring(0,31));
     XLSX.writeFile(wb, `Inventaris_${labName.replace(/\s+/g,'_')}_${new Date().toISOString().slice(0,10)}.xlsx`);
+    showToast('Excel berhasil diunduh');
 }
 
 function exportAllExcel() {
@@ -748,7 +903,7 @@ function exportAllExcel() {
         const labName = panel.querySelector('.panel-title').textContent.trim();
         const rows = [['No','Nama Barang','Kategori','Merk','Model','Spesifikasi','Total','Baik','Rusak','Cadangan','Catatan']];
         
-        panel.querySelectorAll('tbody tr:not(.empty-row)').forEach((row, idx) => {
+        panel.querySelectorAll('tbody tr:not(.empty-row):not(.no-result-row)').forEach((row, idx) => {
             const c = row.querySelectorAll('td');
             
             // Extract clean text
@@ -780,13 +935,14 @@ function exportAllExcel() {
     });
 
     XLSX.writeFile(wb, `Inventaris_Semua_Lab_${new Date().toISOString().slice(0,10)}.xlsx`);
+    showToast('Semua lab berhasil diunduh');
 }
 
 // ─── PDF EXPORT ───────────────────────────────────────────
 function exportPDF() {
     const labName = document.querySelector('.tab-btn.active').textContent.trim().split('\n')[0].trim();
     const rows = [];
-    document.querySelector('.lab-panel.active tbody').querySelectorAll('tr:not(.empty-row)').forEach(row => {
+    document.querySelector('.lab-panel.active tbody').querySelectorAll('tr:not(.empty-row):not(.no-result-row)').forEach(row => {
         if (row.style.display === 'none') return;
         const c = row.querySelectorAll('td');
         rows.push([c[0],c[1],c[2],c[3],c[4],c[5],c[6],c[7],c[8],c[9]].map(x => x.textContent.trim()));
@@ -808,7 +964,11 @@ function exportPDF() {
 </body></html>`;
     const win = window.open('','_blank');
     win.document.write(html); win.document.close(); win.focus();
-    setTimeout(() => win.print(), 500);
+   setTimeout(() => { win.print(); showToast('PDF siap dicetak'); }, 500);
+}
+// ─── AUTO CARD VIEW DI MOBILE ────────────────────────────
+if (window.innerWidth <= 768) {
+    setView('card');
 }
 </script>
 </body>
