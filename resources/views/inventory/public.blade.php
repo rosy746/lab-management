@@ -105,7 +105,17 @@
             transition: border-color .15s, box-shadow .15s;
         }
         .filter-inp:focus { border-color: var(--acc); box-shadow: 0 0 0 3px rgba(172,200,162,.12); }
-        .filter-inp[type=text] { flex: 1; min-width: 180px; }
+        .filter-inp[type=text] { width: 100%; }
+
+        .search-container { position: relative; flex: 1; min-width: 200px; }
+        .search-clear {
+            position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+            width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;
+            background: #e5e7eb; color: #6b7280; border-radius: 50%; font-size: 14px;
+            cursor: pointer; opacity: 0; transition: all .2s; z-index: 2;
+        }
+        .search-container:hover .search-clear { opacity: 1; }
+        .search-clear:hover { background: #d1d5db; color: var(--g9); }
 
         .view-toggle {
             display: flex; gap: 3px; background: #f3f4f6;
@@ -222,24 +232,32 @@
         .broken-lbl { font-size: 10px; color: rgba(248,113,113,.65); }
 
         /* ─── TABLE ─────────────────────────── */
-        .tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        .tbl-wrap::-webkit-scrollbar { height: 4px; }
-        .tbl-wrap::-webkit-scrollbar-thumb { background: var(--acc); border-radius: 4px; }
+        .tbl-wrap {
+            overflow-x: auto; -webkit-overflow-scrolling: touch;
+            max-height: calc(100vh - 350px);
+            scrollbar-width: thin;
+            scrollbar-color: var(--acc) transparent;
+        }
+        .tbl-wrap::-webkit-scrollbar { width: 6px; height: 6px; }
+        .tbl-wrap::-webkit-scrollbar-track { background: transparent; }
+        .tbl-wrap::-webkit-scrollbar-thumb { background: var(--acc); border-radius: 10px; border: 2px solid #fff; }
+        .tbl-wrap::-webkit-scrollbar-thumb:hover { background: var(--acc2); }
 
-        .inv-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .inv-table thead tr { background: #f8faf7; border-bottom: 2px solid var(--border); }
+        .inv-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+        .inv-table thead { position: sticky; top: 0; z-index: 10; }
+        .inv-table thead tr { background: #f8faf7; }
         .inv-table th {
-            padding: 10px 13px; text-align: left;
+            padding: 12px 13px; text-align: left;
             font-size: 10px; font-weight: 700; color: var(--muted);
             text-transform: uppercase; letter-spacing: .08em; white-space: nowrap;
+            background: #f8faf7; border-bottom: 2px solid var(--border);
         }
         .inv-table th.center { text-align: center; }
         .inv-table tbody tr {
-            border-top: 1px solid #f5f5f5;
             transition: background .12s, transform .12s;
         }
         .inv-table tbody tr:hover { background: #fafcf9; }
-        .inv-table td { padding: 11px 13px; vertical-align: middle; }
+        .inv-table td { padding: 11px 13px; vertical-align: middle; border-bottom: 1px solid #f5f5f5; }
         .no-col { color: var(--muted); font-size: 12px; width: 40px; }
         .item-name { font-weight: 700; color: var(--text); }
         .item-brand { color: var(--sub); }
@@ -395,7 +413,8 @@
         <div class="pub-links">
             <a href="{{ route('home') }}" class="pub-link">Jadwal</a>
             <a href="{{ route('inventory.public') }}" class="pub-link on">Inventaris</a>
-            <a href="/rekap" class="pub-link">Rekap</a>
+            <a href="{{ route('rekap.public') }}" class="pub-link">Rekap</a>
+            <a href="{{ route('assignment.public') }}" class="pub-link">Tugas</a>
             @auth
                 <a href="{{ route('dashboard') }}" class="pub-btn">Dashboard →</a>
             @else
@@ -434,9 +453,13 @@
 
     {{-- TOOLBAR --}}
     <div class="toolbar">
-        <input type="text" id="search-inp" class="filter-inp"
-               placeholder="🔍 Cari nama barang, merk, spesifikasi..."
-               oninput="filterTable()">
+        <div class="search-container">
+            <input type="text" id="search-inp" class="filter-inp"
+                   value="{{ request('search') }}"
+                   placeholder="🔍 Cari nama barang, merk, spesifikasi..."
+                   oninput="filterTable()">
+            <span class="search-clear" id="search-clear" onclick="resetSearch()" style="display:none">×</span>
+        </div>
         <select id="cat-filter" class="filter-inp" onchange="filterTable()">
             <option value="">Semua Kategori</option>
             <option value="computer">💻 Komputer</option>
@@ -657,6 +680,9 @@
                         @if($item->quantity_broken > 0)
                         <span class="badge badge-broken">Rusak: {{ $item->quantity_broken }}</span>
                         @endif
+                        @if($item->quantity_backup > 0)
+                        <span class="badge" style="background:#e0f2fe;color:#0369a1">Cad: {{ $item->quantity_backup }}</span>
+                        @endif
                     </div>
                 </div>
                 @endforeach
@@ -732,6 +758,10 @@ function filterTable() {
     const cat    = document.getElementById('cat-filter').value;
     const cond   = document.getElementById('cond-filter').value;
     const panel  = document.querySelector('.lab-panel.active');
+    // Show/hide clear button
+    const clearBtn = document.getElementById('search-clear');
+    if (clearBtn) clearBtn.style.display = search ? 'flex' : 'none';
+
     if (!panel) return;
 
     panel.querySelectorAll('.search-target').forEach(el => {
@@ -794,6 +824,12 @@ function filterTable() {
     } else if (noResultRow) {
         noResultRow.style.display = 'none';
     }
+}
+
+function resetSearch() {
+    document.getElementById('search-inp').value = '';
+    filterTable();
+    document.getElementById('search-inp').focus();
 }
 
 function resetFilter() {

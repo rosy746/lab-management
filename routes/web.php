@@ -68,11 +68,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/procurement', fn() => view('dashboard'))->name('procurement.index');
 
     // Booking
+    Route::patch('/booking/sunday/{id}/approve', [BookingController::class, 'approveSunday'])->name('booking.approve.sunday');
+    Route::delete('/booking/sunday/{id}', [BookingController::class, 'destroySunday'])->name('booking.destroy.sunday');
     Route::get('/booking', [BookingController::class, 'index'])->name('booking.index');
     Route::get('/booking/{booking}', [BookingController::class, 'show'])->name('booking.show');
     Route::patch('/booking/{booking}/approve', [BookingController::class, 'approve'])->name('booking.approve');
     Route::post('/booking/approve-group', [BookingController::class, 'approveGroup'])->name('booking.approve.group');
-    Route::patch('/booking/{booking}/reject', [BookingController::class, 'reject'])->name('booking.reject');
+    Route::patch('/booking/{id}/reject', [BookingController::class, 'reject'])->name('booking.reject');
     Route::delete('/booking/{booking}', [BookingController::class, 'destroy'])->name('booking.destroy');
 
     // Jadwal admin

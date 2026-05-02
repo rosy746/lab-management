@@ -606,7 +606,8 @@
         <div class="pub-links">
             <a href="{{ route('home') }}" class="pub-link on">Jadwal</a>
             <a href="{{ route('inventory.public') }}" class="pub-link">Inventaris</a>
-            <a href="/rekap" class="pub-link">Rekap</a>
+            <a href="{{ route('rekap.public') }}" class="pub-link">Rekap</a>
+            <a href="{{ route('assignment.public') }}" class="pub-link">Tugas</a>
             @auth
                 <a href="{{ route('dashboard') }}" class="pub-btn">Dashboard →</a>
             @else

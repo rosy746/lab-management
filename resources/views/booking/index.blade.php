@@ -212,6 +212,8 @@ tbody tr:hover .act-wrap { opacity:1; }
 }
 </style>
 
+<div style="padding:24px">
+
 {{-- Flash --}}
 @if(session('success'))
 <div class="flash flash-ok">✓ {{ session('success') }}</div>
@@ -279,6 +281,84 @@ tbody tr:hover .act-wrap { opacity:1; }
         @endif
     </form>
 </div>
+
+{{-- ─── SUNDAY BOOKINGS ─── --}}
+@if($sundayBookings->total() > 0)
+<div class="table-card" style="margin-bottom:28px;border:2px solid #3b82f6;box-shadow:0 10px 25px rgba(59,130,246,.12)">
+    <div class="table-head-bar" style="background:#3b82f6;color:#fff;padding:12px 20px">
+        <div>
+            <span class="table-title" style="color:#fff">📅 Permintaan Booking Minggu (Full Day)</span>
+            <span class="table-count" style="color:rgba(255,255,255,.8)">&nbsp;({{ $sundayBookings->total() }} data)</span>
+        </div>
+        <span class="badge" style="background:rgba(255,255,255,.2);color:#fff">KHUSUS MINGGU</span>
+    </div>
+    <div class="tbl-scroll">
+        <table>
+            <thead>
+                <tr>
+                    <th style="background:#f8fafb">Tanggal & Lab</th>
+                    <th style="background:#f8fafb">Pemohon</th>
+                    <th style="background:#f8fafb">Kegiatan</th>
+                    <th style="background:#f8fafb" class="th-center">Status</th>
+                    <th style="background:#f8fafb" class="th-center">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($sundayBookings as $sb)
+                <tr class="{{ $sb->status === 'pending' ? 'row-pending' : ($sb->status === 'approved' ? 'row-approved' : 'row-rejected') }}">
+                    <td>
+                        <div class="cell-primary">{{ $sb->booking_date->translatedFormat('d M Y') }}</div>
+                        <div class="cell-accent" style="color:#2563eb">🖥 {{ $sb->resource->name ?? '-' }}</div>
+                    </td>
+                    <td>
+                        <div class="cell-primary">{{ $sb->teacher_name }}</div>
+                        <div class="cell-secondary">{{ $sb->organization->name ?? '-' }}</div>
+                        <div class="cell-secondary">📱 {{ $sb->teacher_phone }}</div>
+                    </td>
+                    <td>
+                        <div class="cell-primary">{{ $sb->class_name }}</div>
+                        <div class="cell-secondary">{{ $sb->title }}</div>
+                    </td>
+                    <td class="td-center">
+                        <span class="badge badge-{{ $sb->status }}">
+                            @if($sb->status==='pending')<span class="dot"></span>@endif
+                            {{ ucfirst($sb->status) }}
+                        </span>
+                    </td>
+                    <td class="td-center">
+                        <div class="act-wrap">
+                            @if($sb->status === 'pending')
+                                <form method="POST" action="{{ route('booking.approve.sunday', $sb->id) }}"
+                                      onsubmit="return confirm('Setujui booking minggu ini?')">
+                                    @csrf @method('PATCH')
+                                    <button type="submit" class="btn-approve-single" style="background:linear-gradient(135deg,#1e40af,#3b82f6);color:#fff">✓ Setujui</button>
+                                </form>
+                                <button class="btn-reject-act"
+                                    onclick="openReject({{ $sb->id }}, '{{ addslashes($sb->title) }}', '{{ addslashes($sb->teacher_name) }}', 'sunday')">
+                                    ✗ Tolak
+                                </button>
+                            @endif
+                            <form method="POST" action="{{ route('booking.destroy.sunday', $sb->id) }}"
+                                  onsubmit="return confirm('Hapus booking minggu ini?')">
+                                @csrf @method('DELETE')
+                                <button type="submit" class="btn-del" title="Hapus">
+                                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+    @if($sundayBookings->hasPages())
+    <div class="pagi-wrap" style="background:#fff">{{ $sundayBookings->links() }}</div>
+    @endif
+</div>
+@endif
 
 {{-- ─── TABLE ─── --}}
 <div class="table-card">
@@ -458,6 +538,8 @@ tbody tr:hover .act-wrap { opacity:1; }
     @endif
 </div>
 
+</div>
+
 
 {{-- ═══ MODAL REJECT ═══ --}}
 <div id="reject-modal" class="modal-overlay" onclick="if(event.target===this)closeReject()">
@@ -469,6 +551,7 @@ tbody tr:hover .act-wrap { opacity:1; }
         <div class="modal-body">
             <form id="reject-form" method="POST">
                 @csrf @method('PATCH')
+                <input type="hidden" name="type" id="reject-type" value="regular">
                 <label class="field-label">Alasan Penolakan *</label>
                 <textarea name="notes" rows="3" required class="inp-textarea"
                     placeholder="Contoh: Slot sudah terpakai untuk kegiatan lain..."></textarea>
@@ -482,9 +565,10 @@ tbody tr:hover .act-wrap { opacity:1; }
 </div>
 
 <script>
-function openReject(id, title, teacher) {
+function openReject(id, title, teacher, type = 'regular') {
     document.getElementById('reject-subtitle').textContent = teacher + ' — ' + title;
     document.getElementById('reject-form').action = '/booking/' + id + '/reject';
+    document.getElementById('reject-type').value = type;
     document.getElementById('reject-modal').classList.add('open');
     document.body.style.overflow = 'hidden';
 }
