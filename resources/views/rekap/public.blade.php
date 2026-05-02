@@ -100,12 +100,24 @@ a{text-decoration:none}
 /* DETAIL */
 .detail{padding:20px 22px}
 .detail-heading{font-size:12px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px}
-.tbl{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:20px}
-.tbl thead tr{background:#f8faf7;border-bottom:2px solid #e8f0e6}
-.tbl thead th{padding:9px 12px;text-align:left;font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.07em;white-space:nowrap}
-.tbl tbody tr{border-top:1px solid #f5f5f5;transition:background .1s}
+.tbl-wrap {
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    max-height: 500px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--acc) transparent;
+}
+.tbl-wrap::-webkit-scrollbar { width: 6px; height: 6px; }
+.tbl-wrap::-webkit-scrollbar-track { background: transparent; }
+.tbl-wrap::-webkit-scrollbar-thumb { background: var(--acc); border-radius: 10px; border: 2px solid #fff; }
+.tbl-wrap::-webkit-scrollbar-thumb:hover { background: var(--acc2); }
+
+.tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:12px;margin-bottom:20px}
+.tbl thead { position: sticky; top: 0; z-index: 10; }
+.tbl thead tr{background:#f8faf7; }
+.tbl thead th{padding:12px 12px;text-align:left;font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;background:#f8faf7;border-bottom:2px solid #e8f0e6}
+.tbl tbody tr{transition:background .1s}
 .tbl tbody tr:hover{background:#fafcf9}
-.tbl td{padding:10px 12px;vertical-align:middle}
+.tbl td{padding:10px 12px;vertical-align:middle;border-bottom:1px solid #f5f5f5}
 .badge{display:inline-flex;padding:2px 9px;border-radius:999px;font-size:10px;font-weight:700}
 .badge-day-0{background:#3b82f622;color:#3b82f6}
 .badge-day-1{background:#8b5cf622;color:#8b5cf6}
@@ -176,7 +188,8 @@ a{text-decoration:none}
         <div class="pub-links">
             <a href="{{ route('home') }}" class="pub-link">Jadwal</a>
             <a href="{{ route('inventory.public') }}" class="pub-link">Inventaris</a>
-            <a href="/rekap" class="pub-link on">Rekap</a>
+            <a href="{{ route('rekap.public') }}" class="pub-link on">Rekap</a>
+            <a href="{{ route('assignment.public') }}" class="pub-link">Tugas</a>
             @auth
                 <a href="{{ route('dashboard') }}" class="pub-btn">Dashboard →</a>
             @else
@@ -375,42 +388,44 @@ a{text-decoration:none}
                     <span>📅</span> Jadwal Tetap
                     <span style="font-size:11px;font-weight:400;color:#9ca3af">({{ $lab['scheduleDetails']->count() }} entri · {{ $lab['scheduledSlots'] }} slot/bulan)</span>
                 </div>
-                <table class="tbl">
-                    <thead>
-                        <tr>
-                            <th>Hari</th>
-                            <th>Slot Waktu</th>
-                            <th>Guru / Pengajar</th>
-                            <th>Kelas</th>
-                            <th>Mata Pelajaran</th>
-                            <th style="text-align:center">Frekuensi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @php $dayColorIdx = ['Monday'=>0,'Tuesday'=>1,'Wednesday'=>2,'Thursday'=>3,'Friday'=>4,'Saturday'=>5,'Sunday'=>6]; @endphp
-                        @foreach($lab['scheduleDetails'] as $sd)
-                        <tr>
-                            <td>
-                                <span class="badge badge-day-{{ $dayColorIdx[$sd->day_of_week]??0 }}">
-                                    {{ $sd->day_name_id }}
-                                </span>
-                            </td>
-                            <td style="color:#6b7280;font-weight:600;white-space:nowrap">
-                                {{ $sd->timeSlot?->name ?? '-' }}
-                                @if($sd->timeSlot)
-                                <div style="font-size:10px;color:#9ca3af">{{ \Carbon\Carbon::parse($sd->timeSlot->start_time)->format('H:i') }}–{{ \Carbon\Carbon::parse($sd->timeSlot->end_time)->format('H:i') }}</div>
-                                @endif
-                            </td>
-                            <td style="font-weight:700;color:#1A2517">{{ $sd->teacher_name }}</td>
-                            <td style="color:#374151">{{ $sd->labClass?->name ?? '-' }}</td>
-                            <td style="color:#6b7280">{{ $sd->subject_name ?? '-' }}</td>
-                            <td style="text-align:center">
-                                <span class="badge badge-freq">{{ $sd->occurrences }}×/bln</span>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                <div class="tbl-wrap">
+                    <table class="tbl">
+                        <thead>
+                            <tr>
+                                <th>Hari</th>
+                                <th>Slot Waktu</th>
+                                <th>Guru / Pengajar</th>
+                                <th>Kelas</th>
+                                <th>Mata Pelajaran</th>
+                                <th style="text-align:center">Frekuensi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @php $dayColorIdx = ['Monday'=>0,'Tuesday'=>1,'Wednesday'=>2,'Thursday'=>3,'Friday'=>4,'Saturday'=>5,'Sunday'=>6]; @endphp
+                            @foreach($lab['scheduleDetails'] as $sd)
+                            <tr>
+                                <td>
+                                    <span class="badge badge-day-{{ $dayColorIdx[$sd->day_of_week]??0 }}">
+                                        {{ $sd->day_name_id }}
+                                    </span>
+                                </td>
+                                <td style="color:#6b7280;font-weight:600;white-space:nowrap">
+                                    {{ $sd->timeSlot?->name ?? '-' }}
+                                    @if($sd->timeSlot)
+                                    <div style="font-size:10px;color:#9ca3af">{{ \Carbon\Carbon::parse($sd->timeSlot->start_time)->format('H:i') }}–{{ \Carbon\Carbon::parse($sd->timeSlot->end_time)->format('H:i') }}</div>
+                                    @endif
+                                </td>
+                                <td style="font-weight:700;color:#1A2517">{{ $sd->teacher_name }}</td>
+                                <td style="color:#374151">{{ $sd->labClass?->name ?? '-' }}</td>
+                                <td style="color:#6b7280">{{ $sd->subject_name ?? '-' }}</td>
+                                <td style="text-align:center">
+                                    <span class="badge badge-freq">{{ $sd->occurrences }}×/bln</span>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
                 @endif
 
                 {{-- Booking --}}
@@ -419,46 +434,48 @@ a{text-decoration:none}
                     <span>📝</span> Booking Disetujui
                     <span style="font-size:11px;font-weight:400;color:#9ca3af">({{ $lab['bookingDetails']->count() }} booking)</span>
                 </div>
-                <table class="tbl">
-                    <thead>
-                        <tr>
-                            <th>Tanggal</th>
-                            <th>Slot Waktu</th>
-                            <th>Pengajar</th>
-                            <th>Kelas</th>
-                            <th>Kegiatan / Mapel</th>
-                            <th style="text-align:center">Peserta</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($lab['bookingDetails'] as $bd)
-                        <tr>
-                            <td style="white-space:nowrap">
-                                <div style="font-weight:700;color:#1A2517">{{ \Carbon\Carbon::parse($bd->booking_date)->translatedFormat('d M Y') }}</div>
-                                <div style="font-size:10px;color:#9ca3af">{{ \Carbon\Carbon::parse($bd->booking_date)->translatedFormat('l') }}</div>
-                            </td>
-                            <td style="color:#6b7280;font-weight:600;white-space:nowrap">
-                                {{ $bd->timeSlot?->name ?? '-' }}
-                                @if($bd->timeSlot)
-                                <div style="font-size:10px;color:#9ca3af">{{ \Carbon\Carbon::parse($bd->timeSlot->start_time)->format('H:i') }}–{{ \Carbon\Carbon::parse($bd->timeSlot->end_time)->format('H:i') }}</div>
-                                @endif
-                            </td>
-                            <td>
-                                <div style="font-weight:700;color:#1A2517">{{ $bd->teacher_name }}</div>
-                                @if($bd->teacher_phone)<div style="font-size:10px;color:#9ca3af">{{ $bd->teacher_phone }}</div>@endif
-                            </td>
-                            <td style="color:#374151">{{ $bd->class_name ?? '-' }}</td>
-                            <td>
-                                <div style="font-weight:600;color:#1A2517">{{ $bd->title }}</div>
-                                @if($bd->subject_name)<div style="font-size:10px;color:#9ca3af">{{ $bd->subject_name }}</div>@endif
-                            </td>
-                            <td style="text-align:center">
-                                <span class="badge badge-book">{{ $bd->participant_count ?? '-' }} org</span>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                <div class="tbl-wrap">
+                    <table class="tbl">
+                        <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Slot Waktu</th>
+                                <th>Pengajar</th>
+                                <th>Kelas</th>
+                                <th>Kegiatan / Mapel</th>
+                                <th style="text-align:center">Peserta</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($lab['bookingDetails'] as $bd)
+                            <tr>
+                                <td style="white-space:nowrap">
+                                    <div style="font-weight:700;color:#1A2517">{{ \Carbon\Carbon::parse($bd->booking_date)->translatedFormat('d M Y') }}</div>
+                                    <div style="font-size:10px;color:#9ca3af">{{ \Carbon\Carbon::parse($bd->booking_date)->translatedFormat('l') }}</div>
+                                </td>
+                                <td style="color:#6b7280;font-weight:600;white-space:nowrap">
+                                    {{ $bd->timeSlot?->name ?? '-' }}
+                                    @if($bd->timeSlot)
+                                    <div style="font-size:10px;color:#9ca3af">{{ \Carbon\Carbon::parse($bd->timeSlot->start_time)->format('H:i') }}–{{ \Carbon\Carbon::parse($bd->timeSlot->end_time)->format('H:i') }}</div>
+                                    @endif
+                                </td>
+                                <td>
+                                    <div style="font-weight:700;color:#1A2517">{{ $bd->teacher_name }}</div>
+                                    @if($bd->teacher_phone)<div style="font-size:10px;color:#9ca3af">{{ $bd->teacher_phone }}</div>@endif
+                                </td>
+                                <td style="color:#374151">{{ $bd->class_name ?? '-' }}</td>
+                                <td>
+                                    <div style="font-weight:600;color:#1A2517">{{ $bd->title }}</div>
+                                    @if($bd->subject_name)<div style="font-size:10px;color:#9ca3af">{{ $bd->subject_name }}</div>@endif
+                                </td>
+                                <td style="text-align:center">
+                                    <span class="badge badge-book">{{ $bd->participant_count ?? '-' }} org</span>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
                 @endif
 
                 @if($lab['scheduleDetails']->isEmpty() && $lab['bookingDetails']->isEmpty())

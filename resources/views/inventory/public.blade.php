@@ -28,7 +28,7 @@
         /* ─── ANIMATIONS ────────────────────── */
         @keyframes slideDown { from { transform: translateY(-60px); opacity: 0; } to { transform: none; opacity: 1; } }
         @keyframes fadeUp    { from { transform: translateY(18px);  opacity: 0; } to { transform: none; opacity: 1; } }
-        @keyframes panelIn   { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+        @keyframes panelIn   { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
         @keyframes shimmer   { 0% { background-position: -600px 0; } 100% { background-position: 600px 0; } }
         @keyframes countUp   { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
@@ -37,39 +37,20 @@
         .anim-body   { animation: fadeUp .5s .2s  cubic-bezier(.16,1,.3,1) both; }
 
         /* ─── NAVBAR ────────────────────────── */
-        .navbar {
-            position: sticky; top: 0; z-index: 100;
-            background: linear-gradient(135deg, var(--g9), var(--g8));
-            box-shadow: 0 2px 16px rgba(0,0,0,.3);
-        }
-        .navbar-inner {
-            max-width: 1280px; margin: auto; padding: 0 1.5rem;
-            display: flex; align-items: center; justify-content: space-between; height: 60px;
-        }
-        .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-        .brand-icon {
-            width: 34px; height: 34px; border-radius: 9px;
-            background: rgba(172,200,162,.15); border: 1.5px solid rgba(172,200,162,.25);
-            display: flex; align-items: center; justify-content: center;
-            transition: background .18s;
-        }
-        .brand-icon:hover { background: rgba(172,200,162,.25); }
-        .brand-name { font-family: 'Outfit', sans-serif; font-weight: 700; color: #fff; font-size: 15px; line-height: 1.2; }
-        .brand-sub  { font-size: 11px; color: rgba(172,200,162,.5); }
-        .nav-actions { display: flex; align-items: center; gap: 6px; }
-        .nav-link {
-            font-size: 13px; font-weight: 600; color: rgba(172,200,162,.6);
-            text-decoration: none; padding: 6px 12px; border-radius: 8px;
-            transition: color .15s, background .15s;
-        }
-        .nav-link:hover, .nav-link.active { color: var(--acc); background: rgba(172,200,162,.08); }
-        .nav-btn {
-            font-size: 12px; font-weight: 600; padding: 6px 14px;
-            border-radius: 9px; border: 1px solid rgba(172,200,162,.3);
-            color: var(--acc); text-decoration: none;
-            transition: background .15s, transform .15s;
-        }
-        .nav-btn:hover { background: rgba(172,200,162,.1); transform: translateY(-1px); }
+        .pub-navbar{position:sticky;top:0;z-index:100;background:linear-gradient(135deg,#1A2517,#2a3826);box-shadow:0 2px 16px rgba(0,0,0,.28);animation:navSlideDown .4s cubic-bezier(.16,1,.3,1) both}
+        .pub-inner{max-width:1280px;margin:0 auto;padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:60px}
+        .pub-brand{display:flex;align-items:center;gap:10px;text-decoration:none;flex-shrink:0}
+        .pub-brand-icon{width:34px;height:34px;border-radius:9px;background:rgba(172,200,162,.12);border:1.5px solid rgba(172,200,162,.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .18s}
+        .pub-brand-icon:hover{background:rgba(172,200,162,.22)}
+        .pub-brand-name{font-family:'Outfit',sans-serif;font-weight:700;font-size:15px;color:#fff;line-height:1.2}
+        .pub-brand-sub{font-size:10px;color:rgba(172,200,162,.4)}
+        .pub-links{display:flex;align-items:center;gap:4px}
+        .pub-link{font-size:13px;font-weight:600;color:rgba(172,200,162,.55);text-decoration:none;padding:7px 13px;border-radius:8px;transition:color .15s,background .15s;white-space:nowrap}
+        .pub-link:hover,.pub-link.on{color:#ACC8A2;background:rgba(172,200,162,.1)}
+        .pub-btn{font-size:12px;font-weight:700;padding:7px 15px;border-radius:8px;color:#ACC8A2;border:1.5px solid rgba(172,200,162,.3);text-decoration:none;margin-left:6px;transition:background .15s,transform .15s;white-space:nowrap}
+        .pub-btn:hover{background:rgba(172,200,162,.08);transform:translateY(-1px)}
+        @keyframes navSlideDown{from{transform:translateY(-64px);opacity:0}to{transform:none;opacity:1}}
+        @media(max-width:600px){.pub-inner{padding:0 1rem}.pub-brand-sub{display:none}.pub-link{padding:6px 9px;font-size:12px}.pub-btn{padding:6px 11px;font-size:12px;margin-left:3px}}
 
         /* ─── HERO ──────────────────────────── */
         .hero {
@@ -115,6 +96,7 @@
             gap: 8px; align-items: center;
             box-shadow: var(--shadow);
             animation: fadeUp .5s .25s both;
+            position: relative; z-index: 10;
         }
         .filter-inp {
             border: 1.5px solid #e5e7eb; border-radius: 9px;
@@ -123,7 +105,17 @@
             transition: border-color .15s, box-shadow .15s;
         }
         .filter-inp:focus { border-color: var(--acc); box-shadow: 0 0 0 3px rgba(172,200,162,.12); }
-        .filter-inp[type=text] { flex: 1; min-width: 180px; }
+        .filter-inp[type=text] { width: 100%; }
+
+        .search-container { position: relative; flex: 1; min-width: 200px; }
+        .search-clear {
+            position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+            width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;
+            background: #e5e7eb; color: #6b7280; border-radius: 50%; font-size: 14px;
+            cursor: pointer; opacity: 0; transition: all .2s; z-index: 2;
+        }
+        .search-container:hover .search-clear { opacity: 1; }
+        .search-clear:hover { background: #d1d5db; color: var(--g9); }
 
         .view-toggle {
             display: flex; gap: 3px; background: #f3f4f6;
@@ -150,7 +142,7 @@
         .btn-pdf   { background: #dc2626; color: #fff; }
         .btn-print { background: var(--g9); color: var(--acc); }
 
-        /* Dropdown Styles */
+        /* ─── DROPDOWN ──────────────────────── */
         .dropdown { position: relative; display: inline-block; }
         .dropdown-content {
             display: none; position: absolute; right: 0; top: 100%;
@@ -179,6 +171,7 @@
         .tab-bar {
             display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 14px;
             animation: fadeUp .5s .3s both;
+            position: relative; z-index: 1;
         }
         .tab-btn {
             background: var(--white); border: 1.5px solid var(--border);
@@ -218,7 +211,7 @@
         .skel-head-cell { height: 22px; }
 
         /* ─── PANEL ─────────────────────────── */
-        .lab-panel { display: none; animation: panelIn .28s cubic-bezier(.16,1,.3,1) both; }
+        .lab-panel { display: none; animation: panelIn .2s cubic-bezier(.16,1,.3,1) both; }
         .lab-panel.active { display: block; }
 
         .panel-wrap { background: var(--white); border-radius: var(--r); border: 1px solid var(--border); overflow: hidden; box-shadow: var(--shadow); }
@@ -239,24 +232,32 @@
         .broken-lbl { font-size: 10px; color: rgba(248,113,113,.65); }
 
         /* ─── TABLE ─────────────────────────── */
-        .tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        .tbl-wrap::-webkit-scrollbar { height: 4px; }
-        .tbl-wrap::-webkit-scrollbar-thumb { background: var(--acc); border-radius: 4px; }
+        .tbl-wrap {
+            overflow-x: auto; -webkit-overflow-scrolling: touch;
+            max-height: calc(100vh - 350px);
+            scrollbar-width: thin;
+            scrollbar-color: var(--acc) transparent;
+        }
+        .tbl-wrap::-webkit-scrollbar { width: 6px; height: 6px; }
+        .tbl-wrap::-webkit-scrollbar-track { background: transparent; }
+        .tbl-wrap::-webkit-scrollbar-thumb { background: var(--acc); border-radius: 10px; border: 2px solid #fff; }
+        .tbl-wrap::-webkit-scrollbar-thumb:hover { background: var(--acc2); }
 
-        .inv-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .inv-table thead tr { background: #f8faf7; border-bottom: 2px solid var(--border); }
+        .inv-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+        .inv-table thead { position: sticky; top: 0; z-index: 10; }
+        .inv-table thead tr { background: #f8faf7; }
         .inv-table th {
-            padding: 10px 13px; text-align: left;
+            padding: 12px 13px; text-align: left;
             font-size: 10px; font-weight: 700; color: var(--muted);
             text-transform: uppercase; letter-spacing: .08em; white-space: nowrap;
+            background: #f8faf7; border-bottom: 2px solid var(--border);
         }
         .inv-table th.center { text-align: center; }
         .inv-table tbody tr {
-            border-top: 1px solid #f5f5f5;
             transition: background .12s, transform .12s;
         }
         .inv-table tbody tr:hover { background: #fafcf9; }
-        .inv-table td { padding: 11px 13px; vertical-align: middle; }
+        .inv-table td { padding: 11px 13px; vertical-align: middle; border-bottom: 1px solid #f5f5f5; }
         .no-col { color: var(--muted); font-size: 12px; width: 40px; }
         .item-name { font-weight: 700; color: var(--text); }
         .item-brand { color: var(--sub); }
@@ -275,14 +276,6 @@
 
         /* ─── HIGHLIGHT ─────────────────────── */
         mark.search-match { background: #fef08a; color: #854d0e; padding: 0 2px; border-radius: 2px; box-shadow: 0 0 0 1px #fde047; }
-        
-        /* ─── COUNTDOWN ─────────────────────── */
-        .cd-unit { display: inline-flex; flex-direction: column; align-items: center; background: rgba(255,255,255,0.1); padding: 4px 6px; border-radius: 6px; min-width: 32px; }
-        .cd-val { font-size: 11px; font-weight: 800; line-height: 1; }
-        .cd-lbl { font-size: 7px; text-transform: uppercase; margin-top: 2px; opacity: 0.7; }
-
-        /* ─── CATEGORY ICONS ────────────────── */
-        .cat-icon { width: 16px; height: 16px; margin-right: 6px; vertical-align: middle; opacity: .7; }
 
         /* ─── CARD VIEW ─────────────────────── */
         .cards-grid {
@@ -336,12 +329,47 @@
         /* ─── EMPTY ─────────────────────────── */
         .empty-row td { text-align: center; padding: 48px; color: var(--muted); font-size: 14px; }
 
+        .empty-state {
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; padding: 48px 24px; text-align: center;
+        }
+        .empty-icon { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+        .empty-icon.no-data   { background: #f0f4ee; }
+        .empty-icon.no-result { background: #fef3c7; }
+        .empty-title { font-size: 15px; font-weight: 700; color: var(--text); margin: 0 0 6px; }
+        .empty-desc  { font-size: 13px; color: var(--sub); margin: 0 0 20px; max-width: 280px; line-height: 1.6; }
+        .btn-group   { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+        .empty-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 12px; font-weight: 600; padding: 8px 16px;
+            border-radius: 9px; border: 1.5px solid var(--border);
+            background: var(--white); color: var(--text);
+            cursor: pointer; text-decoration: none; transition: background .15s;
+        }
+        .empty-btn.primary { background: var(--g9); color: var(--acc); border-color: transparent; }
+        .empty-btn.primary:hover { background: var(--g8); }
+
+        /* ─── TOAST ─────────────────────────── */
+        .toast {
+            position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+            background: var(--g9); color: var(--acc);
+            padding: 10px 16px; border-radius: 10px;
+            font-size: 13px; font-weight: 600;
+            border: 1px solid rgba(172,200,162,.2);
+            box-shadow: 0 4px 20px rgba(0,0,0,.2);
+            display: flex; align-items: center; gap: 8px;
+            transform: translateY(80px); opacity: 0;
+            transition: transform .3s cubic-bezier(.16,1,.3,1), opacity .3s;
+            pointer-events: none;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+
         /* ─── FOOTER ────────────────────────── */
         footer { text-align: center; padding: 18px; font-size: 12px; color: var(--muted); }
 
         /* ─── PRINT ─────────────────────────── */
         @media print {
-            .navbar, .toolbar, .tab-bar, .export-group, .view-toggle, .skeleton-wrap { display: none !important; }
+            .pub-navbar, .toolbar, .tab-bar, .export-group, .view-toggle, .skeleton-wrap, .toast { display: none !important; }
             .lab-panel { display: block !important; }
             .panel-header { background: var(--g9) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             body { background: #fff; }
@@ -352,7 +380,7 @@
         @media (max-width: 768px) {
             .export-group { margin-left: 0; }
             .inv-table th:nth-child(5), .inv-table td:nth-child(5) { display: none; }
-            .brand-sub { display: none; }
+            .pub-brand-sub { display: none; }
         }
         @media (max-width: 480px) {
             .hero { padding: 1.5rem 1rem 2.5rem; }
@@ -364,22 +392,7 @@
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
         }
-    
-.pub-navbar{position:sticky;top:0;z-index:100;background:linear-gradient(135deg,#1A2517,#2a3826);box-shadow:0 2px 16px rgba(0,0,0,.28);animation:navSlideDown .4s cubic-bezier(.16,1,.3,1) both}
-.pub-inner{max-width:1280px;margin:0 auto;padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:60px}
-.pub-brand{display:flex;align-items:center;gap:10px;text-decoration:none;flex-shrink:0}
-.pub-brand-icon{width:34px;height:34px;border-radius:9px;background:rgba(172,200,162,.12);border:1.5px solid rgba(172,200,162,.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .18s}
-.pub-brand-icon:hover{background:rgba(172,200,162,.22)}
-.pub-brand-name{font-family:'Outfit',sans-serif;font-weight:700;font-size:15px;color:#fff;line-height:1.2}
-.pub-brand-sub{font-size:10px;color:rgba(172,200,162,.4)}
-.pub-links{display:flex;align-items:center;gap:4px}
-.pub-link{font-size:13px;font-weight:600;color:rgba(172,200,162,.55);text-decoration:none;padding:7px 13px;border-radius:8px;transition:color .15s,background .15s;white-space:nowrap}
-.pub-link:hover,.pub-link.on{color:#ACC8A2;background:rgba(172,200,162,.1)}
-.pub-btn{font-size:12px;font-weight:700;padding:7px 15px;border-radius:8px;color:#ACC8A2;border:1.5px solid rgba(172,200,162,.3);text-decoration:none;margin-left:6px;transition:background .15s,transform .15s;white-space:nowrap}
-.pub-btn:hover{background:rgba(172,200,162,.08);transform:translateY(-1px)}
-@keyframes navSlideDown{from{transform:translateY(-64px);opacity:0}to{transform:none;opacity:1}}
-@media(max-width:600px){.pub-inner{padding:0 1rem}.pub-brand-sub{display:none}.pub-link{padding:6px 9px;font-size:12px}.pub-btn{padding:6px 11px;font-size:12px;margin-left:3px}}
-</style>
+    </style>
 </head>
 <body>
 
@@ -400,7 +413,8 @@
         <div class="pub-links">
             <a href="{{ route('home') }}" class="pub-link">Jadwal</a>
             <a href="{{ route('inventory.public') }}" class="pub-link on">Inventaris</a>
-            <a href="/rekap" class="pub-link">Rekap</a>
+            <a href="{{ route('rekap.public') }}" class="pub-link">Rekap</a>
+            <a href="{{ route('assignment.public') }}" class="pub-link">Tugas</a>
             @auth
                 <a href="{{ route('dashboard') }}" class="pub-btn">Dashboard →</a>
             @else
@@ -439,9 +453,13 @@
 
     {{-- TOOLBAR --}}
     <div class="toolbar">
-        <input type="text" id="search-inp" class="filter-inp"
-               placeholder="🔍 Cari nama barang, merk, spesifikasi..."
-               oninput="filterTable()">
+        <div class="search-container">
+            <input type="text" id="search-inp" class="filter-inp"
+                   value="{{ request('search') }}"
+                   placeholder="🔍 Cari nama barang, merk, spesifikasi..."
+                   oninput="filterTable()">
+            <span class="search-clear" id="search-clear" onclick="resetSearch()" style="display:none">×</span>
+        </div>
         <select id="cat-filter" class="filter-inp" onchange="filterTable()">
             <option value="">Semua Kategori</option>
             <option value="computer">💻 Komputer</option>
@@ -610,7 +628,27 @@
                             <td class="item-specs">{{ $item->notes ?: '—' }}</td>
                         </tr>
                         @empty
-                        <tr class="empty-row"><td colspan="11">📦 Belum ada data inventaris untuk lab ini</td></tr>
+                        <tr class="empty-row">
+                            <td colspan="11">
+                                <div class="empty-state">
+                                    <div class="empty-icon no-data">
+                                        <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="#ACC8A2" stroke-width="1.5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M20 7H4a2 2 0 00-2 2v6a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M16 3H8a2 2 0 00-2 2v2h12V5a2 2 0 00-2-2zM8 21h8M12 17v4"/>
+                                        </svg>
+                                    </div>
+                                    <p class="empty-title">Belum ada data inventaris</p>
+                                    <p class="empty-desc">Data perangkat untuk lab ini belum diinput. Hubungi admin untuk menambahkan inventaris.</p>
+                                    <div class="btn-group">
+                                        @auth
+                                            <a href="{{ route('dashboard') }}" class="empty-btn primary">Tambah Inventaris →</a>
+                                        @else
+                                            <a href="{{ route('login') }}" class="empty-btn primary">Login sebagai Admin →</a>
+                                        @endauth
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -642,6 +680,9 @@
                         @if($item->quantity_broken > 0)
                         <span class="badge badge-broken">Rusak: {{ $item->quantity_broken }}</span>
                         @endif
+                        @if($item->quantity_backup > 0)
+                        <span class="badge" style="background:#e0f2fe;color:#0369a1">Cad: {{ $item->quantity_backup }}</span>
+                        @endif
                     </div>
                 </div>
                 @endforeach
@@ -655,6 +696,13 @@
 
 <footer>© {{ date('Y') }} Lab Management – Nuris Jember · Dicetak: {{ now()->translatedFormat('d F Y, H:i') }}</footer>
 
+<div class="toast" id="toast">
+    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+    </svg>
+    <span id="toast-msg">Berhasil diunduh</span>
+</div>
+
 <script>
 let currentView = 'table';
 let currentLab  = {{ $resources->first()->id ?? 0 }};
@@ -664,11 +712,9 @@ function switchLab(id, btn) {
     if (currentLab === id) return;
     currentLab = id;
 
-    // Update tab styles
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
 
-    // Show skeleton, hide panels
     document.querySelectorAll('.lab-panel').forEach(p => p.classList.remove('active'));
     document.getElementById('skeleton').style.display = 'block';
 
@@ -676,12 +722,11 @@ function switchLab(id, btn) {
         document.getElementById('skeleton').style.display = 'none';
         const panel = document.getElementById('lab-' + id);
         panel.classList.add('active');
-        // Re-trigger animation
         panel.style.animation = 'none';
         void panel.offsetWidth;
         panel.style.animation = '';
         filterTable();
-    }, 360);
+    }, 180);
 }
 
 // ─── VIEW TOGGLE ─────────────────────────────────────────
@@ -713,24 +758,25 @@ function filterTable() {
     const cat    = document.getElementById('cat-filter').value;
     const cond   = document.getElementById('cond-filter').value;
     const panel  = document.querySelector('.lab-panel.active');
+    // Show/hide clear button
+    const clearBtn = document.getElementById('search-clear');
+    if (clearBtn) clearBtn.style.display = search ? 'flex' : 'none';
+
     if (!panel) return;
 
-    // Clear previous highlights
     panel.querySelectorAll('.search-target').forEach(el => {
         el.innerHTML = el.innerText;
     });
 
-    // Table rows
     let n = 1;
-    panel.querySelectorAll('tbody tr:not(.empty-row)').forEach(row => {
+    panel.querySelectorAll('tbody tr:not(.empty-row):not(.no-result-row)').forEach(row => {
         const match = (!search || row.dataset.name.includes(search) || row.dataset.brand.includes(search) || row.dataset.specs.includes(search))
                    && (!cat   || row.dataset.category  === cat)
                    && (!cond  || row.dataset.condition === cond);
         row.style.display = match ? '' : 'none';
-        
+
         if (match) {
             row.querySelector('.no-col').textContent = n++;
-            // Apply highlighting if search exists
             if (search && search.length > 1) {
                 row.querySelectorAll('.search-target').forEach(el => {
                     const text = el.innerText;
@@ -741,41 +787,85 @@ function filterTable() {
         }
     });
 
-    // Cards
     panel.querySelectorAll('.inv-card').forEach(card => {
         const match = (!search || card.dataset.name.includes(search) || card.dataset.brand.includes(search) || card.dataset.specs.includes(search))
                    && (!cat   || card.dataset.category  === cat)
                    && (!cond  || card.dataset.condition === cond);
         card.style.display = match ? '' : 'none';
     });
+
+    const tbody = panel.querySelector('tbody');
+    const visibleRows = [...tbody.querySelectorAll('tr:not(.empty-row):not(.no-result-row)')]
+        .filter(r => r.style.display !== 'none');
+    let noResultRow = tbody.querySelector('.no-result-row');
+
+    if (visibleRows.length === 0 && !tbody.querySelector('.empty-row')) {
+        if (!noResultRow) {
+            noResultRow = document.createElement('tr');
+            noResultRow.className = 'no-result-row';
+            noResultRow.innerHTML = `<td colspan="11">
+                <div class="empty-state">
+                    <div class="empty-icon no-result">
+                        <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="#92400e" stroke-width="1.5">
+                            <circle cx="11" cy="11" r="8"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M8 11h6"/>
+                        </svg>
+                    </div>
+                    <p class="empty-title">Tidak ada barang yang cocok</p>
+                    <p class="empty-desc">Coba ubah kata kunci atau reset filter.</p>
+                    <div class="btn-group">
+                        <button class="empty-btn primary" onclick="resetFilter()">Reset Filter</button>
+                    </div>
+                </div>
+            </td>`;
+            tbody.appendChild(noResultRow);
+        }
+        noResultRow.style.display = '';
+    } else if (noResultRow) {
+        noResultRow.style.display = 'none';
+    }
+}
+
+function resetSearch() {
+    document.getElementById('search-inp').value = '';
+    filterTable();
+    document.getElementById('search-inp').focus();
+}
+
+function resetFilter() {
+    document.getElementById('search-inp').value = '';
+    document.getElementById('cat-filter').value = '';
+    document.getElementById('cond-filter').value = '';
+    filterTable();
+}
+
+// ─── TOAST ───────────────────────────────────────────────
+function showToast(msg) {
+    const toast = document.getElementById('toast');
+    document.getElementById('toast-msg').textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
 }
 
 // ─── EXCEL EXPORT ─────────────────────────────────────────
 function exportExcel() {
     const labName = document.querySelector('.tab-btn.active').textContent.trim().split('\n')[0].trim();
     const rows = [['No','Nama Barang','Kategori','Merk','Model','Spesifikasi','Total','Baik','Rusak','Cadangan','Catatan']];
-    document.querySelector('.lab-panel.active tbody').querySelectorAll('tr:not(.empty-row)').forEach(row => {
+    document.querySelector('.lab-panel.active tbody').querySelectorAll('tr:not(.empty-row):not(.no-result-row)').forEach(row => {
         if (row.style.display === 'none') return;
         const c = row.querySelectorAll('td');
-        
-        // Extract clean text (exclude emojis and progress bar)
         const itemName = c[1].querySelector('.search-target')?.innerText || '';
         const category = c[2].querySelector('.badge')?.innerText || '';
         const brandDivs = c[3].querySelectorAll('.search-target');
         const brand = brandDivs[0]?.innerText || '';
         const model = brandDivs[1]?.innerText || '';
         const specs = c[4].querySelector('.search-target')?.innerText || '';
-
         rows.push([
             parseInt(c[0].textContent) || '',
-            itemName.trim(), 
-            category.trim(),
-            brand.trim(),
-            model.trim(),
-            specs.trim(),
+            itemName.trim(), category.trim(), brand.trim(), model.trim(), specs.trim(),
             parseInt(c[5].textContent)||0, parseInt(c[6].textContent)||0,
             parseInt(c[7].textContent)||0, parseInt(c[8].textContent)||0,
-            c[10].textContent.trim(), // Catatan (Kondisi di c[9] dihapus)
+            c[10].textContent.trim(),
         ]);
     });
     const wb = XLSX.utils.book_new();
@@ -783,55 +873,44 @@ function exportExcel() {
     ws['!cols'] = [5,25,14,16,14,20,7,7,7,9,20].map(w => ({wch:w}));
     XLSX.utils.book_append_sheet(wb, ws, labName.substring(0,31));
     XLSX.writeFile(wb, `Inventaris_${labName.replace(/\s+/g,'_')}_${new Date().toISOString().slice(0,10)}.xlsx`);
+    showToast('Excel berhasil diunduh');
 }
 
 function exportAllExcel() {
     const wb = XLSX.utils.book_new();
-    const panels = document.querySelectorAll('.lab-panel');
-    
-    panels.forEach(panel => {
+    document.querySelectorAll('.lab-panel').forEach(panel => {
         const labName = panel.querySelector('.panel-title').textContent.trim();
         const rows = [['No','Nama Barang','Kategori','Merk','Model','Spesifikasi','Total','Baik','Rusak','Cadangan','Catatan']];
-        
-        panel.querySelectorAll('tbody tr:not(.empty-row)').forEach((row, idx) => {
+        panel.querySelectorAll('tbody tr:not(.empty-row):not(.no-result-row)').forEach((row, idx) => {
             const c = row.querySelectorAll('td');
-            
-            // Extract clean text
             const itemName = c[1].querySelector('.search-target')?.innerText || '';
             const category = c[2].querySelector('.badge')?.innerText || '';
             const brandDivs = c[3].querySelectorAll('.search-target');
             const brand = brandDivs[0]?.innerText || '';
             const model = brandDivs[1]?.innerText || '';
             const specs = c[4].querySelector('.search-target')?.innerText || '';
-
             rows.push([
-                idx + 1,
-                itemName.trim(), 
-                category.trim(),
-                brand.trim(),
-                model.trim(),
-                specs.trim(),
+                idx + 1, itemName.trim(), category.trim(), brand.trim(), model.trim(), specs.trim(),
                 parseInt(c[5].textContent)||0, parseInt(c[6].textContent)||0,
                 parseInt(c[7].textContent)||0, parseInt(c[8].textContent)||0,
-                c[10].textContent.trim(), // Catatan (Kondisi di c[9] dihapus)
+                c[10].textContent.trim(),
             ]);
         });
-        
         if (rows.length > 1) {
             const ws = XLSX.utils.aoa_to_sheet(rows);
             ws['!cols'] = [5,25,14,16,14,20,7,7,7,9,20].map(w => ({wch:w}));
             XLSX.utils.book_append_sheet(wb, ws, labName.substring(0,31));
         }
     });
-
     XLSX.writeFile(wb, `Inventaris_Semua_Lab_${new Date().toISOString().slice(0,10)}.xlsx`);
+    showToast('Semua lab berhasil diunduh');
 }
 
 // ─── PDF EXPORT ───────────────────────────────────────────
 function exportPDF() {
     const labName = document.querySelector('.tab-btn.active').textContent.trim().split('\n')[0].trim();
     const rows = [];
-    document.querySelector('.lab-panel.active tbody').querySelectorAll('tr:not(.empty-row)').forEach(row => {
+    document.querySelector('.lab-panel.active tbody').querySelectorAll('tr:not(.empty-row):not(.no-result-row)').forEach(row => {
         if (row.style.display === 'none') return;
         const c = row.querySelectorAll('td');
         rows.push([c[0],c[1],c[2],c[3],c[4],c[5],c[6],c[7],c[8],c[9]].map(x => x.textContent.trim()));
@@ -849,11 +928,15 @@ function exportPDF() {
     <table><thead><tr><th>No</th><th>Nama Barang</th><th>Kategori</th><th>Merk/Model</th><th>Spesifikasi</th><th>Total</th><th>Baik</th><th>Rusak</th><th>Cadangan</th><th>Kondisi</th></tr></thead>
     <tbody>${rows.map(r=>'<tr>'+r.map(c=>'<td>'+c+'</td>').join('')+'</tr>').join('')}</tbody></table>
     <div class="footer">Total ${rows.length} jenis barang</div>
-
 </body></html>`;
     const win = window.open('','_blank');
     win.document.write(html); win.document.close(); win.focus();
-    setTimeout(() => win.print(), 500);
+    setTimeout(() => { win.print(); showToast('PDF siap dicetak'); }, 500);
+}
+
+// ─── AUTO CARD VIEW DI MOBILE ────────────────────────────
+if (window.innerWidth <= 768) {
+    setView('card');
 }
 </script>
 </body>

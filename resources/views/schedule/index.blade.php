@@ -276,12 +276,13 @@
         .tbl-wrap::-webkit-scrollbar { height: 4px; }
         .tbl-wrap::-webkit-scrollbar-thumb { background: var(--acc); border-radius: 4px; }
 
-        table { width: 100%; border-collapse: collapse; min-width: 780px; font-size: 12px; }
+        table { width: 100%; border-collapse: collapse; min-width: 780px; font-size: 12px; height: 1px; }
         thead tr { background: #f8faf7; border-bottom: 2px solid var(--border); }
         thead th {
             padding: 9px 7px; text-align: center;
             font-size: 10px; font-weight: 700; color: var(--muted);
             letter-spacing: .1em; text-transform: uppercase;
+            width: calc((100% - 78px) / 7);
         }
         thead th.col-time {
             text-align: left; padding-left: 13px; width: 78px;
@@ -541,7 +542,31 @@
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
         }
-    
+
+        /* ─── SUNDAY CELL ───────────────────── */
+        td.td-sun[rowspan] {
+            padding: 6px !important;
+            vertical-align: top;
+            width: calc((100% - 78px) / 7);
+            max-width: calc((100% - 78px) / 7);
+            overflow: hidden;
+            height: 100%;
+        }
+        td.td-sun[rowspan] .sc {
+            height: 100%;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start; /* ← ubah dari center ke flex-start */
+            padding: 8px;
+        }
+        td.td-sun[rowspan] .bk-btn {
+            height: 100%;
+            min-height: 400px;
+            width: 100%;
+            justify-content: center;
+        }
+            
 .pub-navbar{position:sticky;top:0;z-index:100;background:linear-gradient(135deg,#1A2517,#2a3826);box-shadow:0 2px 16px rgba(0,0,0,.28);animation:navSlideDown .4s cubic-bezier(.16,1,.3,1) both}
 .pub-inner{max-width:1280px;margin:0 auto;padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:60px}
 .pub-brand{display:flex;align-items:center;gap:10px;text-decoration:none;flex-shrink:0}
@@ -581,7 +606,8 @@
         <div class="pub-links">
             <a href="{{ route('home') }}" class="pub-link on">Jadwal</a>
             <a href="{{ route('inventory.public') }}" class="pub-link">Inventaris</a>
-            <a href="/rekap" class="pub-link">Rekap</a>
+            <a href="{{ route('rekap.public') }}" class="pub-link">Rekap</a>
+            <a href="{{ route('assignment.public') }}" class="pub-link">Tugas</a>
             @auth
                 <a href="{{ route('dashboard') }}" class="pub-btn">Dashboard →</a>
             @else
@@ -629,8 +655,13 @@
 {{-- ═══ MAIN ═══ --}}
 <div class="main">
 
-    @if(session('success'))
-        <div class="flash flash-ok">✓ {{ session('success') }}</div>
+   @if(session('success'))
+        <div class="flash flash-ok">
+            ✓ {{ session('success') }}
+            <div style="margin-top:6px;font-size:12px;font-weight:400;color:#166534;">
+                Pantau status booking di halaman jadwal. Slot yang sudah diajukan akan tampil dengan warna kuning (Pending).
+            </div>
+        </div>
     @endif
     @if($errors->has('error'))
         <div class="flash flash-err">⚠ {{ $errors->first('error') }}</div>
@@ -752,10 +783,11 @@
 
                         @if($isBreak)
                         <tr class="break-row">
-                            <td colspan="{{ count($days) + 1 }}">
+                            <td colspan="{{ count($days) }}">
                                 ☕ ISTIRAHAT · {{ \Carbon\Carbon::parse($slot->start_time)->format('H:i') }}
                                 @if($slot->end_time) – {{ \Carbon\Carbon::parse($slot->end_time)->format('H:i') }}@endif
                             </td>
+                            {{-- Kolom Minggu tidak ada di break row karena sudah di-rowspan --}}
                         </tr>
                         @else
                         <tr>
@@ -779,14 +811,82 @@
                                 $isSun      = $day === 'Minggu';
                                 $sched      = $schedules->get($sk)?->first();
                                 $book       = $bookings->get($bk)?->first();
-                                $sundayLocked = $isSun && !$book && !$sched &&
-                                    $bookings->flatten()->filter(fn($b) =>
-                                        $b->resource_id == $resource->id &&
-                                        $b->booking_date == $date &&
-                                        in_array($b->status, ['pending','approved'])
-                                    )->isNotEmpty();
+
+                                $nonBreakSlots   = $timeSlots->where('is_break', false)->values();
+                                $isFirstNonBreak = $nonBreakSlots->first()?->id === $slot->id;
+                                $sunRowspan      = $timeSlots->count(); // semua slot termasuk break
+                                $sunKey          = $resource->id . '_' . $date;
+                                $sunBook         = $sundayBookings->get($sunKey)?->first();
                             @endphp
-                            <td class="slot-td {{ $isToday ? 'td-today' : '' }} {{ $isSun ? 'td-sun' : '' }}">
+
+                            @if($isSun)
+                                @if($isFirstNonBreak)
+                                <td class="slot-td td-sun" rowspan="{{ $sunRowspan }}" style="vertical-align:top;padding:6px;height:100%;">
+                                    @if($sunBook && $sunBook->status === 'approved')
+                                       <div class="sc sc-approved" style="cursor:pointer;min-height:80px;display:flex;flex-direction:column;justify-content:flex-start;align-items:flex-start;"
+                                            onclick="showDetail({
+                                                type:'approved',
+                                                teacher:'{{ addslashes($sunBook->teacher_name) }}',
+                                                class_name:'{{ addslashes($sunBook->class_name ?? '') }}',
+                                                subject:'{{ addslashes($sunBook->subject_name ?? '') }}',
+                                                slot:'Seharian',
+                                                time:'07:00–12:45',
+                                                day:'Minggu',
+                                                date:'{{ \Carbon\Carbon::parse($date)->translatedFormat('d M Y') }}',
+                                                lab:'{{ addslashes($resource->name) }}',
+                                                phone:'{{ addslashes($sunBook->teacher_phone ?? '') }}',
+                                                title:'{{ addslashes($sunBook->title ?? '') }}',
+                                                desc:'{{ addslashes($sunBook->description ?? '') }}',
+                                                participants:'{{ $sunBook->participant_count ?? '' }}'
+                                            })">
+                                            <div class="sc-name">{{ $sunBook->teacher_name }}</div>
+                                            <div class="sc-class">{{ $sunBook->class_name }}</div>
+                                            @if($sunBook->subject_name)<div class="sc-subject">{{ $sunBook->subject_name }}</div>@endif
+                                            <div class="sc-status">✓ Disetujui · Seharian</div>
+                                        </div>
+
+                                    @elseif($sunBook && $sunBook->status === 'pending')
+                                        <div class="sc sc-pending" style="cursor:pointer;min-height:80px;display:flex;flex-direction:column;justify-content:flex-start;align-items:flex-start;"
+                                            onclick="showDetail({
+                                                type:'pending',
+                                                teacher:'{{ addslashes($sunBook->teacher_name) }}',
+                                                class_name:'{{ addslashes($sunBook->class_name ?? '') }}',
+                                                subject:'{{ addslashes($sunBook->subject_name ?? '') }}',
+                                                slot:'Seharian',
+                                                time:'07:00–12:45',
+                                                day:'Minggu',
+                                                date:'{{ \Carbon\Carbon::parse($date)->translatedFormat('d M Y') }}',
+                                                lab:'{{ addslashes($resource->name) }}',
+                                                phone:'{{ addslashes($sunBook->teacher_phone ?? '') }}',
+                                                title:'{{ addslashes($sunBook->title ?? '') }}',
+                                                desc:'{{ addslashes($sunBook->description ?? '') }}',
+                                                participants:'{{ $sunBook->participant_count ?? '' }}'
+                                            })">
+                                            <div class="sc-name">{{ $sunBook->teacher_name }}</div>
+                                            <div class="sc-class">{{ $sunBook->class_name }}</div>
+                                            <div class="sc-status">⏳ Pending · Seharian</div>
+                                        </div>
+
+                                    @elseif($isPast)
+                                        <div class="slot-past" style="padding:30px 0;">Lewat</div>
+
+                                    @else
+                                        <button class="bk-btn bk-btn-sun" style="height:100%;min-height:400px;width:100%;box-sizing:border-box;"
+                                            onclick="openSundayBooking({{ $resource->id }},'{{ addslashes($resource->name) }}','{{ $date }}')">
+                                            <svg class="bk-icon" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                                            </svg>
+                                            <span class="bk-text">Booking</span>
+                                            <span style="font-size:9px;color:#fca5a5;margin-top:2px">Seharian</span>
+                                        </button>
+                                    @endif
+                                </td>
+                                @endif
+                                {{-- Baris Minggu lainnya dilewati karena pakai rowspan --}}
+
+                            @else
+                            {{-- ─── HARI BIASA ─── --}}
+                            <td class="slot-td {{ $isToday ? 'td-today' : '' }}">
 
                                 @if($sched)
                                     <div class="sc sc-tetap" style="cursor:pointer" onclick="showDetail({
@@ -799,10 +899,7 @@
                                         day:'{{ $day }}',
                                         date:'{{ \Carbon\Carbon::parse($date)->translatedFormat('d M Y') }}',
                                         lab:'{{ addslashes($resource->name) }}',
-                                        phone:'',
-                                        title:'',
-                                        desc:'',
-                                        participants:''
+                                        phone:'',title:'',desc:'',participants:''
                                     })">
                                         <div class="sc-name">{{ $sched->teacher_name }}</div>
                                         <div class="sc-class">{{ $sched->labClass?->name ?? '-' }}</div>
@@ -854,12 +951,6 @@
                                 @elseif($isPast || $isSlotPast)
                                     <div class="slot-past">Lewat</div>
 
-                                @elseif($sundayLocked)
-                                    <div class="slot-locked">
-                                        <div style="font-size:13px">🔒</div>
-                                        <div style="font-size:10px;color:#dc2626;font-weight:600;margin-top:2px">Minggu 1x</div>
-                                    </div>
-
                                 @else
                                 @php
                                     $bookedSlotIds = $bookings->flatten()->filter(fn($b) =>
@@ -873,7 +964,7 @@
                                     )->pluck('id')->toArray();
                                     $takenSlotIds = array_unique(array_merge($bookedSlotIds, $scheduledSlotIds));
                                 @endphp
-                                    <button class="bk-btn {{ $isSun ? 'bk-btn-sun' : '' }}"
+                                    <button class="bk-btn"
                                         onclick="openBooking({{ $resource->id }},'{{ addslashes($resource->name) }}',{{ $slot->id }},'{{ $slot->name }}','{{ \Carbon\Carbon::parse($slot->start_time)->format('H:i') }}{{ $slot->end_time ? '–'.\Carbon\Carbon::parse($slot->end_time)->format('H:i') : '' }}','{{ $dayEn }}','{{ $day }}','{{ $date }}',{{ json_encode($takenSlotIds) }})">
                                         <svg class="bk-icon" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
@@ -882,6 +973,8 @@
                                     </button>
                                 @endif
                             </td>
+                            @endif
+
                             @endforeach
                         </tr>
                         @endif
@@ -912,6 +1005,100 @@
             </div>
         </div>
         <div class="detail-body" id="detail-body"></div>
+    </div>
+</div>
+
+{{-- ═══ MODAL SUNDAY BOOKING ═══ --}}
+<div class="modal-overlay" id="sunday-modal-overlay" onclick="if(event.target===this)closeSundayModal()">
+    <div class="modal-box" id="sunday-modal-box">
+        <div class="modal-head">
+            <div class="modal-head-top">
+                <div>
+                    <p class="modal-eyebrow">📅 Booking Hari Minggu</p>
+                    <h2 class="modal-title">Booking Seharian</h2>
+                </div>
+                <button class="modal-close" onclick="closeSundayModal()">
+                    <svg width="19" height="19" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-badges">
+                <span class="badge" id="sb-lab">🖥 -</span>
+                <span class="badge" id="sb-date">📅 -</span>
+                <span class="badge" style="background:rgba(248,113,113,.15);color:#fca5a5;border-color:rgba(248,113,113,.3)">🕐 Seharian · 07:00–12:45</span>
+            </div>
+        </div>
+
+        <form method="POST" action="{{ route('sunday.booking.store') }}" class="modal-body">
+            @csrf
+            <input type="hidden" name="resource_id"  id="sb_rid">
+            <input type="hidden" name="booking_date" id="sb_date_val">
+            <input type="hidden" name="week" value="{{ $weekStart->toDateString() }}">
+
+            <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:10px 13px;font-size:12px;color:#991b1b;font-weight:600;">
+                🔴 Booking ini akan menggunakan lab <strong>seharian penuh</strong> di hari Minggu.
+            </div>
+
+            <div class="field-row">
+                <div style="position:relative">
+                    <label class="field-label">Nama Pengajar *</label>
+                    <input name="teacher_name" id="sb_teacher_name" type="text"
+                        placeholder="Nama lengkap" class="inp" required autocomplete="off"
+                        oninput="filterTeacherSunday(this.value)">
+                    <div id="sb_teacher_sug" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid #ACC8A2;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.1);z-index:999;max-height:180px;overflow-y:auto"></div>
+                </div>
+                <div>
+                    <label class="field-label">Nomor HP *</label>
+                    <input name="teacher_phone" id="sb_teacher_phone" type="text"
+                        placeholder="08xxxxxxxxxx" class="inp" required>
+                </div>
+            </div>
+
+            <div>
+                <label class="field-label">Unit Sekolah *</label>
+                <select name="organization_id" id="sb_org" class="inp" required
+                    onchange="loadKelasSunday(this.value)" style="appearance:auto">
+                    <option value="">— Pilih unit sekolah —</option>
+                    @foreach($organizations as $org)
+                    <option value="{{ $org->id }}">{{ $org->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div>
+                <label class="field-label">Kelas *</label>
+                <select name="class_id" id="sb_class" class="inp" required disabled style="appearance:auto">
+                    <option value="">— Pilih unit sekolah dulu —</option>
+                </select>
+            </div>
+
+            <div class="field-row">
+                <div>
+                    <label class="field-label">Mata Pelajaran *</label>
+                    <input name="subject_name" type="text" placeholder="Contoh: TIK" class="inp" required>
+                </div>
+                <div>
+                    <label class="field-label">Jumlah Peserta *</label>
+                    <input name="participant_count" type="number" min="1" placeholder="0" class="inp" required>
+                </div>
+            </div>
+
+            <div>
+                <label class="field-label">Judul Kegiatan *</label>
+                <input name="title" type="text" placeholder="Contoh: Latihan KIR" class="inp" required>
+            </div>
+
+            <div>
+                <label class="field-label">Keterangan</label>
+                <input name="description" type="text" placeholder="Opsional" class="inp">
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" onclick="closeSundayModal()" class="btn-cancel">Batal</button>
+                <button type="submit" class="btn-submit">✓ Ajukan Booking Minggu</button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -964,7 +1151,6 @@
                 </div>
             </div>
             <script>
-            const TEACHERS = @json($teachers);
             function filterTeacher(val) {
                 const box = document.getElementById('teacher_suggestions');
                 if (!val || val.length < 2) { box.style.display = 'none'; return; }
@@ -1039,6 +1225,7 @@
 
 <script>
 const ALL_SLOTS = @json($timeSlots->where('is_break', false)->values());
+const TEACHERS  = @json($teachers); // ← tambah di sini
 
 function switchTab(id) {
     document.querySelectorAll('.lab-panel').forEach(p => p.style.display = 'none');
@@ -1214,7 +1401,7 @@ function closeDetail() {
     }, 160);
 }
 
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); closeDetail(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); closeDetail(); closeSundayModal(); } });
 
 // ─── AJAX WEEK NAVIGATION ─────────────────────────────
 let currentActiveTabId = null;
@@ -1310,6 +1497,107 @@ function loadKelas(orgId) {
 
 <div class="page-trans" id="pt"></div>
 <script>
+
+    // ─── SUNDAY BOOKING ──────────────────────────────────
+function openSundayBooking(rid, rname, date) {
+    document.getElementById('sb_rid').value      = rid;
+    document.getElementById('sb_date_val').value = date;
+    const d  = new Date(date + 'T00:00:00');
+    const mn = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+    document.getElementById('sb-lab').textContent  = '🖥 ' + rname;
+    document.getElementById('sb-date').textContent = '📅 Minggu, ' + d.getDate() + ' ' + mn[d.getMonth()] + ' ' + d.getFullYear();
+    // Reset form
+    document.getElementById('sb_teacher_name').value  = '';
+    document.getElementById('sb_teacher_phone').value = '';
+    document.getElementById('sb_org').value = '';
+    document.getElementById('sb_class').innerHTML = '<option value="">— Pilih unit sekolah dulu —</option>';
+    document.getElementById('sb_class').disabled  = true;
+    document.getElementById('sunday-modal-overlay').classList.add('show');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeSundayModal() {
+    const overlay = document.getElementById('sunday-modal-overlay');
+    const box     = document.getElementById('sunday-modal-box');
+    box.style.transition = 'opacity .16s, transform .16s';
+    box.style.opacity    = '0';
+    box.style.transform  = 'translateY(10px) scale(.97)';
+    setTimeout(() => {
+        overlay.classList.remove('show');
+        box.style.transition = box.style.opacity = box.style.transform = '';
+        document.body.style.overflow = '';
+    }, 160);
+}
+
+function filterTeacherSunday(val) {
+    const box = document.getElementById('sb_teacher_sug');
+    if (!val || val.length < 2) { box.style.display = 'none'; return; }
+    const filtered = TEACHERS.filter(t => t.name.toLowerCase().includes(val.toLowerCase()));
+    if (!filtered.length) { box.style.display = 'none'; return; }
+    box.innerHTML = filtered.map(t => `
+        <div onclick="selectTeacherSunday('${t.name}','${t.phone ?? ''}')"
+            style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center"
+            onmouseover="this.style.background='#f0f7ee'" onmouseout="this.style.background=''">
+            <span style="font-weight:600;color:#1A2517">${t.name}</span>
+            <span style="font-size:11px;color:#9ca3af">${t.phone ?? ''}</span>
+        </div>`).join('');
+    box.style.display = 'block';
+}
+
+function selectTeacherSunday(name, phone) {
+    document.getElementById('sb_teacher_name').value  = name;
+    document.getElementById('sb_teacher_phone').value = phone;
+    document.getElementById('sb_teacher_sug').style.display = 'none';
+}
+
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('#sb_teacher_name') && !e.target.closest('#sb_teacher_sug'))
+        document.getElementById('sb_teacher_sug').style.display = 'none';
+});
+
+function loadKelasSunday(orgId) {
+    const sel = document.getElementById('sb_class');
+    if (!orgId) { sel.innerHTML = '<option value="">— Pilih unit sekolah dulu —</option>'; sel.disabled = true; return; }
+    sel.innerHTML = '<option value="">Memuat...</option>';
+    sel.disabled  = true;
+    fetch('/kelas?organization_id=' + orgId)
+        .then(r => r.json())
+        .then(data => {
+            sel.innerHTML = '<option value="">— Pilih kelas —</option>';
+            data.forEach(c => { sel.innerHTML += `<option value="${c.id}">${c.name}</option>`; });
+            sel.disabled = false;
+        })
+        .catch(() => { sel.innerHTML = '<option value="">Gagal memuat</option>'; });
+}
+    // ─── DOUBLE SUBMIT PREVENTION ────────────────────────
+document.querySelectorAll('form').forEach(form => {
+    form.addEventListener('submit', function(e) {
+        const btn = this.querySelector('.btn-submit');
+        if (!btn) return;
+
+        // Kalau sudah loading, block submit
+        if (btn.dataset.loading === 'true') {
+            e.preventDefault();
+            return;
+        }
+
+        // Set loading state
+        btn.dataset.loading = 'true';
+        btn.disabled = true;
+        btn.style.opacity = '.7';
+        btn.style.cursor = 'not-allowed';
+        btn.textContent = '⏳ Memproses...';
+
+        // Safety fallback — enable kembali setelah 10 detik
+        setTimeout(() => {
+            btn.dataset.loading = 'false';
+            btn.disabled = false;
+            btn.style.opacity = '';
+            btn.style.cursor = '';
+            btn.textContent = '✓ Ajukan Booking';
+        }, 10000);
+    });
+});
 // SPA-like page transition
 document.querySelectorAll('a.pub-link, a.pub-btn, a.pub-brand').forEach(a => {
     const href = a.getAttribute('href');
@@ -1332,6 +1620,5 @@ window.addEventListener('pageshow', () => {
     document.getElementById('pt').classList.remove('go');
 });
 </script>
-
 </body>
 </html>

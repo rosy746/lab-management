@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Booking;
 use App\Models\Resource;
+use App\Models\SundayBooking;
 use Carbon\Carbon;
 
 class BookingController extends Controller
@@ -41,7 +42,26 @@ class BookingController extends Controller
             });
         }
 
-        $bookings  = $query->paginate(15)->withQueryString();
+        $bookings  = $query->paginate(15, ['*'], 'bookings_page')->withQueryString();
+
+        // Sunday Bookings Data
+        $sunQuery = SundayBooking::with(['resource', 'organization'])
+            ->orderByRaw("FIELD(status, 'pending', 'approved', 'rejected')")
+            ->orderBy('created_at', 'desc');
+            
+        if ($allowed !== null) $sunQuery->whereIn('resource_id', $allowed);
+        if ($request->status && $request->status !== 'all') $sunQuery->where('status', $request->status);
+        if ($request->resource_id) $sunQuery->where('resource_id', $request->resource_id);
+        if ($request->date) $sunQuery->where('booking_date', $request->date);
+        if ($request->search) {
+            $sunQuery->where(function($q) use ($request) {
+                $q->where('teacher_name', 'like', '%'.$request->search.'%')
+                  ->orWhere('class_name', 'like', '%'.$request->search.'%')
+                  ->orWhere('title', 'like', '%'.$request->search.'%');
+            });
+        }
+        
+        $sundayBookings = $sunQuery->paginate(10, ['*'], 'sunday_page')->withQueryString();
 
         $resQuery = Resource::where('status', 'active')->orderBy('name');
         if ($allowed !== null) $resQuery->whereIn('id', $allowed);
@@ -56,7 +76,7 @@ class BookingController extends Controller
             'total'    => (clone $statsQuery)->count(),
         ];
 
-        return view('booking.index', compact('bookings', 'resources', 'stats'));
+        return view('booking.index', compact('bookings', 'sundayBookings', 'resources', 'stats'));
     }
 
     public function show(Booking $booking)
@@ -141,11 +161,16 @@ class BookingController extends Controller
         return back()->with('success', 'Booking "'.$booking->title.'" berhasil disetujui.');
     }
 
-    public function reject(Request $request, Booking $booking)
+    public function reject(Request $request, $id)
     {
-        if (!$this->checkResourceAccess($booking)) {
-            return back()->with('error', 'Anda tidak memiliki akses ke lab ini.');
+        $type = $request->input('type', 'regular');
+        
+        if ($type === 'sunday') {
+            $booking = SundayBooking::findOrFail($id);
+        } else {
+            $booking = Booking::findOrFail($id);
         }
+
         if ($booking->status !== 'pending') {
             return back()->with('error', 'Booking ini sudah diproses sebelumnya.');
         }
@@ -171,5 +196,30 @@ class BookingController extends Controller
         $title = $booking->title;
         $booking->delete();
         return back()->with('success', 'Booking "'.$title.'" berhasil dihapus.');
+    }
+
+    public function destroySunday($id)
+    {
+        $booking = SundayBooking::findOrFail($id);
+        $title = $booking->title;
+        $booking->delete();
+        return back()->with('success', 'Booking Minggu "'.$title.'" berhasil dihapus.');
+    }
+
+    public function approveSunday(Request $request, $id)
+    {
+        $booking = SundayBooking::findOrFail($id);
+        if ($booking->status !== 'pending') {
+            return back()->with('error', 'Booking ini sudah diproses sebelumnya.');
+        }
+
+        $booking->update([
+            'status'      => 'approved',
+            'approved_by' => auth()->id(),
+            'approved_at' => now(),
+            'notes'       => $request->notes,
+        ]);
+
+        return back()->with('success', 'Booking Minggu "'.$booking->title.'" berhasil disetujui.');
     }
 }

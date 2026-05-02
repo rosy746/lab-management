@@ -28,8 +28,14 @@
 tr:hover .row-actions { opacity:1; }
 .sticky-thead th { position:sticky;top:0;z-index:10;background:#f8faf7;box-shadow:inset 0 -1.5px 0 #e8f0e6; }
 .search-container { flex:1;min-width:240px;position:relative; }
-.search-clear { position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:#9ca3af;display:none; }
-.filter-inp:not(:placeholder-shown) + .search-clear { display:block; }
+.search-clear {
+    position:absolute;right:10px;top:50%;transform:translateY(-50%);
+    width:22px;height:22px;display:flex;align-items:center;justify-content:center;
+    background:#e5e7eb;color:#6b7280;border-radius:50%;font-size:14px;
+    cursor:pointer;opacity:0;transition:all .2s;z-index:2;
+}
+.search-container:hover .search-clear { opacity:1; }
+.search-clear:hover { background:#d1d5db;color:var(--g9); }
 .modal-overlay { display:none;position:fixed;inset:0;z-index:100;background:rgba(26,37,23,.6);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:1rem;transition:all .3s; }
 .modal-overlay.open { display:flex; }
 .modal-box { background:#fff;border-radius:16px;width:100%;max-width:560px;max-height:92vh;overflow-y:auto;animation:su .2s cubic-bezier(.16,1,.3,1); }
@@ -69,7 +75,9 @@ tr:hover .row-actions { opacity:1; }
     <form method="GET" action="{{ route('inventory.admin') }}" style="display:flex;flex-wrap:wrap;gap:10px;flex:1;align-items:center">
         <div class="search-container">
             <input type="text" name="search" value="{{ request('search') }}" placeholder="🔍 Cari nama, merk, spesifikasi..." class="filter-inp" style="width:100%" id="inv-search">
-            <span class="search-clear" onclick="document.getElementById('inv-search').value='';this.form.submit()">×</span>
+            @if(request('search'))
+            <span class="search-clear" onclick="document.getElementById('inv-search').value='';this.closest('form').submit()">×</span>
+            @endif
         </div>
         <select name="resource_id" class="filter-inp">
             <option value="">Semua Lab</option>
@@ -125,6 +133,7 @@ tr:hover .row-actions { opacity:1; }
                     <th style="padding:10px 12px;text-align:center;font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.08em">Total</th>
                     <th style="padding:10px 12px;text-align:center;font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.08em">Baik</th>
                     <th style="padding:10px 12px;text-align:center;font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.08em">Rusak</th>
+                    <th style="padding:10px 12px;text-align:center;font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.08em">Cadangan</th>
                     <th style="padding:10px 16px;text-align:center;font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.08em">Kondisi</th>
                     <th style="padding:10px 16px;text-align:center;font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.08em">Aksi</th>
                 </tr>
@@ -151,6 +160,7 @@ tr:hover .row-actions { opacity:1; }
                     <td style="padding:12px;text-align:center;font-weight:800;font-family:Outfit,sans-serif;color:#1A2517">{{ $item->quantity }}</td>
                     <td style="padding:12px;text-align:center;font-weight:700;color:#16a34a">{{ $item->quantity_good }}</td>
                     <td style="padding:12px;text-align:center;font-weight:700;color:{{ $item->quantity_broken > 0 ? '#dc2626' : '#9ca3af' }}">{{ $item->quantity_broken }}</td>
+                    <td style="padding:12px;text-align:center;font-weight:700;color:#0369a1">{{ $item->quantity_backup }}</td>
                     <td style="padding:12px 16px;text-align:center">
                         <span class="badge-cat cond-{{ $item->condition }}">{{ $conditions[$item->condition] ?? $item->condition }}</span>
                     </td>

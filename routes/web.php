@@ -17,6 +17,7 @@ use App\Http\Controllers\LabClassController;
 // ═══ PUBLIK ═══
 Route::get('/', [ScheduleController::class, 'index'])->name('home');
 Route::post('/booking', [ScheduleController::class, 'storeBooking'])->name('booking.store')->middleware('throttle:10,1');
+Route::post('/booking-minggu', [ScheduleController::class, 'storeSundayBooking'])->name('sunday.booking.store')->middleware('throttle:10,1'); // ← tambah di sini
 Route::get('/kelas', [ScheduleController::class, 'getClasses'])->name('classes.list')->middleware('throttle:30,1');
 Route::get('/inventaris', [InventoryPublicController::class, 'index'])->name('inventory.public');
 Route::get('/rekap', [RekapPublicController::class, 'index'])->name('rekap.public');
@@ -37,6 +38,13 @@ Route::get('/tugas/{assignment}/download-attachment', [AssignmentAdminController
 // Token guru (publik)
 Route::post('/guru/verify-token', [TeacherController::class, 'verifyToken'])->name('teacher.verify');
 
+// Fonnte webhook proxy → bot Python
+Route::any('/fonnte-webhook', function(\Illuminate\Http\Request $request) {
+    $response = \Illuminate\Support\Facades\Http::timeout(10)
+        ->post(env('BOT_URL', 'http://170.1.0.9:5000') . '/api/webhook/fonnte', $request->all());
+    return response()->json($response->json());
+})->middleware('throttle:60,1');
+
 // Lab control (publik, akses via link token)
 Route::prefix('lab-control')->name('lab.')->group(function () {
     Route::get('/{token}', [LabControlController::class, 'control'])->name('control');
@@ -48,7 +56,7 @@ Route::prefix('lab-control')->name('lab.')->group(function () {
 // ═══ GUEST ═══
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:20,1');
 });
 
 // ═══ AUTH ═══
@@ -60,11 +68,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/procurement', fn() => view('dashboard'))->name('procurement.index');
 
     // Booking
+    Route::patch('/booking/sunday/{id}/approve', [BookingController::class, 'approveSunday'])->name('booking.approve.sunday');
+    Route::delete('/booking/sunday/{id}', [BookingController::class, 'destroySunday'])->name('booking.destroy.sunday');
     Route::get('/booking', [BookingController::class, 'index'])->name('booking.index');
     Route::get('/booking/{booking}', [BookingController::class, 'show'])->name('booking.show');
     Route::patch('/booking/{booking}/approve', [BookingController::class, 'approve'])->name('booking.approve');
     Route::post('/booking/approve-group', [BookingController::class, 'approveGroup'])->name('booking.approve.group');
-    Route::patch('/booking/{booking}/reject', [BookingController::class, 'reject'])->name('booking.reject');
+    Route::patch('/booking/{id}/reject', [BookingController::class, 'reject'])->name('booking.reject');
     Route::delete('/booking/{booking}', [BookingController::class, 'destroy'])->name('booking.destroy');
 
     // Jadwal admin
