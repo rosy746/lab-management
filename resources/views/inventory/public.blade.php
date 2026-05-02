@@ -37,39 +37,20 @@
         .anim-body   { animation: fadeUp .5s .2s  cubic-bezier(.16,1,.3,1) both; }
 
         /* ─── NAVBAR ────────────────────────── */
-        .navbar {
-            position: sticky; top: 0; z-index: 100;
-            background: linear-gradient(135deg, var(--g9), var(--g8));
-            box-shadow: 0 2px 16px rgba(0,0,0,.3);
-        }
-        .navbar-inner {
-            max-width: 1280px; margin: auto; padding: 0 1.5rem;
-            display: flex; align-items: center; justify-content: space-between; height: 60px;
-        }
-        .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-        .brand-icon {
-            width: 34px; height: 34px; border-radius: 9px;
-            background: rgba(172,200,162,.15); border: 1.5px solid rgba(172,200,162,.25);
-            display: flex; align-items: center; justify-content: center;
-            transition: background .18s;
-        }
-        .brand-icon:hover { background: rgba(172,200,162,.25); }
-        .brand-name { font-family: 'Outfit', sans-serif; font-weight: 700; color: #fff; font-size: 15px; line-height: 1.2; }
-        .brand-sub  { font-size: 11px; color: rgba(172,200,162,.5); }
-        .nav-actions { display: flex; align-items: center; gap: 6px; }
-        .nav-link {
-            font-size: 13px; font-weight: 600; color: rgba(172,200,162,.6);
-            text-decoration: none; padding: 6px 12px; border-radius: 8px;
-            transition: color .15s, background .15s;
-        }
-        .nav-link:hover, .nav-link.active { color: var(--acc); background: rgba(172,200,162,.08); }
-        .nav-btn {
-            font-size: 12px; font-weight: 600; padding: 6px 14px;
-            border-radius: 9px; border: 1px solid rgba(172,200,162,.3);
-            color: var(--acc); text-decoration: none;
-            transition: background .15s, transform .15s;
-        }
-        .nav-btn:hover { background: rgba(172,200,162,.1); transform: translateY(-1px); }
+        .pub-navbar{position:sticky;top:0;z-index:100;background:linear-gradient(135deg,#1A2517,#2a3826);box-shadow:0 2px 16px rgba(0,0,0,.28);animation:navSlideDown .4s cubic-bezier(.16,1,.3,1) both}
+        .pub-inner{max-width:1280px;margin:0 auto;padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:60px}
+        .pub-brand{display:flex;align-items:center;gap:10px;text-decoration:none;flex-shrink:0}
+        .pub-brand-icon{width:34px;height:34px;border-radius:9px;background:rgba(172,200,162,.12);border:1.5px solid rgba(172,200,162,.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .18s}
+        .pub-brand-icon:hover{background:rgba(172,200,162,.22)}
+        .pub-brand-name{font-family:'Outfit',sans-serif;font-weight:700;font-size:15px;color:#fff;line-height:1.2}
+        .pub-brand-sub{font-size:10px;color:rgba(172,200,162,.4)}
+        .pub-links{display:flex;align-items:center;gap:4px}
+        .pub-link{font-size:13px;font-weight:600;color:rgba(172,200,162,.55);text-decoration:none;padding:7px 13px;border-radius:8px;transition:color .15s,background .15s;white-space:nowrap}
+        .pub-link:hover,.pub-link.on{color:#ACC8A2;background:rgba(172,200,162,.1)}
+        .pub-btn{font-size:12px;font-weight:700;padding:7px 15px;border-radius:8px;color:#ACC8A2;border:1.5px solid rgba(172,200,162,.3);text-decoration:none;margin-left:6px;transition:background .15s,transform .15s;white-space:nowrap}
+        .pub-btn:hover{background:rgba(172,200,162,.08);transform:translateY(-1px)}
+        @keyframes navSlideDown{from{transform:translateY(-64px);opacity:0}to{transform:none;opacity:1}}
+        @media(max-width:600px){.pub-inner{padding:0 1rem}.pub-brand-sub{display:none}.pub-link{padding:6px 9px;font-size:12px}.pub-btn{padding:6px 11px;font-size:12px;margin-left:3px}}
 
         /* ─── HERO ──────────────────────────── */
         .hero {
@@ -138,7 +119,7 @@
         }
         .view-btn.active { background: var(--white); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.1); }
 
-        .export-group { display: flex; gap: 5px; margin-left: auto; }
+        .export-group { display: flex; gap: 5px; margin-left: auto; position: relative; }
         .btn-export {
             display: inline-flex; align-items: center; gap: 5px;
             font-size: 12px; font-weight: 700; padding: 7px 12px;
@@ -147,15 +128,11 @@
             transition: transform .15s, filter .15s;
         }
         .btn-export:hover { transform: translateY(-1px); filter: brightness(1.08); }
-        .btn-excel { background: #16a34a; color: #fff; }
+        .btn-excel { background: #16a34a; color: #fff; position: relative; }
         .btn-pdf   { background: #dc2626; color: #fff; }
         .btn-print { background: var(--g9); color: var(--acc); }
 
-<<<<<<< Updated upstream
-        /* ─── TABS ──────────────────────────── */
-        .tab-bar {
-=======
-        /* Dropdown Styles */
+        /* ─── DROPDOWN ──────────────────────── */
         .dropdown { position: relative; display: inline-block; }
         .dropdown-content {
             display: none; position: absolute; right: 0; top: 100%;
@@ -180,8 +157,8 @@
             background: #f8faf7; border-bottom: 1px solid var(--border);
         }
 
-       .tab-bar {
->>>>>>> Stashed changes
+        /* ─── TABS ──────────────────────────── */
+        .tab-bar {
             display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 14px;
             animation: fadeUp .5s .3s both;
             position: relative; z-index: 1;
@@ -281,14 +258,6 @@
 
         /* ─── HIGHLIGHT ─────────────────────── */
         mark.search-match { background: #fef08a; color: #854d0e; padding: 0 2px; border-radius: 2px; box-shadow: 0 0 0 1px #fde047; }
-        
-        /* ─── COUNTDOWN ─────────────────────── */
-        .cd-unit { display: inline-flex; flex-direction: column; align-items: center; background: rgba(255,255,255,0.1); padding: 4px 6px; border-radius: 6px; min-width: 32px; }
-        .cd-val { font-size: 11px; font-weight: 800; line-height: 1; }
-        .cd-lbl { font-size: 7px; text-transform: uppercase; margin-top: 2px; opacity: 0.7; }
-
-        /* ─── CATEGORY ICONS ────────────────── */
-        .cat-icon { width: 16px; height: 16px; margin-right: 6px; vertical-align: middle; opacity: .7; }
 
         /* ─── CARD VIEW ─────────────────────── */
         .cards-grid {
@@ -342,12 +311,47 @@
         /* ─── EMPTY ─────────────────────────── */
         .empty-row td { text-align: center; padding: 48px; color: var(--muted); font-size: 14px; }
 
+        .empty-state {
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; padding: 48px 24px; text-align: center;
+        }
+        .empty-icon { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+        .empty-icon.no-data   { background: #f0f4ee; }
+        .empty-icon.no-result { background: #fef3c7; }
+        .empty-title { font-size: 15px; font-weight: 700; color: var(--text); margin: 0 0 6px; }
+        .empty-desc  { font-size: 13px; color: var(--sub); margin: 0 0 20px; max-width: 280px; line-height: 1.6; }
+        .btn-group   { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+        .empty-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 12px; font-weight: 600; padding: 8px 16px;
+            border-radius: 9px; border: 1.5px solid var(--border);
+            background: var(--white); color: var(--text);
+            cursor: pointer; text-decoration: none; transition: background .15s;
+        }
+        .empty-btn.primary { background: var(--g9); color: var(--acc); border-color: transparent; }
+        .empty-btn.primary:hover { background: var(--g8); }
+
+        /* ─── TOAST ─────────────────────────── */
+        .toast {
+            position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+            background: var(--g9); color: var(--acc);
+            padding: 10px 16px; border-radius: 10px;
+            font-size: 13px; font-weight: 600;
+            border: 1px solid rgba(172,200,162,.2);
+            box-shadow: 0 4px 20px rgba(0,0,0,.2);
+            display: flex; align-items: center; gap: 8px;
+            transform: translateY(80px); opacity: 0;
+            transition: transform .3s cubic-bezier(.16,1,.3,1), opacity .3s;
+            pointer-events: none;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+
         /* ─── FOOTER ────────────────────────── */
         footer { text-align: center; padding: 18px; font-size: 12px; color: var(--muted); }
 
         /* ─── PRINT ─────────────────────────── */
         @media print {
-            .navbar, .toolbar, .tab-bar, .export-group, .view-toggle, .skeleton-wrap { display: none !important; }
+            .pub-navbar, .toolbar, .tab-bar, .export-group, .view-toggle, .skeleton-wrap, .toast { display: none !important; }
             .lab-panel { display: block !important; }
             .panel-header { background: var(--g9) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             body { background: #fff; }
@@ -358,7 +362,7 @@
         @media (max-width: 768px) {
             .export-group { margin-left: 0; }
             .inv-table th:nth-child(5), .inv-table td:nth-child(5) { display: none; }
-            .brand-sub { display: none; }
+            .pub-brand-sub { display: none; }
         }
         @media (max-width: 480px) {
             .hero { padding: 1.5rem 1rem 2.5rem; }
@@ -370,57 +374,7 @@
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
         }
-    
-    .pub-navbar{position:sticky;top:0;z-index:100;background:linear-gradient(135deg,#1A2517,#2a3826);box-shadow:0 2px 16px rgba(0,0,0,.28);animation:navSlideDown .4s cubic-bezier(.16,1,.3,1) both}
-    .pub-inner{max-width:1280px;margin:0 auto;padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:60px}
-    .pub-brand{display:flex;align-items:center;gap:10px;text-decoration:none;flex-shrink:0}
-    .pub-brand-icon{width:34px;height:34px;border-radius:9px;background:rgba(172,200,162,.12);border:1.5px solid rgba(172,200,162,.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .18s}
-    .pub-brand-icon:hover{background:rgba(172,200,162,.22)}
-    .pub-brand-name{font-family:'Outfit',sans-serif;font-weight:700;font-size:15px;color:#fff;line-height:1.2}
-    .pub-brand-sub{font-size:10px;color:rgba(172,200,162,.4)}
-    .pub-links{display:flex;align-items:center;gap:4px}
-    .pub-link{font-size:13px;font-weight:600;color:rgba(172,200,162,.55);text-decoration:none;padding:7px 13px;border-radius:8px;transition:color .15s,background .15s;white-space:nowrap}
-    .pub-link:hover,.pub-link.on{color:#ACC8A2;background:rgba(172,200,162,.1)}
-    .pub-btn{font-size:12px;font-weight:700;padding:7px 15px;border-radius:8px;color:#ACC8A2;border:1.5px solid rgba(172,200,162,.3);text-decoration:none;margin-left:6px;transition:background .15s,transform .15s;white-space:nowrap}
-    .pub-btn:hover{background:rgba(172,200,162,.08);transform:translateY(-1px)}
-    @keyframes navSlideDown{from{transform:translateY(-64px);opacity:0}to{transform:none;opacity:1}}
-    @media(max-width:600px){.pub-inner{padding:0 1rem}.pub-brand-sub{display:none}.pub-link{padding:6px 9px;font-size:12px}.pub-btn{padding:6px 11px;font-size:12px;margin-left:3px}}
-
-    .empty-state {
-        display: flex; flex-direction: column; align-items: center;
-        justify-content: center; padding: 48px 24px; text-align: center;
-    }
-    .empty-icon { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
-    .empty-icon.no-data   { background: #f0f4ee; }
-    .empty-icon.no-result { background: #fef3c7; }
-    .empty-title { font-size: 15px; font-weight: 700; color: var(--text); margin: 0 0 6px; }
-    .empty-desc  { font-size: 13px; color: var(--sub); margin: 0 0 20px; max-width: 280px; line-height: 1.6; }
-    .btn-group   { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
-    .empty-btn {
-        display: inline-flex; align-items: center; gap: 6px;
-        font-size: 12px; font-weight: 600; padding: 8px 16px;
-        border-radius: 9px; border: 1.5px solid var(--border);
-        background: var(--white); color: var(--text);
-        cursor: pointer; text-decoration: none; transition: background .15s;
-    }
-    .empty-btn.primary { background: var(--g9); color: var(--acc); border-color: transparent; }
-    .empty-btn.primary:hover { background: var(--g8); }
-
-    /* ─── TOAST ─────────────────────────── */
-    .toast {
-        position: fixed; bottom: 24px; right: 24px; z-index: 9999;
-        background: var(--g9); color: var(--acc);
-        padding: 10px 16px; border-radius: 10px;
-        font-size: 13px; font-weight: 600;
-        border: 1px solid rgba(172,200,162,.2);
-        box-shadow: 0 4px 20px rgba(0,0,0,.2);
-        display: flex; align-items: center; gap: 8px;
-        transform: translateY(80px); opacity: 0;
-        transition: transform .3s cubic-bezier(.16,1,.3,1), opacity .3s;
-        pointer-events: none;
-    }
-    .toast.show { transform: translateY(0); opacity: 1; }
-</style>
+    </style>
 </head>
 <body>
 
@@ -505,12 +459,6 @@
             <button class="view-btn" id="btn-card"  onclick="setView('card')">⊞ Kartu</button>
         </div>
         <div class="export-group">
-<<<<<<< Updated upstream
-            <button class="btn-export btn-excel" onclick="exportExcel()">
-                <svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM8.5 17l1.5-2.5L8.5 12H10l.75 1.5L11.5 12H13l-1.5 2.5L13 17h-1.5l-.75-1.5-.75 1.5H8.5z"/></svg>
-                Excel
-            </button>
-=======
             <div class="dropdown">
                 <button class="btn-export btn-excel" onclick="toggleExcelDropdown(event)">
                     <svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM8.5 17l1.5-2.5L8.5 12H10l.75 1.5L11.5 12H13l-1.5 2.5L13 17h-1.5l-.75-1.5-.75 1.5H8.5z"/></svg>
@@ -518,11 +466,10 @@
                 </button>
                 <div id="excelDropdown" class="dropdown-content">
                     <div class="dropdown-header">Pilihan Export Excel</div>
-                    <a href="javascript:void(0)" onclick="exportExcel()">📗 Lab Yang Dipilih Saja</a>
+                    <a href="javascript:void(0)" onclick="exportExcel()">📗 Lab Aktif Saja</a>
                     <a href="javascript:void(0)" onclick="exportAllExcel()" style="color: #16a34a; font-weight: 700;">📊 Semua Lab (Multi-Sheet)</a>
                 </div>
             </div>
->>>>>>> Stashed changes
             <button class="btn-export btn-pdf" onclick="exportPDF()">
                 <svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5z"/></svg>
                 PDF
@@ -739,11 +686,9 @@ function switchLab(id, btn) {
     if (currentLab === id) return;
     currentLab = id;
 
-    // Update tab styles
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
 
-    // Show skeleton, hide panels
     document.querySelectorAll('.lab-panel').forEach(p => p.classList.remove('active'));
     document.getElementById('skeleton').style.display = 'block';
 
@@ -751,7 +696,6 @@ function switchLab(id, btn) {
         document.getElementById('skeleton').style.display = 'none';
         const panel = document.getElementById('lab-' + id);
         panel.classList.add('active');
-        // Re-trigger animation
         panel.style.animation = 'none';
         void panel.offsetWidth;
         panel.style.animation = '';
@@ -769,6 +713,19 @@ function setView(v) {
     filterTable();
 }
 
+// ─── DROPDOWN ────────────────────────────────────────────
+function toggleExcelDropdown(event) {
+    event.stopPropagation();
+    document.getElementById('excelDropdown').classList.toggle('show');
+}
+
+window.addEventListener('click', function(e) {
+    const dropdown = document.getElementById('excelDropdown');
+    if (dropdown && dropdown.classList.contains('show') && !dropdown.contains(e.target)) {
+        dropdown.classList.remove('show');
+    }
+});
+
 // ─── FILTER ──────────────────────────────────────────────
 function filterTable() {
     const search = document.getElementById('search-inp').value.toLowerCase();
@@ -777,22 +734,19 @@ function filterTable() {
     const panel  = document.querySelector('.lab-panel.active');
     if (!panel) return;
 
-    // Clear previous highlights
     panel.querySelectorAll('.search-target').forEach(el => {
         el.innerHTML = el.innerText;
     });
 
-    // Table rows
     let n = 1;
     panel.querySelectorAll('tbody tr:not(.empty-row):not(.no-result-row)').forEach(row => {
         const match = (!search || row.dataset.name.includes(search) || row.dataset.brand.includes(search) || row.dataset.specs.includes(search))
                    && (!cat   || row.dataset.category  === cat)
                    && (!cond  || row.dataset.condition === cond);
         row.style.display = match ? '' : 'none';
-        
+
         if (match) {
             row.querySelector('.no-col').textContent = n++;
-            // Apply highlighting if search exists
             if (search && search.length > 1) {
                 row.querySelectorAll('.search-target').forEach(el => {
                     const text = el.innerText;
@@ -803,7 +757,6 @@ function filterTable() {
         }
     });
 
-    // Cards
     panel.querySelectorAll('.inv-card').forEach(card => {
         const match = (!search || card.dataset.name.includes(search) || card.dataset.brand.includes(search) || card.dataset.specs.includes(search))
                    && (!cat   || card.dataset.category  === cat)
@@ -811,7 +764,6 @@ function filterTable() {
         card.style.display = match ? '' : 'none';
     });
 
-    // Deteksi hasil filter kosong
     const tbody = panel.querySelector('tbody');
     const visibleRows = [...tbody.querySelectorAll('tr:not(.empty-row):not(.no-result-row)')]
         .filter(r => r.style.display !== 'none');
@@ -866,25 +818,18 @@ function exportExcel() {
     document.querySelector('.lab-panel.active tbody').querySelectorAll('tr:not(.empty-row):not(.no-result-row)').forEach(row => {
         if (row.style.display === 'none') return;
         const c = row.querySelectorAll('td');
-        
-        // Extract clean text (exclude emojis and progress bar)
         const itemName = c[1].querySelector('.search-target')?.innerText || '';
         const category = c[2].querySelector('.badge')?.innerText || '';
         const brandDivs = c[3].querySelectorAll('.search-target');
         const brand = brandDivs[0]?.innerText || '';
         const model = brandDivs[1]?.innerText || '';
         const specs = c[4].querySelector('.search-target')?.innerText || '';
-
         rows.push([
             parseInt(c[0].textContent) || '',
-            itemName.trim(), 
-            category.trim(),
-            brand.trim(),
-            model.trim(),
-            specs.trim(),
+            itemName.trim(), category.trim(), brand.trim(), model.trim(), specs.trim(),
             parseInt(c[5].textContent)||0, parseInt(c[6].textContent)||0,
             parseInt(c[7].textContent)||0, parseInt(c[8].textContent)||0,
-            c[10].textContent.trim(), // Catatan (Kondisi di c[9] dihapus)
+            c[10].textContent.trim(),
         ]);
     });
     const wb = XLSX.utils.book_new();
@@ -897,43 +842,30 @@ function exportExcel() {
 
 function exportAllExcel() {
     const wb = XLSX.utils.book_new();
-    const panels = document.querySelectorAll('.lab-panel');
-    
-    panels.forEach(panel => {
+    document.querySelectorAll('.lab-panel').forEach(panel => {
         const labName = panel.querySelector('.panel-title').textContent.trim();
         const rows = [['No','Nama Barang','Kategori','Merk','Model','Spesifikasi','Total','Baik','Rusak','Cadangan','Catatan']];
-        
         panel.querySelectorAll('tbody tr:not(.empty-row):not(.no-result-row)').forEach((row, idx) => {
             const c = row.querySelectorAll('td');
-            
-            // Extract clean text
             const itemName = c[1].querySelector('.search-target')?.innerText || '';
             const category = c[2].querySelector('.badge')?.innerText || '';
             const brandDivs = c[3].querySelectorAll('.search-target');
             const brand = brandDivs[0]?.innerText || '';
             const model = brandDivs[1]?.innerText || '';
             const specs = c[4].querySelector('.search-target')?.innerText || '';
-
             rows.push([
-                idx + 1,
-                itemName.trim(), 
-                category.trim(),
-                brand.trim(),
-                model.trim(),
-                specs.trim(),
+                idx + 1, itemName.trim(), category.trim(), brand.trim(), model.trim(), specs.trim(),
                 parseInt(c[5].textContent)||0, parseInt(c[6].textContent)||0,
                 parseInt(c[7].textContent)||0, parseInt(c[8].textContent)||0,
-                c[10].textContent.trim(), // Catatan (Kondisi di c[9] dihapus)
+                c[10].textContent.trim(),
             ]);
         });
-        
         if (rows.length > 1) {
             const ws = XLSX.utils.aoa_to_sheet(rows);
             ws['!cols'] = [5,25,14,16,14,20,7,7,7,9,20].map(w => ({wch:w}));
             XLSX.utils.book_append_sheet(wb, ws, labName.substring(0,31));
         }
     });
-
     XLSX.writeFile(wb, `Inventaris_Semua_Lab_${new Date().toISOString().slice(0,10)}.xlsx`);
     showToast('Semua lab berhasil diunduh');
 }
@@ -960,12 +892,12 @@ function exportPDF() {
     <table><thead><tr><th>No</th><th>Nama Barang</th><th>Kategori</th><th>Merk/Model</th><th>Spesifikasi</th><th>Total</th><th>Baik</th><th>Rusak</th><th>Cadangan</th><th>Kondisi</th></tr></thead>
     <tbody>${rows.map(r=>'<tr>'+r.map(c=>'<td>'+c+'</td>').join('')+'</tr>').join('')}</tbody></table>
     <div class="footer">Total ${rows.length} jenis barang</div>
-
 </body></html>`;
     const win = window.open('','_blank');
     win.document.write(html); win.document.close(); win.focus();
-   setTimeout(() => { win.print(); showToast('PDF siap dicetak'); }, 500);
+    setTimeout(() => { win.print(); showToast('PDF siap dicetak'); }, 500);
 }
+
 // ─── AUTO CARD VIEW DI MOBILE ────────────────────────────
 if (window.innerWidth <= 768) {
     setView('card');
