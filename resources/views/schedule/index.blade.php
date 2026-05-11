@@ -66,45 +66,63 @@
             background: linear-gradient(135deg, var(--g9), var(--g8));
             box-shadow: 0 2px 16px rgba(0,0,0,.3);
             animation: slideDown .4s cubic-bezier(.16,1,.3,1) both;
+            width: 100%; overflow: hidden;
         }
         .navbar-inner {
             max-width: 1280px; margin: auto;
             padding: 0 1.5rem;
             display: flex; align-items: center; justify-content: space-between;
-            height: 60px;
+            height: 60px; gap: 10px;
         }
-        .brand { display: flex; align-items: center; gap: 10px; }
+        .brand { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
         .brand-icon {
-            width: 34px; height: 34px; border-radius: 9px;
+            width: 32px; height: 32px; border-radius: 9px;
             background: rgba(172,200,162,.15);
             display: flex; align-items: center; justify-content: center;
-            transition: background .2s;
+            transition: background .2s; flex-shrink: 0;
         }
         .brand-icon:hover { background: rgba(172,200,162,.25); }
-        .brand-name { font-family: 'Outfit', sans-serif; font-weight: 700; color: #fff; font-size: 15px; line-height: 1.2; }
-        .brand-sub  { font-size: 11px; color: rgba(172,200,162,.5); }
+        .brand-name { font-family: 'Outfit', sans-serif; font-weight: 700; color: #fff; font-size: 14px; line-height: 1.2; }
+        .brand-sub  { font-size: 10px; color: rgba(172,200,162,.5); }
 
-        .nav-actions { display: flex; align-items: center; gap: 6px; }
+        .nav-actions {
+            display: flex; align-items: center; gap: 4px;
+            overflow-x: auto; -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .nav-actions::-webkit-scrollbar { display: none; }
+
         .nav-link {
-            font-size: 13px; font-weight: 600;
+            font-size: 12px; font-weight: 600;
             color: rgba(172,200,162,.6); text-decoration: none;
-            padding: 6px 12px; border-radius: 8px;
+            padding: 6px 10px; border-radius: 8px;
             transition: color .15s, background .15s;
+            white-space: nowrap;
         }
         .nav-link:hover { color: var(--acc); background: rgba(172,200,162,.08); }
         .nav-btn {
-            font-size: 12px; font-weight: 600; text-decoration: none;
+            font-size: 11px; font-weight: 700; text-decoration: none;
             padding: 6px 14px; border-radius: 9px;
             border: 1px solid rgba(172,200,162,.3); color: var(--acc);
             transition: background .15s, transform .15s;
+            white-space: nowrap; flex-shrink: 0;
         }
         .nav-btn:hover { background: rgba(172,200,162,.1); transform: translateY(-1px); }
+
+        @media (max-width: 640px) {
+            .navbar-inner { padding: 0 1rem; }
+            .brand-sub { display: none; }
+            .brand-name { font-size: 13px; }
+            .nav-link { padding: 6px 8px; font-size: 11px; }
+            .nav-btn { padding: 5px 12px; }
+        }
 
         /* ─── HERO ──────────────────────────── */
         .hero {
             background: linear-gradient(135deg, var(--g9) 0%, var(--g8) 55%, var(--g7) 100%);
             padding: 2rem 1.5rem 3.5rem;
             animation: fadeUp .5s .08s cubic-bezier(.16,1,.3,1) both;
+            overflow: hidden;
         }
         .hero-inner { max-width: 1280px; margin: auto; }
         .hero-eyebrow {
