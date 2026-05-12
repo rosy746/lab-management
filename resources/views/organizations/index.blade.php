@@ -272,29 +272,33 @@
 <script>
 function filterOrgs() {
     const query = document.getElementById('org-search').value.toLowerCase();
-    const cards = document.querySelectorAll('.org-card');
-    cards.forEach(card => {
+    document.querySelectorAll('.org-card').forEach(card => {
         const name = card.getAttribute('data-name') || '';
         const addr = card.getAttribute('data-address') || '';
-        if (name.includes(query) || addr.includes(query)) {
-            card.style.display = 'block';
-        } else {
-            card.style.display = 'none';
-        }
+        card.style.display = (name.includes(query) || addr.includes(query)) ? 'block' : 'none';
     });
 }
+
 function toggleAdd(id) {
     const el = document.getElementById(id);
     const toggle = document.getElementById('toggle-' + id);
-    el.classList.toggle('open');
-    if(toggle) toggle.classList.toggle('open');
+
+    // Cek apakah ini pakai class 'open' (form sekolah) atau inline style (form kelas)
+    if (el.classList.contains('add-body')) {
+        el.classList.toggle('open');
+        if (toggle) toggle.classList.toggle('open');
+    } else {
+        // Form kelas pakai edit-form style
+        const isHidden = el.style.display === 'none' || el.style.display === '';
+        el.style.display = isHidden ? 'block' : 'none';
+    }
 }
 
 function toggleEdit(type, id) {
     const el = document.getElementById('edit-' + type + '-' + id);
-    if(el.style.display === 'none' || el.classList.contains('show')) {
-        el.style.display = (el.style.display === 'none') ? (type === 'class' ? 'table-row' : 'block') : 'none';
-        el.classList.toggle('show');
+    const isHidden = el.style.display === 'none' || el.style.display === '';
+    if (isHidden) {
+        el.style.display = (type === 'class') ? 'table-row' : 'block';
     } else {
         el.style.display = 'none';
     }

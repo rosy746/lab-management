@@ -603,6 +603,22 @@
 
 .page-trans{position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#1A2517,#2d3d29);opacity:0;pointer-events:none;transition:opacity .22s ease}
 .page-trans.go{opacity:1;pointer-events:all}
+
+/* ─── TOAST ─────────────────────────── */
+.toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: #1A2517; color: #fff;
+    padding: 12px 22px; border-radius: 12px;
+    font-size: 13px; font-weight: 600;
+    box-shadow: 0 6px 24px rgba(0,0,0,.25);
+    z-index: 9999; opacity: 0;
+    transition: opacity .25s, transform .25s;
+    white-space: nowrap;
+    border-left: 4px solid #ef4444;
+}
+.toast.show {
+    opacity: 1; transform: translateX(-50%) translateY(0);
+}
 </style>
 </head>
 <body>
@@ -685,26 +701,34 @@
         <div class="flash flash-err">⚠ {{ $errors->first('error') }}</div>
     @endif
 
-    {{-- Week Nav --}}
-    <div class="week-nav">
-        <button onclick="changeWeek('{{ $prevWeek }}')" class="week-btn week-btn-prev">
-            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
-            </svg>
-            <span class="hide-xs">Minggu Lalu</span>
-        </button>
-        <span class="week-label" id="week-label">
-            📅
-            <span class="hide-xs">{{ $weekStart->translatedFormat('d M Y') }} – {{ $weekEnd->translatedFormat('d M Y') }}</span>
-            <span class="show-xs">{{ $weekStart->translatedFormat('d M') }} – {{ $weekEnd->translatedFormat('d M Y') }}</span>
-        </span>
-        <button onclick="changeWeek('{{ $nextWeek }}')" class="week-btn week-btn-next">
-            <span class="hide-xs">Minggu Depan</span>
-            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
-            </svg>
-        </button>
-    </div>
+    @php
+    $nextWeekStart = \Carbon\Carbon::now()->startOfWeek(\Carbon\Carbon::MONDAY)->addWeek();
+    $isMaxWeek = $weekStart->gte($nextWeekStart);
+@endphp
+
+{{-- Week Nav --}}
+<div class="week-nav">
+    <button onclick="changeWeek('{{ $prevWeek }}')" class="week-btn week-btn-prev">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+        </svg>
+        <span class="hide-xs">Minggu Lalu</span>
+    </button>
+    <span class="week-label" id="week-label">
+        📅
+        <span class="hide-xs">{{ $weekStart->translatedFormat('d M Y') }} – {{ $weekEnd->translatedFormat('d M Y') }}</span>
+        <span class="show-xs">{{ $weekStart->translatedFormat('d M') }} – {{ $weekEnd->translatedFormat('d M Y') }}</span>
+    </span>
+    <button onclick="changeWeek('{{ $nextWeek }}')"
+        class="week-btn week-btn-next"
+        {{ $isMaxWeek ? 'disabled' : '' }}
+        style="{{ $isMaxWeek ? 'opacity:.4;cursor:not-allowed;pointer-events:none' : '' }}">
+        <span class="hide-xs">Minggu Depan</span>
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+        </svg>
+    </button>
+</div>
 
     {{-- Tabs --}}
     <div class="tabs">
@@ -1425,6 +1449,21 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal
 let currentActiveTabId = null;
 
 function changeWeek(week) {
+    // ── BATASI MAKSIMAL 1 MINGGU KE DEPAN ──
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const dayOfWeek = today.getDay();
+    const daysToMonday = dayOfWeek === 0 ? 1 : 8 - dayOfWeek;
+    const nextMonday = new Date(today);
+    nextMonday.setDate(today.getDate() + daysToMonday);
+
+    const targetDate = new Date(week + 'T00:00:00');
+    if (targetDate > nextMonday) {
+        showToast('⛔ Jadwal hanya bisa dilihat sampai 1 minggu ke depan.');
+        return;
+    }
+    // ───────────────────────────────────────
+
     // Simpan tab aktif
     const activeTab = document.querySelector('.tab-btn.tab-active');
     if (activeTab) currentActiveTabId = activeTab.id.replace('tab-', '');
@@ -1490,12 +1529,41 @@ function changeWeek(week) {
             void target.offsetWidth;
             target.style.animation = '';
         }
-        // Re-enable tombol
-        document.querySelectorAll('.week-btn').forEach(b => { b.disabled = false; b.style.opacity = ''; });
+
+        // Re-enable tombol (kecuali tombol next jika sudah di minggu depan)
+        document.querySelectorAll('.week-btn').forEach(b => {
+            b.disabled = false;
+            b.style.opacity = '';
+        });
+
+        // Cek apakah minggu yang ditampilkan sudah di batas maksimal
+        const newTarget = new Date(week + 'T00:00:00');
+        if (newTarget >= nextMonday) {
+            const nextBtn = document.querySelector('.week-btn-next');
+            if (nextBtn) {
+                nextBtn.disabled = true;
+                nextBtn.style.opacity = '.4';
+                nextBtn.style.cursor = 'not-allowed';
+                nextBtn.style.pointerEvents = 'none';
+            }
+        }
     })
     .catch(() => { window.location.href = url.toString(); });
 }
 
+function showToast(msg) {
+    let toast = document.getElementById('toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'toast';
+        toast.className = 'toast';
+        document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toast._timeout);
+    toast._timeout = setTimeout(() => toast.classList.remove('show'), 3000);
+}
 
 function loadKelas(orgId) {
     const sel = document.getElementById('f_class');
