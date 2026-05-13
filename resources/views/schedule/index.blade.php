@@ -553,17 +553,18 @@
 .pub-btn{font-size:12px;font-weight:700;padding:7px 15px;border-radius:8px;color:#ACC8A2;border:1.5px solid rgba(172,200,162,.3);text-decoration:none;margin-left:6px;transition:background .15s,transform .15s;white-space:nowrap}
 .pub-btn:hover{background:rgba(172,200,162,.08);transform:translateY(-1px)}
 @keyframes navSlideDown{from{transform:translateY(-64px);opacity:0}to{transform:none;opacity:1}}
-@media(max-width:600px){.pub-inner{padding:0 1rem}.pub-brand-sub{display:none}.pub-link{padding:6px 9px;font-size:12px}.pub-btn{padding:6px 11px;font-size:12px;margin-left:3px}}
+@media(max-width:600px){
+    .pub-inner{padding:0 1rem}
+    .pub-brand-sub{display:none}
+    .pub-link{display:none}
+    .pub-btn{padding:6px 11px;font-size:12px;margin-left:3px}
+}
 
 .pub-nav-row2 {
     display: none; /* hidden di desktop */
 }
 
 @media (max-width: 600px) {
-    /* Sembunyikan link di baris 1 saat mobile */
-    .pub-links .pub-link {
-        display: none;
-    }
 
     /* Tampilkan baris 2 */
     .pub-nav-row2 {
@@ -628,6 +629,10 @@
             </div>
         </a>
         <div class="pub-links">
+            <a href="{{ route('home') }}" class="pub-link on">Jadwal</a>
+            <a href="{{ route('inventory.public') }}" class="pub-link">Inventaris</a>
+            <a href="{{ route('rekap.public') }}" class="pub-link">Rekap</a>
+            <a href="{{ route('assignment.public') }}" class="pub-link">Tugas</a>
             @auth
                 <a href="{{ route('dashboard') }}" class="pub-btn">Dashboard →</a>
             @else
