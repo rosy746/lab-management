@@ -6,13 +6,11 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Jadwal Lab - Lab Management</title>
 
-    {{-- Hanya font dari Google (opsional, bisa dihapus kalau mau lebih ringan lagi) --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 
     <style>
-        /* ─── RESET ─────────────────────────── */
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
@@ -38,7 +36,6 @@
             line-height: 1.5;
         }
 
-        /* ─── ANIMATIONS ────────────────────── */
         @keyframes slideDown {
             from { transform: translateY(-64px); opacity: 0; }
             to   { transform: none; opacity: 1; }
@@ -60,51 +57,67 @@
             to   { opacity: 1; transform: none; }
         }
 
-        /* ─── NAVBAR ────────────────────────── */
         .navbar {
             position: sticky; top: 0; z-index: 40;
             background: linear-gradient(135deg, var(--g9), var(--g8));
             box-shadow: 0 2px 16px rgba(0,0,0,.3);
             animation: slideDown .4s cubic-bezier(.16,1,.3,1) both;
+            width: 100%; overflow: hidden;
         }
         .navbar-inner {
             max-width: 1280px; margin: auto;
             padding: 0 1.5rem;
             display: flex; align-items: center; justify-content: space-between;
-            height: 60px;
+            height: 60px; gap: 10px;
         }
-        .brand { display: flex; align-items: center; gap: 10px; }
+        .brand { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
         .brand-icon {
-            width: 34px; height: 34px; border-radius: 9px;
+            width: 32px; height: 32px; border-radius: 9px;
             background: rgba(172,200,162,.15);
             display: flex; align-items: center; justify-content: center;
-            transition: background .2s;
+            transition: background .2s; flex-shrink: 0;
         }
         .brand-icon:hover { background: rgba(172,200,162,.25); }
-        .brand-name { font-family: 'Outfit', sans-serif; font-weight: 700; color: #fff; font-size: 15px; line-height: 1.2; }
-        .brand-sub  { font-size: 11px; color: rgba(172,200,162,.5); }
+        .brand-name { font-family: 'Outfit', sans-serif; font-weight: 700; color: #fff; font-size: 14px; line-height: 1.2; }
+        .brand-sub  { font-size: 10px; color: rgba(172,200,162,.5); }
 
-        .nav-actions { display: flex; align-items: center; gap: 6px; }
+        .nav-actions {
+            display: flex; align-items: center; gap: 4px;
+            overflow-x: auto; -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .nav-actions::-webkit-scrollbar { display: none; }
+
         .nav-link {
-            font-size: 13px; font-weight: 600;
+            font-size: 12px; font-weight: 600;
             color: rgba(172,200,162,.6); text-decoration: none;
-            padding: 6px 12px; border-radius: 8px;
+            padding: 6px 10px; border-radius: 8px;
             transition: color .15s, background .15s;
+            white-space: nowrap;
         }
         .nav-link:hover { color: var(--acc); background: rgba(172,200,162,.08); }
         .nav-btn {
-            font-size: 12px; font-weight: 600; text-decoration: none;
+            font-size: 11px; font-weight: 700; text-decoration: none;
             padding: 6px 14px; border-radius: 9px;
             border: 1px solid rgba(172,200,162,.3); color: var(--acc);
             transition: background .15s, transform .15s;
+            white-space: nowrap; flex-shrink: 0;
         }
         .nav-btn:hover { background: rgba(172,200,162,.1); transform: translateY(-1px); }
 
-        /* ─── HERO ──────────────────────────── */
+        @media (max-width: 640px) {
+            .navbar-inner { padding: 0 1rem; }
+            .brand-sub { display: none; }
+            .brand-name { font-size: 13px; }
+            .nav-link { padding: 6px 8px; font-size: 11px; }
+            .nav-btn { padding: 5px 12px; }
+        }
+
         .hero {
             background: linear-gradient(135deg, var(--g9) 0%, var(--g8) 55%, var(--g7) 100%);
             padding: 2rem 1.5rem 3.5rem;
             animation: fadeUp .5s .08s cubic-bezier(.16,1,.3,1) both;
+            overflow: hidden;
         }
         .hero-inner { max-width: 1280px; margin: auto; }
         .hero-eyebrow {
@@ -129,7 +142,6 @@
         }
         .period-badge:hover { background: rgba(172,200,162,.18); }
 
-        /* ─── LEGEND ────────────────────────── */
         .legend {
             display: flex; flex-wrap: wrap; gap: 7px; margin-top: 13px;
             animation: fadeUp .5s .14s cubic-bezier(.16,1,.3,1) both;
@@ -143,19 +155,15 @@
             cursor: default;
         }
         .legend-item:hover { background: rgba(172,200,162,.14); transform: translateY(-1px); }
-        .legend-dot {
-            width: 13px; height: 13px; border-radius: 4px; flex-shrink: 0;
-        }
+        .legend-dot { width: 13px; height: 13px; border-radius: 4px; flex-shrink: 0; }
         .legend-text { font-size: 11px; color: rgba(172,200,162,.85); }
 
-        /* ─── MAIN ──────────────────────────── */
         .main {
             max-width: 1280px; margin: -20px auto 0;
             padding: 0 1.5rem 3rem;
             animation: fadeUp .5s .2s cubic-bezier(.16,1,.3,1) both;
         }
 
-        /* ─── FLASH ─────────────────────────── */
         .flash {
             margin-bottom: 14px; padding: 11px 15px;
             border-radius: 10px; font-size: 13px; font-weight: 600;
@@ -164,11 +172,7 @@
         .flash-ok  { color: #166534; background: #f0fdf4; border: 1px solid #bbf7d0; }
         .flash-err { color: #991b1b; background: #fef2f2; border: 1px solid #fecaca; }
 
-        /* ─── WEEK NAV ──────────────────────── */
-        .week-nav {
-            display: flex; align-items: center; gap: 8px;
-            margin-bottom: 16px;
-        }
+        .week-nav { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
         .week-btn {
             display: flex; align-items: center; gap: 5px;
             font-size: 13px; font-weight: 700; text-decoration: none;
@@ -194,7 +198,6 @@
             box-shadow: 0 1px 4px rgba(0,0,0,.05);
         }
 
-        /* ─── TABS ──────────────────────────── */
         .tabs { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 16px; }
         .tab-btn {
             display: flex; align-items: center; gap: 7px;
@@ -217,7 +220,6 @@
             transform: translateY(-1px);
         }
 
-        /* ─── SKELETON ──────────────────────── */
         .skeleton-wrap {
             background: #fff; border-radius: 14px;
             border: 1px solid var(--border);
@@ -235,7 +237,6 @@
         }
         .skel-cell-sm { height: 24px; }
 
-        /* ─── PANEL ─────────────────────────── */
         .lab-panel { animation: panelIn .28s cubic-bezier(.16,1,.3,1) both; }
         .panel-card {
             background: #fff; border-radius: 14px;
@@ -257,7 +258,6 @@
         .panel-name { font-family: 'Outfit', sans-serif; font-weight: 700; color: #fff; font-size: 17px; }
         .panel-cap  { font-size: 11px; color: rgba(172,200,162,.5); margin-top: 2px; }
 
-        /* ─── SWIPE HINT ────────────────────── */
         .swipe-hint { display: none; }
         @media (max-width: 768px) {
             .swipe-hint {
@@ -269,10 +269,7 @@
             }
         }
 
-        /* ─── TABLE ─────────────────────────── */
-        .tbl-wrap {
-            overflow-x: auto; -webkit-overflow-scrolling: touch;
-        }
+        .tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .tbl-wrap::-webkit-scrollbar { height: 4px; }
         .tbl-wrap::-webkit-scrollbar-thumb { background: var(--acc); border-radius: 4px; }
 
@@ -284,9 +281,7 @@
             letter-spacing: .1em; text-transform: uppercase;
             width: calc((100% - 78px) / 7);
         }
-        thead th.col-time {
-            text-align: left; padding-left: 13px; width: 78px;
-        }
+        thead th.col-time { text-align: left; padding-left: 13px; width: 78px; }
         thead th.th-today { color: var(--g9); border-bottom: 3px solid var(--acc); }
         thead th.th-sun   { color: #dc2626; }
 
@@ -302,20 +297,15 @@
         .slot-label { font-family: 'Outfit', sans-serif; font-weight: 700; color: var(--text); font-size: 11px; }
         .slot-time  { font-size: 10px; color: var(--muted); margin-top: 1px; }
 
-        td.slot-td {
-            padding: 4px 3px;
-            border-right: 1px solid #f5f5f5;
-        }
+        td.slot-td { padding: 4px 3px; border-right: 1px solid #f5f5f5; }
         td.slot-td.td-today { background: rgba(172,200,162,.04); }
         td.slot-td.td-sun   { background: rgba(254,226,226,.15); }
 
-        /* ─── SLOT CARDS ────────────────────── */
         .sc {
             border-radius: 9px; padding: 6px 9px;
             overflow: hidden; position: relative;
             transition: transform .18s, box-shadow .18s, filter .18s;
         }
-        /* Shine sweep */
         .sc::before {
             content: '';
             position: absolute; top: 0; left: -70%; width: 45%; height: 100%;
@@ -351,16 +341,13 @@
         .sc-pending .sc-class  { color: #b45309; }
         .sc-pending .sc-status { color: #f59e0b; }
 
-        /* Past slot */
         .slot-past { text-align: center; padding: 13px 0; font-size: 11px; color: var(--muted); opacity: .3; }
 
-        /* Sunday locked */
         .slot-locked {
             text-align: center; padding: 9px 3px; border-radius: 9px;
             background: rgba(254,226,226,.4); border: 1.5px dashed #fca5a5;
         }
 
-        /* Booking button */
         .bk-btn {
             width: 100%; border-radius: 9px; padding: 13px 3px;
             background: transparent; cursor: pointer;
@@ -384,7 +371,6 @@
         .bk-btn-sun .bk-icon { color: #fca5a5; }
         .bk-btn-sun .bk-text { color: #fca5a5; }
 
-        /* Break row */
         .break-row td {
             text-align: center; padding: 8px;
             font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
@@ -392,7 +378,6 @@
             color: #92400e; border-top: 1px solid #fde68a; border-bottom: 1px solid #fde68a;
         }
 
-        /* ─── DETAIL MODAL ──────────────────── */
         .detail-overlay {
             display: none; position: fixed; inset: 0; z-index: 110;
             background: rgba(26,37,23,.82); backdrop-filter: blur(5px);
@@ -406,14 +391,9 @@
             box-shadow: 0 20px 60px rgba(0,0,0,.35);
             animation: modalIn .22s cubic-bezier(.16,1,.3,1);
         }
-        .detail-head {
-            padding: 16px 20px 14px;
-        }
+        .detail-head { padding: 16px 20px 14px; }
         .detail-head-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
-        .detail-type {
-            font-size: 10px; font-weight: 700; letter-spacing: .1em;
-            text-transform: uppercase; margin-bottom: 3px;
-        }
+        .detail-type { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 3px; }
         .detail-teacher { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 18px; line-height: 1.2; }
         .detail-close {
             background: none; border: none; cursor: pointer;
@@ -433,7 +413,6 @@
         .detail-key  { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
         .detail-val  { font-size: 13px; font-weight: 600; color: var(--text); margin-top: 1px; }
 
-        /* ─── MODAL ─────────────────────────── */
         .modal-overlay {
             display: none; position: fixed; inset: 0; z-index: 100;
             background: rgba(26,37,23,.82); backdrop-filter: blur(5px);
@@ -485,7 +464,6 @@
 
         .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
 
-        /* Slot options */
         .slot-opts { display: flex; gap: 7px; flex-wrap: wrap; }
         .slot-opt {
             flex: 1; min-width: 110px; padding: 9px 11px; border-radius: 9px;
@@ -506,7 +484,6 @@
             border-radius: 11px; padding: 11px 13px;
         }
 
-        /* Modal buttons */
         .modal-actions { display: flex; gap: 9px; padding-top: 3px; padding-bottom: 3px; }
         .btn-cancel {
             flex: 1; background: #f3f4f6; border: none; color: var(--text);
@@ -524,10 +501,8 @@
         }
         .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(26,37,23,.35); filter: brightness(1.08); }
 
-        /* ─── FOOTER ────────────────────────── */
         footer { text-align: center; padding: 18px; font-size: 12px; color: var(--muted); }
 
-        /* ─── RESPONSIVE ────────────────────── */
         .hide-xs { display: inline; }
         .show-xs { display: none; }
         @media (max-width: 600px) {
@@ -538,12 +513,10 @@
             .hero, .main { padding-left: 1rem; padding-right: 1rem; }
         }
 
-        /* ─── REDUCED MOTION ─────────────────── */
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
         }
 
-        /* ─── SUNDAY CELL ───────────────────── */
         td.td-sun[rowspan] {
             padding: 6px !important;
             vertical-align: top;
@@ -557,7 +530,7 @@
             min-height: 400px;
             display: flex;
             flex-direction: column;
-            justify-content: flex-start; /* ← ubah dari center ke flex-start */
+            justify-content: flex-start;
             padding: 8px;
         }
         td.td-sun[rowspan] .bk-btn {
@@ -566,7 +539,7 @@
             width: 100%;
             justify-content: center;
         }
-            
+
 .pub-navbar{position:sticky;top:0;z-index:100;background:linear-gradient(135deg,#1A2517,#2a3826);box-shadow:0 2px 16px rgba(0,0,0,.28);animation:navSlideDown .4s cubic-bezier(.16,1,.3,1) both}
 .pub-inner{max-width:1280px;margin:0 auto;padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:60px}
 .pub-brand{display:flex;align-items:center;gap:10px;text-decoration:none;flex-shrink:0}
@@ -582,14 +555,65 @@
 @keyframes navSlideDown{from{transform:translateY(-64px);opacity:0}to{transform:none;opacity:1}}
 @media(max-width:600px){.pub-inner{padding:0 1rem}.pub-brand-sub{display:none}.pub-link{padding:6px 9px;font-size:12px}.pub-btn{padding:6px 11px;font-size:12px;margin-left:3px}}
 
+.pub-nav-row2 {
+    display: none; /* hidden di desktop */
+}
+
+@media (max-width: 600px) {
+    /* Sembunyikan link di baris 1 saat mobile */
+    .pub-links .pub-link {
+        display: none;
+    }
+
+    /* Tampilkan baris 2 */
+    .pub-nav-row2 {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        padding: 0 10px 8px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        border-top: 1px solid rgba(172,200,162,.1);
+    }
+    .pub-nav-row2::-webkit-scrollbar { display: none; }
+
+    .pub-nav2-link {
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        color: rgba(172,200,162,.55);
+        text-decoration: none;
+        white-space: nowrap;
+        transition: color .15s, background .15s;
+    }
+    .pub-nav2-link:hover,
+    .pub-nav2-link.on {
+        color: #ACC8A2;
+        background: rgba(172,200,162,.1);
+    }
+}
 
 .page-trans{position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#1A2517,#2d3d29);opacity:0;pointer-events:none;transition:opacity .22s ease}
 .page-trans.go{opacity:1;pointer-events:all}
-</style>
+
+.toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: #1A2517; color: #fff;
+    padding: 12px 22px; border-radius: 12px;
+    font-size: 13px; font-weight: 600;
+    box-shadow: 0 6px 24px rgba(0,0,0,.25);
+    z-index: 9999; opacity: 0;
+    transition: opacity .25s, transform .25s;
+    white-space: nowrap;
+    border-left: 4px solid #ef4444;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    </style>
 </head>
 <body>
 
-{{-- ═══ NAVBAR ═══ --}}
 <nav class="pub-navbar">
     <div class="pub-inner">
         <a href="{{ route('home') }}" class="pub-brand">
@@ -604,10 +628,6 @@
             </div>
         </a>
         <div class="pub-links">
-            <a href="{{ route('home') }}" class="pub-link on">Jadwal</a>
-            <a href="{{ route('inventory.public') }}" class="pub-link">Inventaris</a>
-            <a href="{{ route('rekap.public') }}" class="pub-link">Rekap</a>
-            <a href="{{ route('assignment.public') }}" class="pub-link">Tugas</a>
             @auth
                 <a href="{{ route('dashboard') }}" class="pub-btn">Dashboard →</a>
             @else
@@ -615,9 +635,16 @@
             @endauth
         </div>
     </div>
+
+    {{-- Baris kedua: navigasi (mobile only) --}}
+    <div class="pub-nav-row2">
+        <a href="{{ route('home') }}" class="pub-nav2-link {{ request()->routeIs('home') ? 'on' : '' }}">Jadwal</a>
+        <a href="{{ route('inventory.public') }}" class="pub-nav2-link {{ request()->routeIs('inventory.public') ? 'on' : '' }}">Inventaris</a>
+        <a href="{{ route('rekap.public') }}" class="pub-nav2-link {{ request()->routeIs('rekap.public') ? 'on' : '' }}">Rekap</a>
+        <a href="{{ route('assignment.public') }}" class="pub-nav2-link {{ request()->routeIs('assignment.public') ? 'on' : '' }}">Tugas</a>
+    </div>
 </nav>
 
-{{-- ═══ HERO ═══ --}}
 <div class="hero">
     <div class="hero-inner">
         <p class="hero-eyebrow">Sistem Informasi Laboratorium</p>
@@ -652,10 +679,9 @@
     </div>
 </div>
 
-{{-- ═══ MAIN ═══ --}}
 <div class="main">
 
-   @if(session('success'))
+    @if(session('success'))
         <div class="flash flash-ok">
             ✓ {{ session('success') }}
             <div style="margin-top:6px;font-size:12px;font-weight:400;color:#166534;">
@@ -667,7 +693,11 @@
         <div class="flash flash-err">⚠ {{ $errors->first('error') }}</div>
     @endif
 
-    {{-- Week Nav --}}
+    @php
+        $nextWeekStart = \Carbon\Carbon::now()->startOfWeek(\Carbon\Carbon::MONDAY)->addWeek();
+        $isMaxWeek = $weekStart->gte($nextWeekStart);
+    @endphp
+
     <div class="week-nav">
         <button onclick="changeWeek('{{ $prevWeek }}')" class="week-btn week-btn-prev">
             <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -680,7 +710,10 @@
             <span class="hide-xs">{{ $weekStart->translatedFormat('d M Y') }} – {{ $weekEnd->translatedFormat('d M Y') }}</span>
             <span class="show-xs">{{ $weekStart->translatedFormat('d M') }} – {{ $weekEnd->translatedFormat('d M Y') }}</span>
         </span>
-        <button onclick="changeWeek('{{ $nextWeek }}')" class="week-btn week-btn-next">
+        <button onclick="changeWeek('{{ $nextWeek }}')"
+            class="week-btn week-btn-next"
+            {{ $isMaxWeek ? 'disabled' : '' }}
+            style="{{ $isMaxWeek ? 'opacity:.4;cursor:not-allowed;pointer-events:none' : '' }}">
             <span class="hide-xs">Minggu Depan</span>
             <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
@@ -688,7 +721,6 @@
         </button>
     </div>
 
-    {{-- Tabs --}}
     <div class="tabs">
         @foreach($resources as $i => $resource)
         <button onclick="switchTab({{ $resource->id }})" id="tab-{{ $resource->id }}"
@@ -701,7 +733,6 @@
         @endforeach
     </div>
 
-    {{-- Skeleton --}}
     <div class="skeleton-wrap" id="skeleton">
         <div class="skel-head"></div>
         <div class="skel-body">
@@ -720,13 +751,11 @@
         </div>
     </div>
 
-    {{-- Lab Panels --}}
     <div id="panels-wrap">
     @foreach($resources as $i => $resource)
     <div id="panel-{{ $resource->id }}" class="lab-panel" style="{{ $i !== 0 ? 'display:none' : '' }}">
         <div class="panel-card">
 
-            {{-- Header --}}
             <div class="panel-header">
                 <div class="panel-icon">
                     <svg width="19" height="19" fill="none" viewBox="0 0 24 24" stroke="#ACC8A2" stroke-width="1.8">
@@ -741,7 +770,6 @@
                 </div>
             </div>
 
-            {{-- Swipe hint --}}
             <div class="swipe-hint">
                 <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
@@ -749,7 +777,6 @@
                 Geser kiri/kanan untuk semua hari
             </div>
 
-            {{-- Table --}}
             <div class="tbl-wrap">
                 <table>
                     <thead>
@@ -787,7 +814,6 @@
                                 ☕ ISTIRAHAT · {{ \Carbon\Carbon::parse($slot->start_time)->format('H:i') }}
                                 @if($slot->end_time) – {{ \Carbon\Carbon::parse($slot->end_time)->format('H:i') }}@endif
                             </td>
-                            {{-- Kolom Minggu tidak ada di break row karena sudah di-rowspan --}}
                         </tr>
                         @else
                         <tr>
@@ -814,7 +840,7 @@
 
                                 $nonBreakSlots   = $timeSlots->where('is_break', false)->values();
                                 $isFirstNonBreak = $nonBreakSlots->first()?->id === $slot->id;
-                                $sunRowspan      = $timeSlots->count(); // semua slot termasuk break
+                                $sunRowspan      = $timeSlots->count();
                                 $sunKey          = $resource->id . '_' . $date;
                                 $sunBook         = $sundayBookings->get($sunKey)?->first();
                             @endphp
@@ -822,46 +848,71 @@
                             @if($isSun)
                                 @if($isFirstNonBreak)
                                 <td class="slot-td td-sun" rowspan="{{ $sunRowspan }}" style="vertical-align:top;padding:6px;height:100%;">
+
+                                    {{-- ═══════════════════════════════════════════════════════ --}}
+                                    {{-- PERUBAHAN #1a: slot Minggu approved                    --}}
+                                    {{-- SEBELUM: onclick="showDetail({teacher:'{{ addslashes(...) }}', ...})" --}}
+                                    {{-- SESUDAH: data-detail='{{ json_encode(..., JSON_HEX_*) }}'           --}}
+                                    {{-- ═══════════════════════════════════════════════════════ --}}
                                     @if($sunBook && $sunBook->status === 'approved')
-                                       <div class="sc sc-approved" style="cursor:pointer;min-height:80px;display:flex;flex-direction:column;justify-content:flex-start;align-items:flex-start;"
-                                            onclick="showDetail({
-                                                type:'approved',
-                                                teacher:'{{ addslashes($sunBook->teacher_name) }}',
-                                                class_name:'{{ addslashes($sunBook->class_name ?? '') }}',
-                                                subject:'{{ addslashes($sunBook->subject_name ?? '') }}',
-                                                slot:'Seharian',
-                                                time:'07:00–12:45',
-                                                day:'Minggu',
-                                                date:'{{ \Carbon\Carbon::parse($date)->translatedFormat('d M Y') }}',
-                                                lab:'{{ addslashes($resource->name) }}',
-                                                phone:'{{ addslashes($sunBook->teacher_phone ?? '') }}',
-                                                title:'{{ addslashes($sunBook->title ?? '') }}',
-                                                desc:'{{ addslashes($sunBook->description ?? '') }}',
-                                                participants:'{{ $sunBook->participant_count ?? '' }}'
-                                            })">
+                                        @php
+                                        $detailSunApproved = json_encode([
+                                            'type'         => 'approved',
+                                            'teacher'      => $sunBook->teacher_name,
+                                            'class_name'   => $sunBook->class_name ?? '',
+                                            'subject'      => $sunBook->subject_name ?? '',
+                                            'slot'         => 'Seharian',
+                                            'time'         => '07:00–12:45',
+                                            'day'          => 'Minggu',
+                                            'date'         => \Carbon\Carbon::parse($date)->translatedFormat('d M Y'),
+                                            'lab'          => $resource->name,
+                                            'phone'        => $sunBook->teacher_phone ?? '',
+                                            'title'        => $sunBook->title ?? '',
+                                            'desc'         => $sunBook->description ?? '',
+                                            'participants' => (string)($sunBook->participant_count ?? ''),
+                                        ], JSON_HEX_TAG | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_APOS);
+                                        @endphp
+                                        <div class="sc sc-approved"
+                                             style="cursor:pointer;min-height:80px;display:flex;flex-direction:column;justify-content:flex-start;align-items:flex-start;"
+                                             role="button"
+                                             tabindex="0"
+                                             data-detail='{{ $detailSunApproved }}'
+                                             onclick="showDetail(JSON.parse(this.dataset.detail))"
+                                             onkeydown="if(event.key==='Enter'||event.key===' ')showDetail(JSON.parse(this.dataset.detail))">
                                             <div class="sc-name">{{ $sunBook->teacher_name }}</div>
                                             <div class="sc-class">{{ $sunBook->class_name }}</div>
                                             @if($sunBook->subject_name)<div class="sc-subject">{{ $sunBook->subject_name }}</div>@endif
                                             <div class="sc-status">✓ Disetujui · Seharian</div>
                                         </div>
 
+                                    {{-- ═══════════════════════════════════════════════════════ --}}
+                                    {{-- PERUBAHAN #1b: slot Minggu pending                     --}}
+                                    {{-- ═══════════════════════════════════════════════════════ --}}
                                     @elseif($sunBook && $sunBook->status === 'pending')
-                                        <div class="sc sc-pending" style="cursor:pointer;min-height:80px;display:flex;flex-direction:column;justify-content:flex-start;align-items:flex-start;"
-                                            onclick="showDetail({
-                                                type:'pending',
-                                                teacher:'{{ addslashes($sunBook->teacher_name) }}',
-                                                class_name:'{{ addslashes($sunBook->class_name ?? '') }}',
-                                                subject:'{{ addslashes($sunBook->subject_name ?? '') }}',
-                                                slot:'Seharian',
-                                                time:'07:00–12:45',
-                                                day:'Minggu',
-                                                date:'{{ \Carbon\Carbon::parse($date)->translatedFormat('d M Y') }}',
-                                                lab:'{{ addslashes($resource->name) }}',
-                                                phone:'{{ addslashes($sunBook->teacher_phone ?? '') }}',
-                                                title:'{{ addslashes($sunBook->title ?? '') }}',
-                                                desc:'{{ addslashes($sunBook->description ?? '') }}',
-                                                participants:'{{ $sunBook->participant_count ?? '' }}'
-                                            })">
+                                        @php
+                                        $detailSunPending = json_encode([
+                                            'type'         => 'pending',
+                                            'teacher'      => $sunBook->teacher_name,
+                                            'class_name'   => $sunBook->class_name ?? '',
+                                            'subject'      => $sunBook->subject_name ?? '',
+                                            'slot'         => 'Seharian',
+                                            'time'         => '07:00–12:45',
+                                            'day'          => 'Minggu',
+                                            'date'         => \Carbon\Carbon::parse($date)->translatedFormat('d M Y'),
+                                            'lab'          => $resource->name,
+                                            'phone'        => $sunBook->teacher_phone ?? '',
+                                            'title'        => $sunBook->title ?? '',
+                                            'desc'         => $sunBook->description ?? '',
+                                            'participants' => (string)($sunBook->participant_count ?? ''),
+                                        ], JSON_HEX_TAG | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_APOS);
+                                        @endphp
+                                        <div class="sc sc-pending"
+                                             style="cursor:pointer;min-height:80px;display:flex;flex-direction:column;justify-content:flex-start;align-items:flex-start;"
+                                             role="button"
+                                             tabindex="0"
+                                             data-detail='{{ $detailSunPending }}'
+                                             onclick="showDetail(JSON.parse(this.dataset.detail))"
+                                             onkeydown="if(event.key==='Enter'||event.key===' ')showDetail(JSON.parse(this.dataset.detail))">
                                             <div class="sc-name">{{ $sunBook->teacher_name }}</div>
                                             <div class="sc-class">{{ $sunBook->class_name }}</div>
                                             <div class="sc-status">⏳ Pending · Seharian</div>
@@ -872,7 +923,7 @@
 
                                     @else
                                         <button class="bk-btn bk-btn-sun" style="height:100%;min-height:400px;width:100%;box-sizing:border-box;"
-                                            onclick="openSundayBooking({{ $resource->id }},'{{ addslashes($resource->name) }}','{{ $date }}')">
+                                            onclick="openSundayBooking({{ $resource->id }},'{{ e($resource->name) }}','{{ $date }}')">
                                             <svg class="bk-icon" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                                             </svg>
@@ -882,67 +933,110 @@
                                     @endif
                                 </td>
                                 @endif
-                                {{-- Baris Minggu lainnya dilewati karena pakai rowspan --}}
 
                             @else
                             {{-- ─── HARI BIASA ─── --}}
                             <td class="slot-td {{ $isToday ? 'td-today' : '' }}">
 
+                                {{-- ═══════════════════════════════════════════════════════ --}}
+                                {{-- PERUBAHAN #2a: slot tetap                              --}}
+                                {{-- SEBELUM: onclick="showDetail({teacher:'{{ addslashes($sched->teacher_name) }}', ...})" --}}
+                                {{-- SESUDAH: data-detail='{{ json_encode([...], JSON_HEX_*) }}'                           --}}
+                                {{-- ═══════════════════════════════════════════════════════ --}}
                                 @if($sched)
-                                    <div class="sc sc-tetap" style="cursor:pointer" onclick="showDetail({
-                                        type:'tetap',
-                                        teacher:'{{ addslashes($sched->teacher_name) }}',
-                                        class_name:'{{ addslashes($sched->labClass?->name ?? '-') }}',
-                                        subject:'{{ addslashes($sched->subject_name ?? '') }}',
-                                        slot:'{{ addslashes($slot->name) }}',
-                                        time:'{{ \Carbon\Carbon::parse($slot->start_time)->format('H:i') }}{{ $slot->end_time ? '–'.\Carbon\Carbon::parse($slot->end_time)->format('H:i') : '' }}',
-                                        day:'{{ $day }}',
-                                        date:'{{ \Carbon\Carbon::parse($date)->translatedFormat('d M Y') }}',
-                                        lab:'{{ addslashes($resource->name) }}',
-                                        phone:'',title:'',desc:'',participants:''
-                                    })">
+                                    @php
+                                    $detailTetap = json_encode([
+                                        'type'         => 'tetap',
+                                        'teacher'      => $sched->teacher_name,
+                                        'class_name'   => $sched->labClass?->name ?? '-',
+                                        'subject'      => $sched->subject_name ?? '',
+                                        'slot'         => $slot->name,
+                                        'time'         => \Carbon\Carbon::parse($slot->start_time)->format('H:i')
+                                                          . ($slot->end_time ? '–'.\Carbon\Carbon::parse($slot->end_time)->format('H:i') : ''),
+                                        'day'          => $day,
+                                        'date'         => \Carbon\Carbon::parse($date)->translatedFormat('d M Y'),
+                                        'lab'          => $resource->name,
+                                        'phone'        => '',
+                                        'title'        => '',
+                                        'desc'         => '',
+                                        'participants' => '',
+                                    ], JSON_HEX_TAG | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_APOS);
+                                    @endphp
+                                    <div class="sc sc-tetap"
+                                         style="cursor:pointer"
+                                         role="button"
+                                         tabindex="0"
+                                         data-detail='{{ $detailTetap }}'
+                                         onclick="showDetail(JSON.parse(this.dataset.detail))"
+                                         onkeydown="if(event.key==='Enter'||event.key===' ')showDetail(JSON.parse(this.dataset.detail))">
                                         <div class="sc-name">{{ $sched->teacher_name }}</div>
                                         <div class="sc-class">{{ $sched->labClass?->name ?? '-' }}</div>
                                         @if($sched->subject_name)<div class="sc-subject">{{ $sched->subject_name }}</div>@endif
                                     </div>
 
+                                {{-- ═══════════════════════════════════════════════════════ --}}
+                                {{-- PERUBAHAN #2b: booking approved                        --}}
+                                {{-- ═══════════════════════════════════════════════════════ --}}
                                 @elseif($book && $book->status === 'approved')
-                                    <div class="sc sc-approved" style="cursor:pointer" onclick="showDetail({
-                                        type:'approved',
-                                        teacher:'{{ addslashes($book->teacher_name) }}',
-                                        class_name:'{{ addslashes($book->class_name ?? '') }}',
-                                        subject:'{{ addslashes($book->subject_name ?? '') }}',
-                                        slot:'{{ addslashes($slot->name) }}',
-                                        time:'{{ \Carbon\Carbon::parse($slot->start_time)->format('H:i') }}{{ $slot->end_time ? '–'.\Carbon\Carbon::parse($slot->end_time)->format('H:i') : '' }}',
-                                        day:'{{ $day }}',
-                                        date:'{{ \Carbon\Carbon::parse($date)->translatedFormat('d M Y') }}',
-                                        lab:'{{ addslashes($resource->name) }}',
-                                        phone:'{{ addslashes($book->teacher_phone ?? '') }}',
-                                        title:'{{ addslashes($book->title ?? '') }}',
-                                        desc:'{{ addslashes($book->description ?? '') }}',
-                                        participants:'{{ $book->participant_count ?? '' }}'
-                                    })">
+                                    @php
+                                    $detailApproved = json_encode([
+                                        'type'         => 'approved',
+                                        'teacher'      => $book->teacher_name,
+                                        'class_name'   => $book->class_name ?? '',
+                                        'subject'      => $book->subject_name ?? '',
+                                        'slot'         => $slot->name,
+                                        'time'         => \Carbon\Carbon::parse($slot->start_time)->format('H:i')
+                                                          . ($slot->end_time ? '–'.\Carbon\Carbon::parse($slot->end_time)->format('H:i') : ''),
+                                        'day'          => $day,
+                                        'date'         => \Carbon\Carbon::parse($date)->translatedFormat('d M Y'),
+                                        'lab'          => $resource->name,
+                                        'phone'        => $book->teacher_phone ?? '',
+                                        'title'        => $book->title ?? '',
+                                        'desc'         => $book->description ?? '',
+                                        'participants' => (string)($book->participant_count ?? ''),
+                                    ], JSON_HEX_TAG | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_APOS);
+                                    @endphp
+                                    <div class="sc sc-approved"
+                                         style="cursor:pointer"
+                                         role="button"
+                                         tabindex="0"
+                                         data-detail='{{ $detailApproved }}'
+                                         onclick="showDetail(JSON.parse(this.dataset.detail))"
+                                         onkeydown="if(event.key==='Enter'||event.key===' ')showDetail(JSON.parse(this.dataset.detail))">
                                         <div class="sc-name">{{ $book->teacher_name }}</div>
                                         <div class="sc-class">{{ $book->class_name }}</div>
                                         <div class="sc-status">✓ Disetujui</div>
                                     </div>
 
+                                {{-- ═══════════════════════════════════════════════════════ --}}
+                                {{-- PERUBAHAN #2c: booking pending                         --}}
+                                {{-- ═══════════════════════════════════════════════════════ --}}
                                 @elseif($book && $book->status === 'pending')
-                                    <div class="sc sc-pending" style="cursor:pointer" onclick="showDetail({
-                                        type:'pending',
-                                        teacher:'{{ addslashes($book->teacher_name) }}',
-                                        class_name:'{{ addslashes($book->class_name ?? '') }}',
-                                        subject:'{{ addslashes($book->subject_name ?? '') }}',
-                                        slot:'{{ addslashes($slot->name) }}',
-                                        time:'{{ \Carbon\Carbon::parse($slot->start_time)->format('H:i') }}{{ $slot->end_time ? '–'.\Carbon\Carbon::parse($slot->end_time)->format('H:i') : '' }}',
-                                        day:'{{ $day }}',
-                                        date:'{{ \Carbon\Carbon::parse($date)->translatedFormat('d M Y') }}',
-                                        lab:'{{ addslashes($resource->name) }}',
-                                        phone:'{{ addslashes($book->teacher_phone ?? '') }}',
-                                        title:'{{ addslashes($book->title ?? '') }}',
-                                        desc:'{{ addslashes($book->description ?? '') }}',
-                                        participants:'{{ $book->participant_count ?? '' }}'
-                                    })">
+                                    @php
+                                    $detailPending = json_encode([
+                                        'type'         => 'pending',
+                                        'teacher'      => $book->teacher_name,
+                                        'class_name'   => $book->class_name ?? '',
+                                        'subject'      => $book->subject_name ?? '',
+                                        'slot'         => $slot->name,
+                                        'time'         => \Carbon\Carbon::parse($slot->start_time)->format('H:i')
+                                                          . ($slot->end_time ? '–'.\Carbon\Carbon::parse($slot->end_time)->format('H:i') : ''),
+                                        'day'          => $day,
+                                        'date'         => \Carbon\Carbon::parse($date)->translatedFormat('d M Y'),
+                                        'lab'          => $resource->name,
+                                        'phone'        => $book->teacher_phone ?? '',
+                                        'title'        => $book->title ?? '',
+                                        'desc'         => $book->description ?? '',
+                                        'participants' => (string)($book->participant_count ?? ''),
+                                    ], JSON_HEX_TAG | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_APOS);
+                                    @endphp
+                                    <div class="sc sc-pending"
+                                         style="cursor:pointer"
+                                         role="button"
+                                         tabindex="0"
+                                         data-detail='{{ $detailPending }}'
+                                         onclick="showDetail(JSON.parse(this.dataset.detail))"
+                                         onkeydown="if(event.key==='Enter'||event.key===' ')showDetail(JSON.parse(this.dataset.detail))">
                                         <div class="sc-name">{{ $book->teacher_name }}</div>
                                         <div class="sc-class">{{ $book->class_name }}</div>
                                         <div class="sc-status">⏳ Pending</div>
@@ -965,7 +1059,7 @@
                                     $takenSlotIds = array_unique(array_merge($bookedSlotIds, $scheduledSlotIds));
                                 @endphp
                                     <button class="bk-btn"
-                                        onclick="openBooking({{ $resource->id }},'{{ addslashes($resource->name) }}',{{ $slot->id }},'{{ $slot->name }}','{{ \Carbon\Carbon::parse($slot->start_time)->format('H:i') }}{{ $slot->end_time ? '–'.\Carbon\Carbon::parse($slot->end_time)->format('H:i') : '' }}','{{ $dayEn }}','{{ $day }}','{{ $date }}',{{ json_encode($takenSlotIds) }})">
+                                        onclick="openBooking({{ $resource->id }},'{{ e($resource->name) }}',{{ $slot->id }},'{{ e($slot->name) }}','{{ \Carbon\Carbon::parse($slot->start_time)->format('H:i') }}{{ $slot->end_time ? '–'.\Carbon\Carbon::parse($slot->end_time)->format('H:i') : '' }}','{{ $dayEn }}','{{ $day }}','{{ $date }}',{{ json_encode($takenSlotIds) }})">
                                         <svg class="bk-icon" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                                         </svg>
@@ -985,11 +1079,12 @@
         </div>
     </div>
     @endforeach
-    </div>{{-- /panels-wrap --}}
+    </div>
 </div>
 
 {{-- ═══ DETAIL MODAL ═══ --}}
-<div class="detail-overlay" id="detail-overlay" onclick="if(event.target===this)closeDetail()">
+<div class="detail-overlay" id="detail-overlay" onclick="if(event.target===this)closeDetail()"
+     role="dialog" aria-modal="true" aria-labelledby="d-teacher">
     <div class="detail-box" id="detail-box">
         <div class="detail-head" id="detail-head">
             <div class="detail-head-top">
@@ -997,7 +1092,7 @@
                     <div class="detail-type" id="d-type"></div>
                     <div class="detail-teacher" id="d-teacher"></div>
                 </div>
-                <button class="detail-close" onclick="closeDetail()">
+                <button class="detail-close" onclick="closeDetail()" aria-label="Tutup detail">
                     <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
@@ -1009,15 +1104,16 @@
 </div>
 
 {{-- ═══ MODAL SUNDAY BOOKING ═══ --}}
-<div class="modal-overlay" id="sunday-modal-overlay" onclick="if(event.target===this)closeSundayModal()">
+<div class="modal-overlay" id="sunday-modal-overlay" onclick="if(event.target===this)closeSundayModal()"
+     role="dialog" aria-modal="true" aria-labelledby="sunday-modal-title">
     <div class="modal-box" id="sunday-modal-box">
         <div class="modal-head">
             <div class="modal-head-top">
                 <div>
                     <p class="modal-eyebrow">📅 Booking Hari Minggu</p>
-                    <h2 class="modal-title">Booking Seharian</h2>
+                    <h2 class="modal-title" id="sunday-modal-title">Booking Seharian</h2>
                 </div>
-                <button class="modal-close" onclick="closeSundayModal()">
+                <button class="modal-close" onclick="closeSundayModal()" aria-label="Tutup form booking Minggu">
                     <svg width="19" height="19" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
@@ -1104,16 +1200,17 @@
 
 <footer>© {{ date('Y') }} Lab Management System · Nuris Jember</footer>
 
-{{-- ═══ MODAL ═══ --}}
-<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+{{-- ═══ MODAL BOOKING ═══ --}}
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()"
+     role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <div class="modal-box" id="modal-box">
         <div class="modal-head">
             <div class="modal-head-top">
                 <div>
                     <p class="modal-eyebrow">Form Booking Lab</p>
-                    <h2 class="modal-title">Ajukan Penggunaan Lab</h2>
+                    <h2 class="modal-title" id="modal-title">Ajukan Penggunaan Lab</h2>
                 </div>
-                <button class="modal-close" onclick="closeModal()">
+                <button class="modal-close" onclick="closeModal()" aria-label="Tutup form booking">
                     <svg width="19" height="19" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
@@ -1150,32 +1247,11 @@
                     <input name="teacher_phone" id="inp_teacher_phone" type="text" placeholder="08xxxxxxxxxx" class="inp" required value="{{ old('teacher_phone') }}">
                 </div>
             </div>
-            <script>
-            function filterTeacher(val) {
-                const box = document.getElementById('teacher_suggestions');
-                if (!val || val.length < 2) { box.style.display = 'none'; return; }
-                const filtered = TEACHERS.filter(t => t.name.toLowerCase().includes(val.toLowerCase()));
-                if (!filtered.length) { box.style.display = 'none'; return; }
-                box.innerHTML = filtered.map(t => `
-                    <div onclick="selectTeacher('${t.name}','${t.phone ?? ''}')"
-                        style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center"
-                        onmouseover="this.style.background='#f0f7ee'" onmouseout="this.style.background=''">
-                        <span style="font-weight:600;color:#1A2517">${t.name}</span>
-                        <span style="font-size:11px;color:#9ca3af">${t.phone ?? ''}</span>
-                    </div>`).join('');
-                box.style.display = 'block';
-            }
-            function selectTeacher(name, phone) {
-                document.getElementById('inp_teacher_name').value = name;
-                document.getElementById('inp_teacher_phone').value = phone;
-                document.getElementById('teacher_suggestions').style.display = 'none';
-            }
-            document.addEventListener('click', function(e) {
-                if (!e.target.closest('#inp_teacher_name') && !e.target.closest('#teacher_suggestions')) {
-                    document.getElementById('teacher_suggestions').style.display = 'none';
-                }
-            });
-            </script>
+
+            {{-- ═══════════════════════════════════════════════════════════════════ --}}
+            {{-- PERUBAHAN #3: autocomplete teacher — innerHTML diganti createElement --}}
+            {{-- Fungsi filterTeacher() & selectTeacher() ada di blok <script> bawah --}}
+            {{-- ═══════════════════════════════════════════════════════════════════ --}}
 
             <div>
                 <label class="field-label">Unit Sekolah *</label>
@@ -1225,14 +1301,86 @@
 
 <script>
 const ALL_SLOTS = @json($timeSlots->where('is_break', false)->values());
-const TEACHERS  = @json($teachers); // ← tambah di sini
+const TEACHERS  = @json($teachers);
 
+// ═══════════════════════════════════════════════════════════════════════════
+// PERUBAHAN #3: filterTeacher — innerHTML diganti createElement + textContent
+// SEBELUM: box.innerHTML = filtered.map(t => `<div>...${t.name}...${t.phone}...</div>`).join('')
+// SESUDAH: setiap item dibuat lewat createElement, nilai diisi via textContent
+// ═══════════════════════════════════════════════════════════════════════════
+function buildSuggestionItem(name, phone, onClickFn) {
+    const item = document.createElement('div');
+    item.style.cssText = 'padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center';
+    item.addEventListener('mouseover', () => item.style.background = '#f0f7ee');
+    item.addEventListener('mouseout',  () => item.style.background = '');
+    item.addEventListener('click', onClickFn);
+
+    const nameSpan = document.createElement('span');
+    nameSpan.style.cssText = 'font-weight:600;color:#1A2517';
+    nameSpan.textContent = name; // ← textContent, bukan innerHTML
+
+    const phoneSpan = document.createElement('span');
+    phoneSpan.style.cssText = 'font-size:11px;color:#9ca3af';
+    phoneSpan.textContent = phone || ''; // ← textContent
+
+    item.appendChild(nameSpan);
+    item.appendChild(phoneSpan);
+    return item;
+}
+
+function filterTeacher(val) {
+    const box = document.getElementById('teacher_suggestions');
+    if (!val || val.length < 2) { box.style.display = 'none'; return; }
+    const filtered = TEACHERS.filter(t => t.name.toLowerCase().includes(val.toLowerCase()));
+    if (!filtered.length) { box.style.display = 'none'; return; }
+    box.innerHTML = '';
+    filtered.forEach(t => {
+        box.appendChild(buildSuggestionItem(t.name, t.phone, () => selectTeacher(t.name, t.phone ?? '')));
+    });
+    box.style.display = 'block';
+}
+
+function selectTeacher(name, phone) {
+    document.getElementById('inp_teacher_name').value  = name;
+    document.getElementById('inp_teacher_phone').value = phone;
+    document.getElementById('teacher_suggestions').style.display = 'none';
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PERUBAHAN #4: filterTeacherSunday — sama, pakai createElement + textContent
+// ═══════════════════════════════════════════════════════════════════════════
+function filterTeacherSunday(val) {
+    const box = document.getElementById('sb_teacher_sug');
+    if (!val || val.length < 2) { box.style.display = 'none'; return; }
+    const filtered = TEACHERS.filter(t => t.name.toLowerCase().includes(val.toLowerCase()));
+    if (!filtered.length) { box.style.display = 'none'; return; }
+    box.innerHTML = '';
+    filtered.forEach(t => {
+        box.appendChild(buildSuggestionItem(t.name, t.phone, () => selectTeacherSunday(t.name, t.phone ?? '')));
+    });
+    box.style.display = 'block';
+}
+
+function selectTeacherSunday(name, phone) {
+    document.getElementById('sb_teacher_name').value  = name;
+    document.getElementById('sb_teacher_phone').value = phone;
+    document.getElementById('sb_teacher_sug').style.display = 'none';
+}
+
+// Tutup dropdown saat klik di luar — digabung jadi satu listener
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('#inp_teacher_name') && !e.target.closest('#teacher_suggestions'))
+        document.getElementById('teacher_suggestions').style.display = 'none';
+    if (!e.target.closest('#sb_teacher_name') && !e.target.closest('#sb_teacher_sug'))
+        document.getElementById('sb_teacher_sug').style.display = 'none';
+});
+
+// ─── TABS ─────────────────────────────────────────────────────────────────
 function switchTab(id) {
     document.querySelectorAll('.lab-panel').forEach(p => p.style.display = 'none');
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('tab-active'));
     document.getElementById('skeleton').style.display = 'block';
     document.getElementById('tab-' + id).classList.add('tab-active');
-
     setTimeout(() => {
         document.getElementById('skeleton').style.display = 'none';
         const panel = document.getElementById('panel-' + id);
@@ -1243,6 +1391,7 @@ function switchTab(id) {
     }, 380);
 }
 
+// ─── BOOKING MODAL ────────────────────────────────────────────────────────
 function openBooking(rid, rname, sid, sname, stime, dayEn, dayId, date, bookedSlots) {
     bookedSlots = bookedSlots || [];
     document.getElementById('f_rid').value  = rid;
@@ -1256,13 +1405,11 @@ function openBooking(rid, rname, sid, sname, stime, dayEn, dayId, date, bookedSl
     document.getElementById('b-date').textContent = '📅 ' + dayId + ', ' + d.getDate() + ' ' + mn[d.getMonth()] + ' ' + d.getFullYear();
     document.getElementById('b-slot').textContent = '🕐 ' + sname + ' · ' + stime;
 
-    // Multi-slot selector
-    const slotIdx  = ALL_SLOTS.findIndex(s => s.id == sid);
-    const wrap     = document.getElementById('slot-options');
+    const slotIdx   = ALL_SLOTS.findIndex(s => s.id == sid);
+    const wrap      = document.getElementById('slot-options');
     const startTime = stime.split('\u2013')[0].split('-')[0].trim();
-    wrap.innerHTML = '';
+    wrap.innerHTML  = '';
 
-    // Cari semua slot berurutan yang tersedia
     let availableSlots = [];
     for (let i = slotIdx; i < ALL_SLOTS.length; i++) {
         if (i > slotIdx && bookedSlots.includes(ALL_SLOTS[i].id)) break;
@@ -1284,7 +1431,6 @@ function openBooking(rid, rname, sid, sname, stime, dayEn, dayId, date, bookedSl
             + ' \u00B7 ' + startTime + (endTime ? '\u2013' + endTime : '');
     }
 
-    // Buat tombol per slot
     availableSlots.forEach((slot, i) => {
         const btn  = document.createElement('button');
         btn.type   = 'button';
@@ -1299,13 +1445,12 @@ function openBooking(rid, rname, sid, sname, stime, dayEn, dayId, date, bookedSl
         wrap.appendChild(btn);
     });
 
-    // Tombol Full Day jika ada lebih dari 2 slot tersedia
     if (availableSlots.length > 2) {
         const btnAll = document.createElement('button');
         btnAll.type  = 'button';
         btnAll.className = 'slot-opt slot-opt-full';
         btnAll.style.cssText = 'background:linear-gradient(135deg,#1A2517,#2a3826);color:#ACC8A2;border-color:#3d5438;min-width:90px';
-        const lastT  = availableSlots[availableSlots.length - 1];
+        const lastT   = availableSlots[availableSlots.length - 1];
         const lastEnd = lastT.end_time ? lastT.end_time.slice(0,5) : '';
         btnAll.innerHTML = '<strong>Full (' + availableSlots.length + ')</strong><br><span style="font-size:10px">' + startTime + (lastEnd ? '\u2013' + lastEnd : '') + '</span>';
         btnAll.onclick = () => {
@@ -1327,8 +1472,6 @@ function openBooking(rid, rname, sid, sname, stime, dayEn, dayId, date, bookedSl
     document.body.style.overflow = 'hidden';
 }
 
-// selectOpt diganti dengan multi-slot logic di openBooking
-
 function closeModal() {
     const overlay = document.getElementById('modal-overlay');
     const box     = document.getElementById('modal-box');
@@ -1344,25 +1487,32 @@ function closeModal() {
     }, 160);
 }
 
-// ─── DETAIL MODAL ────────────────────────────────────
+// ─── DETAIL MODAL ─────────────────────────────────────────────────────────
 const TYPE_CONFIG = {
-    tetap:    { label: '📅 Jadwal Tetap',  headBg: 'linear-gradient(135deg,#2a4a28,#3a6b38)', typeColor: 'rgba(172,200,162,.7)', teacherColor: '#d6ead2' },
-    approved: { label: '✓ Booking Disetujui', headBg: 'linear-gradient(135deg,#14532d,#166534)', typeColor: '#86efac', teacherColor: '#d1fae5' },
-    pending:  { label: '⏳ Menunggu Persetujuan', headBg: 'linear-gradient(135deg,#78350f,#92400e)', typeColor: '#fcd34d', teacherColor: '#fef3c7' },
+    tetap:    { label: '📅 Jadwal Tetap',         headBg: 'linear-gradient(135deg,#2a4a28,#3a6b38)', typeColor: 'rgba(172,200,162,.7)', teacherColor: '#d6ead2' },
+    approved: { label: '✓ Booking Disetujui',     headBg: 'linear-gradient(135deg,#14532d,#166534)', typeColor: '#86efac',             teacherColor: '#d1fae5' },
+    pending:  { label: '⏳ Menunggu Persetujuan', headBg: 'linear-gradient(135deg,#78350f,#92400e)', typeColor: '#fcd34d',             teacherColor: '#fef3c7' },
 };
 
+// ═══════════════════════════════════════════════════════════════════════════
+// PERUBAHAN #5 (utama): showDetail — innerHTML diganti createElement + textContent
+// SEBELUM: detail-body.innerHTML = rows.map(r => `<div>...${r.val}...</div>`).join('')
+//          → r.val tidak di-escape, XSS bisa masuk lewat data server
+// SESUDAH: setiap elemen dibuat via createElement, nilai diisi via textContent
+//          → tidak ada string yang diparse sebagai HTML oleh browser
+// ═══════════════════════════════════════════════════════════════════════════
 function showDetail(d) {
     const cfg = TYPE_CONFIG[d.type] || TYPE_CONFIG.tetap;
 
-    // Header
     const head = document.getElementById('detail-head');
     head.style.background = cfg.headBg;
+
+    // textContent — tidak pernah diparse sebagai HTML
     document.getElementById('d-type').style.color    = cfg.typeColor;
     document.getElementById('d-type').textContent    = cfg.label;
     document.getElementById('d-teacher').style.color = cfg.teacherColor;
     document.getElementById('d-teacher').textContent = d.teacher;
 
-    // Build rows
     const rows = [
         { icon: '🖥', key: 'Lab',      val: d.lab },
         { icon: '📚', key: 'Kelas',    val: d.class_name || '-' },
@@ -1370,20 +1520,38 @@ function showDetail(d) {
         { icon: '📅', key: 'Hari',     val: d.day + ', ' + d.date },
         { icon: '🕐', key: 'Slot',     val: d.slot + ' · ' + d.time },
     ];
-    if (d.title)        rows.push({ icon: '📝', key: 'Kegiatan',  val: d.title });
-    if (d.participants) rows.push({ icon: '👥', key: 'Peserta',   val: d.participants + ' orang' });
-    if (d.phone)        rows.push({ icon: '📞', key: 'No. HP',    val: d.phone });
+    if (d.title)        rows.push({ icon: '📝', key: 'Kegiatan',   val: d.title });
+    if (d.participants) rows.push({ icon: '👥', key: 'Peserta',    val: d.participants + ' orang' });
+    if (d.phone)        rows.push({ icon: '📞', key: 'No. HP',     val: d.phone });
     if (d.desc)         rows.push({ icon: '💬', key: 'Keterangan', val: d.desc });
 
-    document.getElementById('detail-body').innerHTML = rows.map(r => `
-        <div class="detail-row">
-            <span class="detail-icon">${r.icon}</span>
-            <div>
-                <div class="detail-key">${r.key}</div>
-                <div class="detail-val">${r.val}</div>
-            </div>
-        </div>
-    `).join('');
+    const body = document.getElementById('detail-body');
+    body.innerHTML = ''; // kosongkan container — aman karena tidak ada user data di sini
+
+    rows.forEach(function(r) {
+        const wrap = document.createElement('div');
+        wrap.className = 'detail-row';
+
+        const iconEl = document.createElement('span');
+        iconEl.className = 'detail-icon';
+        iconEl.textContent = r.icon; // emoji via textContent
+
+        const info = document.createElement('div');
+
+        const keyEl = document.createElement('div');
+        keyEl.className = 'detail-key';
+        keyEl.textContent = r.key; // ← textContent
+
+        const valEl = document.createElement('div');
+        valEl.className = 'detail-val';
+        valEl.textContent = r.val; // ← textContent, bukan innerHTML
+
+        info.appendChild(keyEl);
+        info.appendChild(valEl);
+        wrap.appendChild(iconEl);
+        wrap.appendChild(info);
+        body.appendChild(wrap);
+    });
 
     document.getElementById('detail-overlay').classList.add('show');
     document.body.style.overflow = 'hidden';
@@ -1401,104 +1569,187 @@ function closeDetail() {
     }, 160);
 }
 
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); closeDetail(); closeSundayModal(); } });
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeModal(); closeDetail(); closeSundayModal(); }
+});
 
-// ─── AJAX WEEK NAVIGATION ─────────────────────────────
+// ─── AJAX WEEK NAVIGATION ─────────────────────────────────────────────────
+let fetchController    = null;
 let currentActiveTabId = null;
 
+function getNextMonday() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const day = today.getDay();
+    const daysToMonday = day === 0 ? 1 : 8 - day;
+    const next = new Date(today);
+    next.setDate(today.getDate() + daysToMonday);
+    return next;
+}
+
 function changeWeek(week) {
-    // Simpan tab aktif
+    const targetDate = new Date(week + 'T00:00:00');
+    if (targetDate > getNextMonday()) {
+        showToast('⛔ Jadwal hanya bisa dilihat sampai 1 minggu ke depan.');
+        return;
+    }
+
+    if (fetchController) fetchController.abort();
+    fetchController = new AbortController();
+
     const activeTab = document.querySelector('.tab-btn.tab-active');
     if (activeTab) currentActiveTabId = activeTab.id.replace('tab-', '');
 
-    // Tampilkan skeleton
     document.querySelectorAll('.lab-panel').forEach(p => p.style.display = 'none');
     document.getElementById('skeleton').style.display = 'block';
-
-    // Disable tombol minggu
     document.querySelectorAll('.week-btn').forEach(b => { b.disabled = true; b.style.opacity = '.6'; });
 
-    // Update URL tanpa reload
     const url = new URL(window.location.href);
     url.searchParams.set('week', week);
-    window.history.pushState({week}, '', url.toString());
+    window.history.pushState({ week }, '', url.toString());
 
-    // Fetch HTML halaman baru
-    fetch(url.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-    .then(r => r.text())
-    .then(html => {
-        const parser = new DOMParser();
-        const newDoc = parser.parseFromString(html, 'text/html');
-
-        // Update week label
-        const newLabel = newDoc.getElementById('week-label');
-        if (newLabel) document.getElementById('week-label').innerHTML = newLabel.innerHTML;
-
-        // Update data panel
-        const newWrap = newDoc.getElementById('panels-wrap');
-        const oldWrap = document.getElementById('panels-wrap');
-        if (newWrap && oldWrap) oldWrap.innerHTML = newWrap.innerHTML;
-
-        // Update tombol prev/next
-        const newBtns = newDoc.querySelectorAll('.week-btn');
-        const oldBtns = document.querySelectorAll('.week-btn');
-        newBtns.forEach((nb, i) => {
-            if (oldBtns[i]) {
-                const match = nb.getAttribute('onclick')?.match(/'([^']+)'/);
-                if (match) oldBtns[i].setAttribute('onclick', `changeWeek('${match[1]}')`);
-            }
-        });
-
-        // Update ALL_SLOTS
-        newDoc.querySelectorAll('script');
-        const scripts = newDoc.querySelectorAll('script');
-        scripts.forEach(s => {
-            const m = s.textContent.match(/const ALL_SLOTS\s*=\s*(\[[\s\S]*?\]);/);
-            if (m) { try { window.ALL_SLOTS = JSON.parse(m[1]); } catch(e) {} }
-        });
-
-        // Sembunyikan skeleton
-        document.getElementById('skeleton').style.display = 'none';
-
-        // Sembunyikan SEMUA panel dulu (penting!)
-        document.querySelectorAll('.lab-panel').forEach(p => p.style.display = 'none');
-
-        // Tampilkan hanya panel yang aktif
-        const targetId = currentActiveTabId || document.querySelector('.lab-panel')?.id?.replace('panel-', '');
-        const target   = targetId ? document.getElementById('panel-' + targetId) : document.querySelector('.lab-panel');
-        if (target) {
-            target.style.display = '';
-            target.style.animation = 'none';
-            void target.offsetWidth;
-            target.style.animation = '';
-        }
-        // Re-enable tombol
-        document.querySelectorAll('.week-btn').forEach(b => { b.disabled = false; b.style.opacity = ''; });
+    fetch(url.toString(), {
+        signal: fetchController.signal,
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
     })
-    .catch(() => { window.location.href = url.toString(); });
+    .then(r => r.text())
+    .then(html => { fetchController = null; applyWeekResponse(html, week); })
+    .catch(err => {
+        if (err.name === 'AbortError') return;
+        fetchController = null;
+        window.location.href = url.toString();
+    });
 }
 
+function applyWeekResponse(html, week) {
+    const parser = new DOMParser();
+    const newDoc = parser.parseFromString(html, 'text/html');
+
+    const newLabel = newDoc.getElementById('week-label');
+    if (newLabel) document.getElementById('week-label').innerHTML = newLabel.innerHTML;
+
+    const newWrap = newDoc.getElementById('panels-wrap');
+    const oldWrap = document.getElementById('panels-wrap');
+    if (newWrap && oldWrap) oldWrap.innerHTML = newWrap.innerHTML;
+
+    const newBtns = newDoc.querySelectorAll('.week-btn');
+    const oldBtns = document.querySelectorAll('.week-btn');
+    newBtns.forEach((nb, i) => {
+        if (!oldBtns[i]) return;
+        const match = nb.getAttribute('onclick')?.match(/'([^']+)'/);
+        if (match) oldBtns[i].setAttribute('onclick', `changeWeek('${match[1]}')`);
+    });
+
+    newDoc.querySelectorAll('script').forEach(s => {
+        const m = s.textContent.match(/const ALL_SLOTS\s*=\s*(\[[\s\S]*?\]);/);
+        if (m) { try { window.ALL_SLOTS = JSON.parse(m[1]); } catch(e) {} }
+    });
+
+    document.getElementById('skeleton').style.display = 'none';
+    document.querySelectorAll('.lab-panel').forEach(p => p.style.display = 'none');
+
+    const targetId = currentActiveTabId || document.querySelector('.lab-panel')?.id?.replace('panel-', '');
+    const target   = targetId ? document.getElementById('panel-' + targetId) : document.querySelector('.lab-panel');
+    if (target) {
+        target.style.display = '';
+        target.style.animation = 'none';
+        void target.offsetWidth;
+        target.style.animation = '';
+    }
+
+    document.querySelectorAll('.week-btn').forEach(b => { b.disabled = false; b.style.opacity = ''; });
+
+    const nextBtn = document.querySelector('.week-btn-next');
+    if (nextBtn) {
+        if (new Date(week + 'T00:00:00') >= getNextMonday()) {
+            nextBtn.disabled = true;
+            nextBtn.style.opacity = '.4';
+            nextBtn.style.cursor = 'not-allowed';
+            nextBtn.style.pointerEvents = 'none';
+        } else {
+            nextBtn.disabled = false;
+            nextBtn.style.opacity = '';
+            nextBtn.style.cursor = '';
+            nextBtn.style.pointerEvents = '';
+        }
+    }
+}
+
+window.addEventListener('popstate', (e) => {
+    const week = e.state?.week;
+    if (!week) return;
+    if (fetchController) { fetchController.abort(); fetchController = null; }
+    const activeTab = document.querySelector('.tab-btn.tab-active');
+    if (activeTab) currentActiveTabId = activeTab.id.replace('tab-', '');
+    document.querySelectorAll('.lab-panel').forEach(p => p.style.display = 'none');
+    document.getElementById('skeleton').style.display = 'block';
+    document.querySelectorAll('.week-btn').forEach(b => { b.disabled = true; b.style.opacity = '.6'; });
+    const url = new URL(window.location.href);
+    fetchController = new AbortController();
+    fetch(url.toString(), {
+        signal: fetchController.signal,
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(r => r.text())
+    .then(html => { fetchController = null; applyWeekResponse(html, week); })
+    .catch(err => { if (err.name === 'AbortError') return; window.location.href = url.toString(); });
+});
+
+function showToast(msg) {
+    let toast = document.getElementById('toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'toast';
+        toast.className = 'toast';
+        document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toast._timeout);
+    toast._timeout = setTimeout(() => toast.classList.remove('show'), 3000);
+}
 
 function loadKelas(orgId) {
     const sel = document.getElementById('f_class');
     if (!orgId) { sel.innerHTML = '<option value="">— Pilih unit sekolah dulu —</option>'; sel.disabled = true; return; }
     sel.innerHTML = '<option value="">Memuat...</option>';
     sel.disabled  = true;
-    fetch('/kelas?organization_id=' + orgId)
+    fetch('/kelas?organization_id=' + encodeURIComponent(orgId))
         .then(r => r.json())
         .then(data => {
             sel.innerHTML = '<option value="">— Pilih kelas —</option>';
-            data.forEach(c => { sel.innerHTML += `<option value="${c.id}">${c.name}</option>`; });
+            data.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value       = c.id;
+                opt.textContent = c.name; // ← textContent
+                sel.appendChild(opt);
+            });
             sel.disabled = false;
         })
         .catch(() => { sel.innerHTML = '<option value="">Gagal memuat</option>'; });
 }
-</script>
 
-<div class="page-trans" id="pt"></div>
-<script>
+function loadKelasSunday(orgId) {
+    const sel = document.getElementById('sb_class');
+    if (!orgId) { sel.innerHTML = '<option value="">— Pilih unit sekolah dulu —</option>'; sel.disabled = true; return; }
+    sel.innerHTML = '<option value="">Memuat...</option>';
+    sel.disabled  = true;
+    fetch('/kelas?organization_id=' + encodeURIComponent(orgId))
+        .then(r => r.json())
+        .then(data => {
+            sel.innerHTML = '<option value="">— Pilih kelas —</option>';
+            data.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value       = c.id;
+                opt.textContent = c.name; // ← textContent
+                sel.appendChild(opt);
+            });
+            sel.disabled = false;
+        })
+        .catch(() => { sel.innerHTML = '<option value="">Gagal memuat</option>'; });
+}
 
-    // ─── SUNDAY BOOKING ──────────────────────────────────
+// ─── SUNDAY BOOKING ───────────────────────────────────────────────────────
 function openSundayBooking(rid, rname, date) {
     document.getElementById('sb_rid').value      = rid;
     document.getElementById('sb_date_val').value = date;
@@ -1506,7 +1757,6 @@ function openSundayBooking(rid, rname, date) {
     const mn = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
     document.getElementById('sb-lab').textContent  = '🖥 ' + rname;
     document.getElementById('sb-date').textContent = '📅 Minggu, ' + d.getDate() + ' ' + mn[d.getMonth()] + ' ' + d.getFullYear();
-    // Reset form
     document.getElementById('sb_teacher_name').value  = '';
     document.getElementById('sb_teacher_phone').value = '';
     document.getElementById('sb_org').value = '';
@@ -1529,66 +1779,17 @@ function closeSundayModal() {
     }, 160);
 }
 
-function filterTeacherSunday(val) {
-    const box = document.getElementById('sb_teacher_sug');
-    if (!val || val.length < 2) { box.style.display = 'none'; return; }
-    const filtered = TEACHERS.filter(t => t.name.toLowerCase().includes(val.toLowerCase()));
-    if (!filtered.length) { box.style.display = 'none'; return; }
-    box.innerHTML = filtered.map(t => `
-        <div onclick="selectTeacherSunday('${t.name}','${t.phone ?? ''}')"
-            style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center"
-            onmouseover="this.style.background='#f0f7ee'" onmouseout="this.style.background=''">
-            <span style="font-weight:600;color:#1A2517">${t.name}</span>
-            <span style="font-size:11px;color:#9ca3af">${t.phone ?? ''}</span>
-        </div>`).join('');
-    box.style.display = 'block';
-}
-
-function selectTeacherSunday(name, phone) {
-    document.getElementById('sb_teacher_name').value  = name;
-    document.getElementById('sb_teacher_phone').value = phone;
-    document.getElementById('sb_teacher_sug').style.display = 'none';
-}
-
-document.addEventListener('click', function(e) {
-    if (!e.target.closest('#sb_teacher_name') && !e.target.closest('#sb_teacher_sug'))
-        document.getElementById('sb_teacher_sug').style.display = 'none';
-});
-
-function loadKelasSunday(orgId) {
-    const sel = document.getElementById('sb_class');
-    if (!orgId) { sel.innerHTML = '<option value="">— Pilih unit sekolah dulu —</option>'; sel.disabled = true; return; }
-    sel.innerHTML = '<option value="">Memuat...</option>';
-    sel.disabled  = true;
-    fetch('/kelas?organization_id=' + orgId)
-        .then(r => r.json())
-        .then(data => {
-            sel.innerHTML = '<option value="">— Pilih kelas —</option>';
-            data.forEach(c => { sel.innerHTML += `<option value="${c.id}">${c.name}</option>`; });
-            sel.disabled = false;
-        })
-        .catch(() => { sel.innerHTML = '<option value="">Gagal memuat</option>'; });
-}
-    // ─── DOUBLE SUBMIT PREVENTION ────────────────────────
+// ─── DOUBLE SUBMIT PREVENTION ─────────────────────────────────────────────
 document.querySelectorAll('form').forEach(form => {
     form.addEventListener('submit', function(e) {
         const btn = this.querySelector('.btn-submit');
         if (!btn) return;
-
-        // Kalau sudah loading, block submit
-        if (btn.dataset.loading === 'true') {
-            e.preventDefault();
-            return;
-        }
-
-        // Set loading state
+        if (btn.dataset.loading === 'true') { e.preventDefault(); return; }
         btn.dataset.loading = 'true';
         btn.disabled = true;
         btn.style.opacity = '.7';
         btn.style.cursor = 'not-allowed';
         btn.textContent = '⏳ Memproses...';
-
-        // Safety fallback — enable kembali setelah 10 detik
         setTimeout(() => {
             btn.dataset.loading = 'false';
             btn.disabled = false;
@@ -1598,12 +1799,12 @@ document.querySelectorAll('form').forEach(form => {
         }, 10000);
     });
 });
-// SPA-like page transition
+
+// ─── SPA PAGE TRANSITION ──────────────────────────────────────────────────
 document.querySelectorAll('a.pub-link, a.pub-btn, a.pub-brand').forEach(a => {
     const href = a.getAttribute('href');
     if (!href || href.startsWith('#') || href.startsWith('javascript') || a.getAttribute('target') === '_blank') return;
     a.addEventListener('click', function(e) {
-        // Skip jika sudah di halaman yang sama
         const current = window.location.pathname;
         try {
             const target = new URL(href, window.location.href).pathname;
@@ -1615,10 +1816,12 @@ document.querySelectorAll('a.pub-link, a.pub-btn, a.pub-brand').forEach(a => {
         setTimeout(() => { window.location.href = href; }, 220);
     });
 });
-// Fade in on back navigation
+
 window.addEventListener('pageshow', () => {
     document.getElementById('pt').classList.remove('go');
 });
 </script>
+
+<div class="page-trans" id="pt"></div>
 </body>
 </html>

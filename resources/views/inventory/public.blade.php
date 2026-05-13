@@ -37,26 +37,70 @@
         .anim-body   { animation: fadeUp .5s .2s  cubic-bezier(.16,1,.3,1) both; }
 
         /* ─── NAVBAR ────────────────────────── */
-        .pub-navbar{position:sticky;top:0;z-index:100;background:linear-gradient(135deg,#1A2517,#2a3826);box-shadow:0 2px 16px rgba(0,0,0,.28);animation:navSlideDown .4s cubic-bezier(.16,1,.3,1) both}
-        .pub-inner{max-width:1280px;margin:0 auto;padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:60px}
-        .pub-brand{display:flex;align-items:center;gap:10px;text-decoration:none;flex-shrink:0}
-        .pub-brand-icon{width:34px;height:34px;border-radius:9px;background:rgba(172,200,162,.12);border:1.5px solid rgba(172,200,162,.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .18s}
-        .pub-brand-icon:hover{background:rgba(172,200,162,.22)}
-        .pub-brand-name{font-family:'Outfit',sans-serif;font-weight:700;font-size:15px;color:#fff;line-height:1.2}
-        .pub-brand-sub{font-size:10px;color:rgba(172,200,162,.4)}
-        .pub-links{display:flex;align-items:center;gap:4px}
-        .pub-link{font-size:13px;font-weight:600;color:rgba(172,200,162,.55);text-decoration:none;padding:7px 13px;border-radius:8px;transition:color .15s,background .15s;white-space:nowrap}
-        .pub-link:hover,.pub-link.on{color:#ACC8A2;background:rgba(172,200,162,.1)}
-        .pub-btn{font-size:12px;font-weight:700;padding:7px 15px;border-radius:8px;color:#ACC8A2;border:1.5px solid rgba(172,200,162,.3);text-decoration:none;margin-left:6px;transition:background .15s,transform .15s;white-space:nowrap}
-        .pub-btn:hover{background:rgba(172,200,162,.08);transform:translateY(-1px)}
-        @keyframes navSlideDown{from{transform:translateY(-64px);opacity:0}to{transform:none;opacity:1}}
-        @media(max-width:600px){.pub-inner{padding:0 1rem}.pub-brand-sub{display:none}.pub-link{padding:6px 9px;font-size:12px}.pub-btn{padding:6px 11px;font-size:12px;margin-left:3px}}
+        .pub-navbar {
+            position: sticky; top: 0; z-index: 100;
+            background: linear-gradient(135deg, #1A2517, #2a3826);
+            box-shadow: 0 2px 16px rgba(0,0,0,.28);
+            animation: navSlideDown .4s cubic-bezier(.16,1,.3,1) both;
+            width: 100%; overflow: hidden;
+        }
+        .pub-inner {
+            max-width: 1280px; margin: 0 auto;
+            padding: 0 1.5rem;
+            display: flex; align-items: center; justify-content: space-between;
+            height: 60px; gap: 10px;
+        }
+        .pub-brand { display: flex; align-items: center; gap: 8px; text-decoration: none; flex-shrink: 0; }
+        .pub-brand-icon {
+            width: 32px; height: 32px; border-radius: 9px;
+            background: rgba(172,200,162,.12); border: 1.5px solid rgba(172,200,162,.25);
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; transition: background .18s;
+        }
+        .pub-brand-icon:hover { background: rgba(172,200,162, .22); }
+        .pub-brand-name { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 14px; color: #fff; line-height: 1.2; }
+        .pub-brand-sub { font-size: 10px; color: rgba(172,200,162, .4); }
+
+        .pub-links {
+            display: flex; align-items: center; gap: 2px;
+            overflow-x: auto; -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .pub-links::-webkit-scrollbar { display: none; }
+
+        .pub-link {
+            font-size: 12px; font-weight: 600;
+            color: rgba(172,200,162,.55); text-decoration: none;
+            padding: 6px 10px; border-radius: 8px;
+            transition: color .15s, background .15s;
+            white-space: nowrap;
+        }
+        .pub-link:hover, .pub-link.on { color: #ACC8A2; background: rgba(172,200,162, .1); }
+        .pub-btn {
+            font-size: 11px; font-weight: 700; padding: 6px 12px;
+            border-radius: 8px; color: #ACC8A2;
+            border: 1px solid rgba(172,200,162, .3); text-decoration: none;
+            transition: background .15s, transform .15s;
+            white-space: nowrap; flex-shrink: 0; margin-left: 4px;
+        }
+        .pub-btn:hover { background: rgba(172,200,162, .08); transform: translateY(-1px); }
+
+        @media (max-width: 640px) {
+            .pub-inner { padding: 0 1rem; }
+            .pub-brand-sub { display: none; }
+            .pub-brand-name { font-size: 13px; }
+            .pub-link { padding: 6px 8px; font-size: 11px; }
+            .pub-btn { padding: 5px 10px; }
+        }
+
+        @keyframes navSlideDown { from { transform: translateY(-64px); opacity: 0; } to { transform: none; opacity: 1; } }
 
         /* ─── HERO ──────────────────────────── */
         .hero {
             background: linear-gradient(135deg, var(--g9) 0%, var(--g8) 55%, var(--g7) 100%);
             padding: 2.5rem 1.5rem 3rem; text-align: center;
             position: relative; overflow: hidden;
+            width: 100%;
         }
         .hero::before {
             content: ''; position: absolute; top: -100px; right: -100px;
