@@ -4,25 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Rekap Penggunaan Lab – Nuris Jember</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+@vite(['resources/css/app.css'])
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:#f0f4ef;color:#1A2517;min-height:100vh}
 a{text-decoration:none}
-
-/* NAVBAR */
-.navbar{background:linear-gradient(135deg,#1A2517,#2a3826);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(26,37,23,.3)}
-.brand{display:flex;align-items:center;gap:10px}
-.brand-icon{width:34px;height:34px;border-radius:10px;background:rgba(172,200,162,.12);border:1.5px solid rgba(172,200,162,.25);display:flex;align-items:center;justify-content:center}
-.brand-name{font-family:Outfit,sans-serif;font-weight:700;font-size:15px;color:#fff;line-height:1.2}
-.brand-sub{font-size:10px;color:rgba(172,200,162,.4)}
-.nav-links{display:flex;align-items:center;gap:4px}
-.nav-link{padding:7px 13px;border-radius:8px;font-size:13px;font-weight:600;color:rgba(172,200,162,.55);transition:all .15s}
-.nav-link:hover,.nav-link.active{color:#ACC8A2;background:rgba(172,200,162,.1)}
-.nav-btn{padding:7px 15px;border-radius:8px;font-size:13px;font-weight:700;color:#ACC8A2;border:1.5px solid rgba(172,200,162,.3);margin-left:6px;transition:all .15s}
-.nav-btn:hover{background:rgba(172,200,162,.08)}
 
 /* HERO */
 .hero{background:linear-gradient(135deg,#1A2517 0%,#2a3826 60%,#3d5438 100%);padding:34px 24px 30px;text-align:center}
@@ -574,6 +560,17 @@ function getSummaryRows(){
     ]));
 }
 function exportExcel(){
+    if(typeof XLSX === 'undefined'){
+        const s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+        s.onload = () => doExportExcel();
+        document.head.appendChild(s);
+    } else {
+        doExportExcel();
+    }
+}
+
+function doExportExcel(){
     const lab=getActiveLabName(),period=getPeriod(),wb=XLSX.utils.book_new();
     const ws1=XLSX.utils.aoa_to_sheet([['REKAP PENGGUNAAN LABORATORIUM'],['Lab: '+lab,'Periode: '+period],[],['Indikator','Nilai','Keterangan'],...getSummaryRows()]);
     ws1['!cols']=[{wch:22},{wch:12},{wch:28}];
@@ -583,6 +580,7 @@ function exportExcel(){
     if(booking.length>1){const ws3=XLSX.utils.aoa_to_sheet(booking);ws3['!cols']=[{wch:14},{wch:14},{wch:22},{wch:14},{wch:20},{wch:10}];XLSX.utils.book_append_sheet(wb,ws3,'Booking');}
     XLSX.writeFile(wb,`Rekap_${lab.replace(/\s+/g,'_')}_${period.replace(/[^a-zA-Z0-9]/g,'_')}.xlsx`);
 }
+
 function exportCSV(){
     const lab=getActiveLabName(),period=getPeriod();
     const{jadwal,booking}=getActiveTableData();

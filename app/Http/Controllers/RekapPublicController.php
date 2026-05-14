@@ -19,12 +19,33 @@ class RekapPublicController extends Controller
         $startDate = Carbon::create($year, $month, 1)->startOfMonth();
         $endDate   = Carbon::create($year, $month, 1)->endOfMonth();
 
+        // ✅ FIX 1: Ambil semua resource sekaligus
         $resources = Resource::where('status', 'active')->orderBy('name')->get();
+
+        // ✅ FIX 2: Ambil semua timeslot sekaligus
         $timeSlots = TimeSlot::where('is_active', 1)->where('is_break', 0)
             ->orderBy('slot_order')->get();
 
         $totalSlotPerDay  = $timeSlots->count();
         $totalDaysInMonth = $startDate->daysInMonth;
+        $resourceIds      = $resources->pluck('id')->toArray();
+
+        // ✅ FIX 3: Ambil SEMUA schedules sekaligus (bukan per resource)
+        $allSchedules = Schedule::whereIn('resource_id', $resourceIds)
+            ->where('status', 'active')
+            ->whereNull('deleted_at')
+            ->with(['timeSlot', 'labClass'])
+            ->get()
+            ->groupBy('resource_id'); // group by resource_id supaya mudah diakses
+
+        // ✅ FIX 4: Ambil SEMUA bookings sekaligus (bukan per resource)
+        $allBookings = Booking::whereIn('resource_id', $resourceIds)
+            ->whereBetween('booking_date', [$startDate->toDateString(), $endDate->toDateString()])
+            ->where('status', 'approved')
+            ->with('timeSlot')
+            ->orderBy('booking_date')
+            ->get()
+            ->groupBy('resource_id'); // group by resource_id
 
         $dayMap = [
             'Monday'=>1,'Tuesday'=>2,'Wednesday'=>3,
@@ -35,28 +56,35 @@ class RekapPublicController extends Controller
             'Thursday'=>'Kamis','Friday'=>'Jumat','Saturday'=>'Sabtu','Sunday'=>'Minggu'
         ];
 
+        // ✅ FIX 5: Pre-compute jumlah kemunculan tiap hari dalam bulan ini
+        // Contoh: ['Monday' => 4, 'Tuesday' => 5, ...]
+        $dayOccurrences = [];
+        for ($d = 1; $d <= $totalDaysInMonth; $d++) {
+            $dayName = Carbon::create($year, $month, $d)->format('l');
+            $dayOccurrences[$dayName] = ($dayOccurrences[$dayName] ?? 0) + 1;
+        }
+
+        // ✅ FIX 6: Pre-compute daftar tanggal per nama hari
+        // Contoh: ['Monday' => ['2025-05-05', '2025-05-12', ...], ...]
+        $datesByDayName = [];
+        for ($d = 1; $d <= $totalDaysInMonth; $d++) {
+            $date    = Carbon::create($year, $month, $d);
+            $dayName = $date->format('l');
+            $datesByDayName[$dayName][] = $date->toDateString();
+        }
+
         $labData = [];
 
         foreach ($resources as $resource) {
+            $schedules      = $allSchedules->get($resource->id, collect());
+            $bookingDetails = $allBookings->get($resource->id, collect());
 
-            // Jadwal tetap
-            $schedules = Schedule::where('resource_id', $resource->id)
-                ->where('status', 'active')->whereNull('deleted_at')
-                ->with(['timeSlot', 'labClass'])->get();
-
+            // Hitung occurrences per schedule (tanpa loop harian)
             $scheduledSlots  = 0;
-            $scheduleDetails = $schedules->map(function($sch) use ($dayMap, $totalDaysInMonth, $year, $month, $dayNameId) {
-                $dayNum = $dayMap[$sch->day_of_week] ?? null;
-                $occurrences = 0;
-                if ($dayNum !== null) {
-                    for ($d = 1; $d <= $totalDaysInMonth; $d++) {
-                        if (Carbon::create($year, $month, $d)->dayOfWeek == $dayNum) {
-                            $occurrences++;
-                        }
-                    }
-                }
-                $sch->occurrences  = $occurrences;
-                $sch->day_name_id  = $dayNameId[$sch->day_of_week] ?? $sch->day_of_week;
+            $scheduleDetails = $schedules->map(function($sch) use ($dayOccurrences, $dayNameId) {
+                $occurrences      = $dayOccurrences[$sch->day_of_week] ?? 0;
+                $sch->occurrences = $occurrences;
+                $sch->day_name_id = $dayNameId[$sch->day_of_week] ?? $sch->day_of_week;
                 return $sch;
             })->filter(fn($s) => $s->occurrences > 0)
               ->sortBy(fn($s) => $dayMap[$s->day_of_week] ?? 9);
@@ -65,29 +93,25 @@ class RekapPublicController extends Controller
                 $scheduledSlots += $sd->occurrences;
             }
 
-            // Booking approved
-            $bookingDetails = Booking::where('resource_id', $resource->id)
-                ->whereBetween('booking_date', [$startDate, $endDate])
-                ->where('status', 'approved')
-                ->with('timeSlot')
-                ->orderBy('booking_date')
-                ->get();
-
             $bookingSlots  = $bookingDetails->count();
             $totalCapacity = $totalDaysInMonth * $totalSlotPerDay;
             $totalUsed     = $scheduledSlots + $bookingSlots;
             $percentage    = $totalCapacity > 0
                 ? round(($totalUsed / $totalCapacity) * 100, 1) : 0;
 
-            // Daily calendar data
+            // ✅ FIX 7: Group booking per tanggal supaya filter O(1) bukan O(n)
+            $bookingByDate   = $bookingDetails->groupBy('booking_date');
+            $scheduleByDay   = $schedules->groupBy('day_of_week');
+
+            // Daily calendar data (sudah tidak ada filter() berulang)
             $dailyData = [];
             for ($d = 1; $d <= $totalDaysInMonth; $d++) {
                 $date    = Carbon::create($year, $month, $d);
                 $dayName = $date->format('l');
                 $dateStr = $date->toDateString();
 
-                $schedCount = $schedules->filter(fn($s) => $s->day_of_week === $dayName)->count();
-                $bookCount  = $bookingDetails->filter(fn($b) => $b->booking_date === $dateStr)->count();
+                $schedCount = $scheduleByDay->get($dayName, collect())->count();
+                $bookCount  = $bookingByDate->get($dateStr, collect())->count();
 
                 $dailyData[] = [
                     'date'     => $date,
