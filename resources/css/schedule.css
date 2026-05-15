@@ -21,7 +21,7 @@
 }
 
 body {
-    font-family: 'DM Sans', system-ui, sans-serif;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
     background: var(--bg);
     color: var(--text);
     font-size: 14px;
@@ -64,7 +64,7 @@ body {
     margin-bottom: 5px;
 }
 .hero-title {
-    font-family: 'Outfit', sans-serif; font-weight: 800;
+    font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800;
     font-size: clamp(1.5rem, 4vw, 2.1rem);
     color: #fff; letter-spacing: -.02em; margin-bottom: 4px;
 }
@@ -199,7 +199,7 @@ body {
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
 }
-.panel-name { font-family: 'Outfit', sans-serif; font-weight: 700; color: #fff; font-size: 17px; }
+.panel-name { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; color: #fff; font-size: 17px; }
 .panel-cap  { font-size: 11px; color: rgba(172,200,162,.5); margin-top: 2px; }
 
 /* ─── SWIPE HINT ─────────────────────────────── */
@@ -240,7 +240,7 @@ tbody tr:hover .col-time { background: #fafcf9; }
     position: sticky; left: 0; z-index: 2;
     background: #fff; border-right: 1px solid #f0f0f0;
 }
-.slot-label { font-family: 'Outfit', sans-serif; font-weight: 700; color: var(--text); font-size: 11px; }
+.slot-label { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; color: var(--text); font-size: 11px; }
 .slot-time  { font-size: 10px; color: var(--muted); margin-top: 1px; }
 
 td.slot-td { padding: 4px 3px; border-right: 1px solid #f5f5f5; }
@@ -369,7 +369,7 @@ td.td-sun[rowspan] .bk-btn {
 .detail-head { padding: 16px 20px 14px; }
 .detail-head-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
 .detail-type { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 3px; }
-.detail-teacher { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 18px; line-height: 1.2; }
+.detail-teacher { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 18px; line-height: 1.2; }
 .detail-close {
     background: none; border: none; cursor: pointer;
     padding: 4px; border-radius: 7px; flex-shrink: 0;
@@ -407,7 +407,7 @@ td.td-sun[rowspan] .bk-btn {
 }
 .modal-head-top { display: flex; align-items: flex-start; justify-content: space-between; }
 .modal-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: rgba(172,200,162,.55); margin-bottom: 3px; }
-.modal-title { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 19px; color: #fff; }
+.modal-title { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 19px; color: #fff; }
 .modal-close {
     background: none; border: none; cursor: pointer;
     color: rgba(172,200,162,.5); padding: 4px; border-radius: 7px;

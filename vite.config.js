@@ -6,9 +6,11 @@ export default defineConfig({
         laravel({
             input: [
                 'resources/css/app.css',
-                'resources/css/inventory.css',  // tambah ini
+                'resources/css/inventory.css',
+                'resources/css/schedule.css',   // jadwal publik
                 'resources/js/app.js',
-                'resources/js/inventory.js',    // tambah ini
+                'resources/js/inventory.js',
+                'resources/js/schedule.js',     // jadwal publik
             ],
             refresh: true,
         }),

@@ -1,12 +1,13 @@
 /**
  * schedule.js — JavaScript untuk halaman jadwal publik
- * public/js/schedule.js
+ * resources/js/schedule.js  (di-compile Vite → public/build/)
  *
  * Variabel ALL_SLOTS dan TEACHERS di-inject dari blade via:
  *   <script>
  *     window.ALL_SLOTS = @json(...);
  *     window.TEACHERS  = @json(...);
  *   </script>
+ * (harus sebelum @vite di @section('vite'))
  */
 
 /* ─── TEACHER AUTOCOMPLETE ───────────────────────────────────────────────── */
@@ -518,3 +519,19 @@ document.querySelectorAll('form').forEach(function(form) {
         }, 10000);
     });
 });
+
+/* ─── EXPOSE KE WINDOW (diperlukan karena Vite load JS sebagai module) ────── */
+/* Fungsi-fungsi ini dipanggil dari onclick di HTML, harus ada di global scope  */
+
+window.filterTeacher      = filterTeacher;
+window.filterTeacherSunday = filterTeacherSunday;
+window.switchTab          = switchTab;
+window.openBooking        = openBooking;
+window.closeModal         = closeModal;
+window.showDetail         = showDetail;
+window.closeDetail        = closeDetail;
+window.changeWeek         = changeWeek;
+window.loadKelas          = loadKelas;
+window.loadKelasSunday    = loadKelasSunday;
+window.openSundayBooking  = openSundayBooking;
+window.closeSundayModal   = closeSundayModal;

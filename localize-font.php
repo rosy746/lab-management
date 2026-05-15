@@ -22,16 +22,10 @@ $cssDir  = __DIR__ . '/public/css';
 // Font yang akan didownload
 $fonts = [
     [
-        'family'   => 'Outfit',
-        'weights'  => [600, 700, 800],
-        'url'      => 'https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&display=swap',
-        'prefix'   => 'outfit',
-    ],
-    [
-        'family'   => 'DM Sans',
-        'weights'  => [400, 500, 600],
-        'url'      => 'https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap',
-        'prefix'   => 'dmsans',
+        'family'   => 'Plus Jakarta Sans',
+        'weights'  => [400, 500, 600, 700, 800],
+        'url'      => 'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap',
+        'prefix'   => 'plusjakarta',
     ],
 ];
 

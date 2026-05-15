@@ -26,7 +26,7 @@
     border: 1px solid rgba(172,200,162,.06); pointer-events: none;
 }
 .hero-title {
-    font-family: 'Outfit', sans-serif; font-weight: 800;
+    font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800;
     font-size: clamp(1.4rem, 4vw, 2rem);
     color: #fff; letter-spacing: -.02em; margin-bottom: 6px;
 }
@@ -42,7 +42,7 @@
 .stat-card:nth-child(2) { animation-delay: .22s; }
 .stat-card:nth-child(3) { animation-delay: .29s; }
 .stat-card:nth-child(4) { animation-delay: .36s; }
-.stat-val           { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 22px; color: var(--acc); }
+.stat-val           { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 22px; color: var(--acc); }
 .stat-val.danger    { color: #f87171; }
 .stat-lbl           { font-size: 10px; color: rgba(172,200,162,.55); margin-top: 2px; }
 
@@ -59,7 +59,7 @@
 }
 .filter-inp {
     border: 1.5px solid #e5e7eb; border-radius: 9px;
-    padding: 8px 12px; font-size: 13px; font-family: 'DM Sans', sans-serif;
+    padding: 8px 12px; font-size: 13px; font-family: 'Plus Jakarta Sans', sans-serif;
     background: #fafcf9; outline: none; color: var(--text);
     transition: border-color .15s, box-shadow .15s;
 }
@@ -80,7 +80,7 @@
 .view-btn {
     background: none; border: none; border-radius: 6px;
     padding: 5px 11px; font-size: 12px; font-weight: 600;
-    cursor: pointer; color: var(--sub); font-family: 'DM Sans', sans-serif;
+    cursor: pointer; color: var(--sub); font-family: 'Plus Jakarta Sans', sans-serif;
     transition: all .15s;
 }
 .view-btn.active { background: var(--white); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.1); }
@@ -90,7 +90,7 @@
     display: inline-flex; align-items: center; gap: 5px;
     font-size: 12px; font-weight: 700; padding: 7px 12px;
     border-radius: 8px; border: none; cursor: pointer;
-    font-family: 'DM Sans', sans-serif; transition: transform .15s, filter .15s;
+    font-family: 'Plus Jakarta Sans', sans-serif; transition: transform .15s, filter .15s;
 }
 .btn-export:hover { transform: translateY(-1px); filter: brightness(1.08); }
 .btn-excel { background: #16a34a; color: #fff; }
@@ -130,7 +130,7 @@
     color: var(--sub); font-size: 12px; font-weight: 700;
     padding: 7px 14px; border-radius: 10px; cursor: pointer;
     transition: all .2s cubic-bezier(.16,1,.3,1);
-    font-family: 'DM Sans', sans-serif; white-space: nowrap;
+    font-family: 'Plus Jakarta Sans', sans-serif; white-space: nowrap;
 }
 .tab-btn:hover:not(.active) { border-color: var(--acc); color: var(--g7); transform: translateY(-1px); }
 .tab-btn.active {
@@ -158,10 +158,10 @@
 .lab-panel.active { display: block; }
 .panel-wrap       { background: var(--white); border-radius: var(--r); border: 1px solid var(--border); overflow: hidden; box-shadow: var(--shadow); }
 .panel-header     { background: linear-gradient(135deg, var(--g9), var(--g8)); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; }
-.panel-title      { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 16px; color: #fff; }
+.panel-title      { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 16px; color: #fff; }
 .panel-info       { font-size: 11px; color: rgba(172,200,162,.5); margin-top: 2px; }
 .broken-badge     { background: rgba(248,113,113,.12); border: 1px solid rgba(248,113,113,.25); border-radius: 10px; padding: 7px 12px; text-align: center; flex-shrink: 0; }
-.broken-val       { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 17px; color: #f87171; }
+.broken-val       { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 17px; color: #f87171; }
 .broken-lbl       { font-size: 10px; color: rgba(248,113,113,.65); }
 
 /* ─── TABLE ─────────────────────────── */

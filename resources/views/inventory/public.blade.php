@@ -1,15 +1,13 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventaris Lab – Lab Management Nuris Jember</title>
+{{-- resources/views/inventory/public.blade.php --}}
+@extends('layouts.public-schedule')
 
-    @vite(['resources/css/app.css', 'resources/css/inventory.css', 'resources/js/app.js', 'resources/js/inventory.js'])
-</head>
-<body>
+@section('title', 'Inventaris Lab')
 
-    @include('inventory.partials._navbar')
+@section('vite')
+@vite(['resources/css/inventory.css', 'resources/js/inventory.js'])
+@endsection
+
+@section('content')
 
     @include('inventory.partials._hero')
 
@@ -45,7 +43,7 @@
             $condLabels = ['excellent'=>'Sangat Baik','good'=>'Baik','fair'=>'Cukup','poor'=>'Buruk','broken'=>'Rusak'];
         @endphp
 
-       @foreach($resources as $i => $lab)
+        @foreach($resources as $i => $lab)
             @php
                 $labItems    = $inventories->where('resource_id', $lab->id)->values();
                 $brokenCount = $labItems->sum('quantity_broken');
@@ -53,12 +51,8 @@
             @endphp
             @include('inventory.partials._panel', compact('lab', 'labItems', 'brokenCount', 'isFirst', 'catLabels', 'catIcons', 'condLabels'))
         @endforeach
-            </div>
 
-    <footer>
-        © {{ date('Y') }} Lab Management – Nuris Jember
-        · Dicetak: {{ now()->translatedFormat('d F Y, H:i') }}
-    </footer>
+    </div>
 
     <div class="toast" id="toast">
         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -69,5 +63,4 @@
 
     <script>window.firstLabId = {{ $resources->first()->id ?? 0 }};</script>
 
-</body>
-</html>
+@endsection

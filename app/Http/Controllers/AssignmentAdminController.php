@@ -1,5 +1,6 @@
 <?php
 namespace App\Http\Controllers;
+
 use App\Models\Assignment;
 use App\Models\AssignmentSubmission;
 use App\Models\Teacher;
@@ -8,29 +9,61 @@ use Illuminate\Support\Facades\Storage;
 
 class AssignmentAdminController extends Controller
 {
-    public function index(Request $request)
+    /**
+     * Resolve siapa yang sedang mengakses:
+     * - Admin/Teknisi → via auth() login biasa
+     * - Guru → via token
+     */
+    private function resolveAccess(Request $request): array
     {
-        $token   = $request->query('token') ?? session('teacher_token');
-        $teacher = null;
+        // Jika login biasa (admin/teknisi)
+        if (auth()->check() && in_array(auth()->user()->role, ['admin', 'teknisi'])) {
+            return ['role' => auth()->user()->role, 'teacher' => null];
+        }
+
+        // Jika guru pakai token
+        $token = $request->query('token') ?? session('teacher_token');
         if ($token) {
             $teacher = Teacher::where('token', strtoupper($token))
                 ->where('is_active', true)
                 ->first();
-            if ($teacher) session(['teacher_token' => $token]);
+
+            if ($teacher) {
+                session(['teacher_token' => $token]);
+                return ['role' => 'teacher', 'teacher' => $teacher];
+            }
         }
-        if (!$teacher && !auth()->check()) {
+
+        return ['role' => null, 'teacher' => null];
+    }
+
+    public function index(Request $request)
+    {
+        $access  = $this->resolveAccess($request);
+        $role    = $access['role'];
+        $teacher = $access['teacher'];
+
+        // Tidak punya akses sama sekali
+        if (!$role) {
             return view('assignments.verify-token');
         }
-        if (auth()->check() && in_array(auth()->user()->role, ['admin', 'operator'])) {
-            $assignments = Assignment::with(['teacher', 'submissions'])
-                ->orderByDesc('created_at')->get();
-        } else {
+
+        if ($role === 'teacher') {
+            // Guru hanya lihat tugasnya sendiri
             $assignments = Assignment::with('submissions')
                 ->where('teacher_id', $teacher->id)
-                ->orderByDesc('created_at')->get();
+                ->orderByDesc('created_at')
+                ->get();
+        } else {
+            // Admin/Teknisi lihat semua tugas
+            $assignments = Assignment::with(['teacher', 'submissions'])
+                ->orderByDesc('created_at')
+                ->get();
         }
+
         $organizations = \App\Models\Organization::where('is_active', true)->orderBy('name')->get();
         $classes       = \App\Models\LabClass::where('is_active', true)->orderBy('name')->get();
+
         return view('assignments.admin', compact('assignments', 'teacher', 'organizations', 'classes'));
     }
 
@@ -47,6 +80,7 @@ class AssignmentAdminController extends Controller
             'organization_id' => 'required|exists:organizations,id',
         ], [
             'class_names.required' => 'Pilih minimal satu kelas.',
+            'deadline.after'       => 'Deadline harus setelah waktu sekarang.',
         ]);
 
         $teacher = Teacher::where('token', strtoupper($request->teacher_token))
@@ -56,6 +90,7 @@ class AssignmentAdminController extends Controller
         $attachmentPath = null;
         $attachmentName = null;
         $attachmentSize = null;
+
         if ($request->hasFile('attachment')) {
             $file           = $request->file('attachment');
             $attachmentPath = $file->store('attachments', 'local');
@@ -63,7 +98,6 @@ class AssignmentAdminController extends Controller
             $attachmentSize = round($file->getSize() / 1024, 1) . ' KB';
         }
 
-        // Buat satu record tugas untuk setiap kelas yang dipilih
         foreach ($request->class_names as $className) {
             Assignment::create([
                 'teacher_id'      => $teacher->id,
@@ -80,30 +114,48 @@ class AssignmentAdminController extends Controller
             ]);
         }
 
-        return back()->with('success', count($request->class_names) . ' Tugas berhasil dibuat.');
+        return back()->with('success', count($request->class_names) . ' tugas berhasil dibuat.');
     }
 
     public function destroy(Assignment $assignment)
     {
+        // Hapus semua file submission
         $assignment->submissions->each(function ($sub) {
-            Storage::delete($sub->file_path);
+            if (Storage::disk('local')->exists($sub->file_path)) {
+                Storage::disk('local')->delete($sub->file_path);
+            }
         });
-        if ($assignment->attachment_path) {
-            Storage::delete($assignment->attachment_path);
+
+        // Hapus file lampiran jika ada
+        if ($assignment->attachment_path && Storage::disk('local')->exists($assignment->attachment_path)) {
+            Storage::disk('local')->delete($assignment->attachment_path);
         }
+
         $assignment->delete();
-        return back()->with('success', 'Tugas dihapus.');
+
+        return back()->with('success', 'Tugas berhasil dihapus.');
     }
 
     public function downloadAttachment(Assignment $assignment)
     {
-        if (!$assignment->attachment_path) abort(404);
-        return Storage::download($assignment->attachment_path, $assignment->attachment_name);
+        if (!$assignment->attachment_path) {
+            return back()->withErrors(['error' => 'Tidak ada lampiran untuk tugas ini.']);
+        }
+
+        if (!Storage::disk('local')->exists($assignment->attachment_path)) {
+            return back()->withErrors(['error' => 'File lampiran tidak ditemukan di server.']);
+        }
+
+        return Storage::disk('local')->download($assignment->attachment_path, $assignment->attachment_name);
     }
 
     public function downloadSubmission(AssignmentSubmission $submission)
     {
-        return Storage::download($submission->file_path, $submission->file_name);
+        if (!Storage::disk('local')->exists($submission->file_path)) {
+            return back()->withErrors(['error' => 'File tidak ditemukan di server.']);
+        }
+
+        return Storage::disk('local')->download($submission->file_path, $submission->file_name);
     }
 
     public function gradeSubmission(Request $request, AssignmentSubmission $submission)
@@ -112,11 +164,13 @@ class AssignmentAdminController extends Controller
             'grade'    => 'required|numeric|min:0|max:100',
             'feedback' => 'nullable|string|max:500',
         ]);
+
         $submission->update([
             'grade'    => $request->grade,
             'feedback' => $request->feedback,
             'status'   => 'graded',
         ]);
+
         return back()->with('success', 'Nilai berhasil disimpan.');
     }
 }
