@@ -9,6 +9,11 @@
     "src": "resources/css/inventory.css",
     "isEntry": true
   },
+  "resources/css/rekap.css": {
+    "file": "assets/rekap-DoEDqmUi.css",
+    "src": "resources/css/rekap.css",
+    "isEntry": true
+  },
   "resources/css/schedule.css": {
     "file": "assets/schedule-CzkgLMpB.css",
     "src": "resources/css/schedule.css",

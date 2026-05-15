@@ -7,10 +7,11 @@ export default defineConfig({
             input: [
                 'resources/css/app.css',
                 'resources/css/inventory.css',
-                'resources/css/schedule.css',   // jadwal publik
+                'resources/css/schedule.css',
+                'resources/css/rekap.css',      // rekap publik
                 'resources/js/app.js',
                 'resources/js/inventory.js',
-                'resources/js/schedule.js',     // jadwal publik
+                'resources/js/schedule.js',
             ],
             refresh: true,
         }),
