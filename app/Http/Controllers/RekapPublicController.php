@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use App\Models\Resource;
 use App\Models\Schedule;
 use App\Models\Booking;
@@ -19,58 +20,58 @@ class RekapPublicController extends Controller
         $startDate = Carbon::create($year, $month, 1)->startOfMonth();
         $endDate   = Carbon::create($year, $month, 1)->endOfMonth();
 
-        // ✅ FIX 1: Ambil semua resource sekaligus
-        $resources = Resource::where('status', 'active')->orderBy('name')->get();
+        // ── Cache data master yang jarang berubah ──
+        $resources = Cache::remember('active_resources', 300, function () {
+            return Resource::where('status', 'active')
+                ->orderBy('name')
+                ->get(['id', 'name', 'building', 'capacity', 'status']);
+        });
 
-        // ✅ FIX 2: Ambil semua timeslot sekaligus
-        $timeSlots = TimeSlot::where('is_active', 1)->where('is_break', 0)
-            ->orderBy('slot_order')->get();
+        $timeSlots = Cache::remember('active_time_slots_nonbreak', 3600, function () {
+            return TimeSlot::where('is_active', 1)
+                ->where('is_break', 0)
+                ->orderBy('slot_order')
+                ->get();
+        });
 
         $totalSlotPerDay  = $timeSlots->count();
         $totalDaysInMonth = $startDate->daysInMonth;
         $resourceIds      = $resources->pluck('id')->toArray();
 
-        // ✅ FIX 3: Ambil SEMUA schedules sekaligus (bukan per resource)
-        $allSchedules = Schedule::whereIn('resource_id', $resourceIds)
-            ->where('status', 'active')
-            ->whereNull('deleted_at')
-            ->with(['timeSlot', 'labClass'])
-            ->get()
-            ->groupBy('resource_id'); // group by resource_id supaya mudah diakses
+        // ── Cache schedules per bulan (jarang berubah) ──
+        $allSchedules = Cache::remember('active_schedules', 300, function () use ($resourceIds) {
+            return Schedule::whereIn('resource_id', $resourceIds)
+                ->where('status', 'active')
+                ->whereNull('deleted_at')
+                ->with(['timeSlot', 'labClass'])
+                ->get()
+                ->groupBy('resource_id');
+        });
 
-        // ✅ FIX 4: Ambil SEMUA bookings sekaligus (bukan per resource)
+        // ── Bookings TIDAK di-cache — berubah setiap ada booking ──
         $allBookings = Booking::whereIn('resource_id', $resourceIds)
             ->whereBetween('booking_date', [$startDate->toDateString(), $endDate->toDateString()])
             ->where('status', 'approved')
             ->with('timeSlot')
             ->orderBy('booking_date')
             ->get()
-            ->groupBy('resource_id'); // group by resource_id
+            ->groupBy('resource_id');
 
         $dayMap = [
-            'Monday'=>1,'Tuesday'=>2,'Wednesday'=>3,
-            'Thursday'=>4,'Friday'=>5,'Saturday'=>6,'Sunday'=>0
+            'Monday'    => 1, 'Tuesday' => 2, 'Wednesday' => 3,
+            'Thursday'  => 4, 'Friday'  => 5, 'Saturday'  => 6, 'Sunday' => 0,
         ];
         $dayNameId = [
-            'Monday'=>'Senin','Tuesday'=>'Selasa','Wednesday'=>'Rabu',
-            'Thursday'=>'Kamis','Friday'=>'Jumat','Saturday'=>'Sabtu','Sunday'=>'Minggu'
+            'Monday'    => 'Senin',   'Tuesday'  => 'Selasa', 'Wednesday' => 'Rabu',
+            'Thursday'  => 'Kamis',   'Friday'   => 'Jumat',  'Saturday'  => 'Sabtu',
+            'Sunday'    => 'Minggu',
         ];
 
-        // ✅ FIX 5: Pre-compute jumlah kemunculan tiap hari dalam bulan ini
-        // Contoh: ['Monday' => 4, 'Tuesday' => 5, ...]
+        // Pre-compute jumlah kemunculan tiap hari dalam bulan
         $dayOccurrences = [];
         for ($d = 1; $d <= $totalDaysInMonth; $d++) {
             $dayName = Carbon::create($year, $month, $d)->format('l');
             $dayOccurrences[$dayName] = ($dayOccurrences[$dayName] ?? 0) + 1;
-        }
-
-        // ✅ FIX 6: Pre-compute daftar tanggal per nama hari
-        // Contoh: ['Monday' => ['2025-05-05', '2025-05-12', ...], ...]
-        $datesByDayName = [];
-        for ($d = 1; $d <= $totalDaysInMonth; $d++) {
-            $date    = Carbon::create($year, $month, $d);
-            $dayName = $date->format('l');
-            $datesByDayName[$dayName][] = $date->toDateString();
         }
 
         $labData = [];
@@ -79,9 +80,8 @@ class RekapPublicController extends Controller
             $schedules      = $allSchedules->get($resource->id, collect());
             $bookingDetails = $allBookings->get($resource->id, collect());
 
-            // Hitung occurrences per schedule (tanpa loop harian)
             $scheduledSlots  = 0;
-            $scheduleDetails = $schedules->map(function($sch) use ($dayOccurrences, $dayNameId) {
+            $scheduleDetails = $schedules->map(function ($sch) use ($dayOccurrences, $dayNameId) {
                 $occurrences      = $dayOccurrences[$sch->day_of_week] ?? 0;
                 $sch->occurrences = $occurrences;
                 $sch->day_name_id = $dayNameId[$sch->day_of_week] ?? $sch->day_of_week;
@@ -99,11 +99,9 @@ class RekapPublicController extends Controller
             $percentage    = $totalCapacity > 0
                 ? round(($totalUsed / $totalCapacity) * 100, 1) : 0;
 
-            // ✅ FIX 7: Group booking per tanggal supaya filter O(1) bukan O(n)
-            $bookingByDate   = $bookingDetails->groupBy('booking_date');
-            $scheduleByDay   = $schedules->groupBy('day_of_week');
+            $bookingByDate = $bookingDetails->groupBy('booking_date');
+            $scheduleByDay = $schedules->groupBy('day_of_week');
 
-            // Daily calendar data (sudah tidak ada filter() berulang)
             $dailyData = [];
             for ($d = 1; $d <= $totalDaysInMonth; $d++) {
                 $date    = Carbon::create($year, $month, $d);
@@ -148,15 +146,15 @@ class RekapPublicController extends Controller
             ? round(($summary['total_used'] / $summary['total_capacity']) * 100, 1) : 0;
 
         $months = [
-            1=>'Januari',2=>'Februari',3=>'Maret',4=>'April',
-            5=>'Mei',6=>'Juni',7=>'Juli',8=>'Agustus',
-            9=>'September',10=>'Oktober',11=>'November',12=>'Desember'
+            1  => 'Januari',  2 => 'Februari', 3  => 'Maret',    4  => 'April',
+            5  => 'Mei',      6 => 'Juni',      7  => 'Juli',     8  => 'Agustus',
+            9  => 'September',10 => 'Oktober',  11 => 'November', 12 => 'Desember',
         ];
         $years = range(now()->year - 1, now()->year + 1);
 
         return view('rekap.public', compact(
-            'labData','summary','month','year',
-            'months','years','startDate','endDate','totalSlotPerDay'
+            'labData', 'summary', 'month', 'year',
+            'months', 'years', 'startDate', 'endDate', 'totalSlotPerDay'
         ));
     }
 }

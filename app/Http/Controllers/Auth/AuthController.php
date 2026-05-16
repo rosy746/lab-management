@@ -3,8 +3,11 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Resource;
+use App\Models\Booking;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 
@@ -12,7 +15,16 @@ class AuthController extends Controller
 {
     public function showLogin()
     {
-        return view('auth.login');
+        // Cache stats 60 detik — tidak perlu query setiap halaman login dibuka
+        $stats = Cache::remember('login_page_stats', 60, function () {
+            return [
+                'labs'    => Resource::count(),
+                'pending' => Booking::where('status', 'pending')->count(),
+                'today'   => Booking::whereDate('created_at', today())->count(),
+            ];
+        });
+
+        return view('auth.login', compact('stats'));
     }
 
     public function login(Request $request)
@@ -41,16 +53,18 @@ class AuthController extends Controller
                     ->first();
 
         if (!$user || !Hash::check($request->password, $user->password_hash)) {
-            RateLimiter::hit($key, 60); // tambah counter, reset setelah 60 detik
+            RateLimiter::hit($key, 60);
             return back()->withErrors([
                 'username' => 'Username atau password salah.',
             ])->withInput($request->only('username'));
         }
 
-        // Login berhasil
-        RateLimiter::clear($key); // reset counter
+        // Login berhasil — clear cache stats karena booking pending mungkin berubah
+        RateLimiter::clear($key);
+        Cache::forget('login_page_stats');
+
         Auth::login($user, $request->boolean('remember'));
-        $request->session()->regenerate(); // cegah session fixation
+        $request->session()->regenerate();
         return redirect()->intended(route('dashboard'));
     }
 

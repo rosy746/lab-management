@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use App\Models\Resource;
 use App\Models\Schedule;
 use App\Models\TimeSlot;
@@ -42,18 +44,43 @@ class ScheduleController extends Controller
 
         $weekEnd = $weekStart->copy()->addDays(6);
 
-        $resources     = Resource::where('status', 'active')->orderBy('name')->get();
-        $timeSlots     = TimeSlot::where('is_active', 1)->orderBy('slot_order')->get();
-        $organizations = Organization::where('is_active', 1)->orderBy('name')->get();
-        $teachers      = Teacher::where('is_active', true)->orderBy('name')->get(['id', 'name', 'phone']);
+        // ── Cache data master yang jarang berubah ──
+
+        $resources = Cache::remember('active_resources', 300, function () {
+            return Resource::where('status', 'active')
+                ->orderBy('name')
+                ->get(['id', 'name', 'building', 'capacity', 'status']);
+        });
+
+        $timeSlots = Cache::remember('active_time_slots', 3600, function () {
+            return TimeSlot::where('is_active', 1)
+                ->orderBy('slot_order')
+                ->get();
+        });
+
+        $organizations = Cache::remember('active_organizations', 3600, function () {
+            return Organization::where('is_active', 1)
+                ->orderBy('name')
+                ->get();
+        });
+
+        $teachers = Cache::remember('active_teachers', 300, function () {
+            return Teacher::where('is_active', true)
+                ->orderBy('name')
+                ->get(['id', 'name', 'phone']);
+        });
 
         $resourceIds = $resources->pluck('id');
 
-        $schedules = Schedule::with(['labClass'])
-            ->where('status', 'active')
-            ->whereIn('resource_id', $resourceIds)
-            ->get()
-            ->groupBy(fn($s) => $s->resource_id . '_' . $s->day_of_week . '_' . $s->time_slot_id);
+        $schedules = Cache::remember('active_schedules', 300, function () use ($resourceIds) {
+            return Schedule::with(['labClass'])
+                ->where('status', 'active')
+                ->whereIn('resource_id', $resourceIds)
+                ->get()
+                ->groupBy(fn($s) => $s->resource_id . '_' . $s->day_of_week . '_' . $s->time_slot_id);
+        });
+
+        // ── Bookings TIDAK di-cache — berubah setiap ada booking baru ──
 
         $bookings = Booking::whereBetween('booking_date', [$weekStart, $weekEnd])
             ->whereIn('resource_id', $resourceIds)
@@ -88,11 +115,15 @@ class ScheduleController extends Controller
 
     public function getClasses(Request $request)
     {
-        $classes = LabClass::where('organization_id', $request->organization_id)
-            ->where('is_active', 1)
-            ->whereNull('deleted_at')
-            ->orderBy('name')
-            ->get(['id', 'name']);
+        $request->validate(['organization_id' => 'required|exists:organizations,id']);
+
+        $classes = Cache::remember('classes_org_' . $request->organization_id, 3600, function () use ($request) {
+            return LabClass::where('organization_id', $request->organization_id)
+                ->where('is_active', 1)
+                ->whereNull('deleted_at')
+                ->orderBy('name')
+                ->get(['id', 'name']);
+        });
 
         return response()->json($classes);
     }
@@ -103,7 +134,6 @@ class ScheduleController extends Controller
 
     public function storeBooking(Request $request)
     {
-        // Guard — hari Minggu pakai method khusus
         if ($request->filled('booking_date')) {
             if (Carbon::parse($request->booking_date)->format('l') === 'Sunday') {
                 return back()->withErrors(['error' => 'Booking hari Minggu menggunakan form khusus.'])->withInput();
@@ -129,13 +159,12 @@ class ScheduleController extends Controller
         $dayEn        = Carbon::parse($request->booking_date)->format('l');
         $teacherName  = trim(ucwords(strtolower($request->teacher_name)));
         $teacherPhone = $this->normalizePhone($request->teacher_phone);
-
-        $allSlotIds = $this->resolveSlotIds($request);
+        $allSlotIds   = $this->resolveSlotIds($request);
+        $sessionId    = (string) Str::uuid();
 
         try {
-            $result = DB::transaction(function () use ($request, $dayEn, $teacherName, $teacherPhone, $allSlotIds) {
+            $result = DB::transaction(function () use ($request, $dayEn, $teacherName, $teacherPhone, $allSlotIds, $sessionId) {
 
-                // Cek slot yang sudah terpakai — query SEKALI dengan lock
                 $takenBookingSlots = Booking::where('resource_id', $request->resource_id)
                     ->where('booking_date', $request->booking_date)
                     ->whereIn('status', ['pending', 'approved'])
@@ -153,17 +182,18 @@ class ScheduleController extends Controller
 
                 $takenSlotIds = array_unique(array_merge($takenBookingSlots, $takenScheduleSlots));
 
-                // Slot utama harus bebas
                 if (in_array((int) $request->time_slot_id, $takenSlotIds)) {
                     throw new \Exception('Slot ini sudah dibooking atau ada jadwal tetap.');
                 }
 
-                $labClass    = LabClass::findOrFail($request->class_id);
-                $teacher     = $this->upsertTeacher($teacherName, $teacherPhone);
+                $labClass = LabClass::findOrFail($request->class_id);
+                $teacher  = $this->upsertTeacher($teacherName, $teacherPhone);
 
                 $bookingData = [
+                    'session_id'        => $sessionId,
                     'resource_id'       => $request->resource_id,
                     'organization_id'   => $request->organization_id,
+                    'teacher_id'        => $teacher->id,
                     'booking_date'      => $request->booking_date,
                     'teacher_name'      => $teacherName,
                     'teacher_phone'     => $teacherPhone,
@@ -175,7 +205,7 @@ class ScheduleController extends Controller
                     'status'            => 'pending',
                 ];
 
-                $bookedCount  = 0;
+                $bookedSlots  = [];
                 $skippedCount = 0;
 
                 foreach ($allSlotIds as $slotId) {
@@ -183,20 +213,34 @@ class ScheduleController extends Controller
                         $skippedCount++;
                         continue;
                     }
-                    Booking::create(array_merge($bookingData, ['time_slot_id' => $slotId]));
-                    $bookedCount++;
+                    $bookedSlots[] = Booking::create(array_merge($bookingData, ['time_slot_id' => $slotId]));
                 }
 
-                return compact('bookedCount', 'skippedCount', 'labClass', 'teacher');
+                // Clear cache teacher setelah upsert
+                Cache::forget('active_teachers');
+
+                return [
+                    'bookedSlots'  => $bookedSlots,
+                    'bookedCount'  => count($bookedSlots),
+                    'skippedCount' => $skippedCount,
+                    'labClass'     => $labClass,
+                    'teacher'      => $teacher,
+                ];
             });
 
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()])->withInput();
         }
 
-        // Notif WA — di luar transaction, error tidak block response
         if ($result['bookedCount'] > 0) {
-            $this->sendBookingNotification($request, $teacherName, $teacherPhone, $result['labClass']);
+            $this->sendBookingNotification(
+                $request,
+                $teacherName,
+                $teacherPhone,
+                $result['labClass'],
+                $result['bookedSlots'],
+                $sessionId
+            );
         }
 
         $slotInfo = $result['bookedCount'] . ' slot berhasil';
@@ -240,7 +284,6 @@ class ScheduleController extends Controller
         try {
             $sundayBooking = DB::transaction(function () use ($request, $teacherName, $teacherPhone) {
 
-                // Cek double booking dengan lock
                 $exists = SundayBooking::where('resource_id', $request->resource_id)
                     ->where('booking_date', $request->booking_date)
                     ->whereIn('status', ['pending', 'approved'])
@@ -253,6 +296,9 @@ class ScheduleController extends Controller
 
                 $labClass = LabClass::findOrFail($request->class_id);
                 $teacher  = $this->upsertTeacher($teacherName, $teacherPhone);
+
+                // Clear cache teacher setelah upsert
+                Cache::forget('active_teachers');
 
                 return SundayBooking::create([
                     'teacher_id'        => $teacher->id,
@@ -274,7 +320,6 @@ class ScheduleController extends Controller
             return back()->withErrors(['error' => $e->getMessage()])->withInput();
         }
 
-        // Notif WA — di luar transaction
         $this->sendSundayBookingNotification($request, $teacherName, $teacherPhone, $sundayBooking);
 
         return redirect()->back()
@@ -286,36 +331,24 @@ class ScheduleController extends Controller
     // PRIVATE HELPERS
     // ══════════════════════════════════════════════════════════════════
 
-    /**
-     * Normalisasi nomor HP ke format 62xxxxxxxxx
-     */
     private function normalizePhone(string $phone): string
     {
         $phone = preg_replace('/\s+/', '', $phone);
-        if (str_starts_with($phone, '0')) {
-            return '62' . substr($phone, 1);
-        }
-        if (str_starts_with($phone, '+')) {
-            return ltrim($phone, '+');
-        }
+        if (str_starts_with($phone, '0')) return '62' . substr($phone, 1);
+        if (str_starts_with($phone, '+')) return ltrim($phone, '+');
         return $phone;
     }
 
-    /**
-     * Cari atau buat teacher, update phone kalau berubah
-     */
     private function upsertTeacher(string $name, string $phone): Teacher
     {
-        $teacher = Teacher::whereRaw('LOWER(name) = ?', [strtolower($name)])->first();
-
-        if (!$teacher) {
-            return Teacher::create([
-                'name'      => $name,
+        $teacher = Teacher::firstOrCreate(
+            ['name' => $name],
+            [
                 'phone'     => $phone,
                 'token'     => Teacher::generateUniqueToken(),
                 'is_active' => true,
-            ]);
-        }
+            ]
+        );
 
         if ($teacher->phone !== $phone && $phone) {
             $teacher->update(['phone' => $phone]);
@@ -324,9 +357,6 @@ class ScheduleController extends Controller
         return $teacher;
     }
 
-    /**
-     * Resolve semua slot IDs dari request (main + extra)
-     */
     private function resolveSlotIds(Request $request): array
     {
         $allSlotIds = [(int) $request->time_slot_id];
@@ -341,37 +371,46 @@ class ScheduleController extends Controller
         return array_values(array_unique(array_filter($allSlotIds)));
     }
 
-    /**
-     * Kirim notif WA booking biasa — error tidak block response
-     */
-    private function sendBookingNotification(Request $request, string $teacherName, string $teacherPhone, LabClass $labClass): void
-    {
+    private function sendBookingNotification(
+        Request $request,
+        string $teacherName,
+        string $teacherPhone,
+        LabClass $labClass,
+        array $bookedSlots,
+        string $sessionId
+    ): void {
         try {
-            $newBookings = Booking::where('resource_id', $request->resource_id)
-                ->where('booking_date', $request->booking_date)
-                ->where('teacher_name', $teacherName)
-                ->where('status', 'pending')
-                ->with('timeSlot')
-                ->orderBy('time_slot_id')
-                ->get();
+            $slotIds    = array_map(fn($b) => $b->time_slot_id, $bookedSlots);
+            $timeSlots  = TimeSlot::whereIn('id', $slotIds)->orderBy('slot_order')->get()->keyBy('id');
+            $bookingIds = array_map(fn($b) => $b->id, $bookedSlots);
 
-            $slots = $newBookings->map(fn($b) =>
-                substr($b->timeSlot->start_time ?? '', 0, 5) . '-' . substr($b->timeSlot->end_time ?? '', 0, 5)
-            )->join(', ');
+            $slotTimes = collect($slotIds)->map(function ($slotId) use ($timeSlots) {
+                $ts = $timeSlots->get($slotId);
+                return $ts ? substr($ts->start_time, 0, 5) . '-' . substr($ts->end_time, 0, 5) : null;
+            })->filter()->join(', ');
+
+            $slotNames = collect($slotIds)->map(fn($id) => $timeSlots->get($id)?->name)->filter();
+            $slotRange = $slotNames->count() > 1
+                ? $slotNames->first() . ' – ' . $slotNames->last()
+                : $slotNames->first();
 
             $lab = Resource::find($request->resource_id);
 
             Http::timeout(3)->post(config('mikrotik.bot_url') . '/api/webhook/lab-session', [
-                'event'         => 'booking_pending',
-                'booking_ids'   => $newBookings->pluck('id')->toArray(),
-                'teacher_name'  => $teacherName,
-                'teacher_phone' => $teacherPhone,
-                'lab_name'      => $lab->name ?? '-',
-                'booking_date'  => Carbon::parse($request->booking_date)->format('d/m/Y'),
-                'slots'         => $slots,
-                'class_name'    => $labClass->name,
-                'subject_name'  => $request->subject_name,
-                'total_slots'   => $newBookings->count(),
+                'event'             => 'booking_pending',
+                'session_id'        => $sessionId,
+                'booking_ids'       => $bookingIds,
+                'teacher_name'      => $teacherName,
+                'teacher_phone'     => $teacherPhone,
+                'lab_name'          => $lab->name ?? '-',
+                'booking_date'      => Carbon::parse($request->booking_date)->translatedFormat('l, d M Y'),
+                'slot_range'        => $slotRange,
+                'slot_times'        => $slotTimes,
+                'class_name'        => $labClass->name,
+                'subject_name'      => $request->subject_name,
+                'title'             => $request->title,
+                'participant_count' => $request->participant_count,
+                'total_slots'       => count($bookedSlots),
             ]);
 
         } catch (\Exception $e) {
@@ -379,26 +418,32 @@ class ScheduleController extends Controller
         }
     }
 
-    /**
-     * Kirim notif WA booking Minggu — error tidak block response
-     */
-    private function sendSundayBookingNotification(Request $request, string $teacherName, string $teacherPhone, SundayBooking $booking): void
-    {
+    private function sendSundayBookingNotification(
+        Request $request,
+        string $teacherName,
+        string $teacherPhone,
+        SundayBooking $booking
+    ): void {
         try {
             $lab      = Resource::find($request->resource_id);
             $labClass = LabClass::find($request->class_id);
 
             Http::timeout(3)->post(config('mikrotik.bot_url') . '/api/webhook/lab-session', [
-                'event'         => 'booking_pending',
-                'booking_ids'   => [$booking->id],
-                'teacher_name'  => $teacherName,
-                'teacher_phone' => $teacherPhone,
-                'lab_name'      => $lab->name ?? '-',
-                'booking_date'  => Carbon::parse($request->booking_date)->format('d/m/Y'),
-                'slots'         => 'Seharian (Minggu)',
-                'class_name'    => $labClass->name ?? '-',
-                'subject_name'  => $request->subject_name,
-                'total_slots'   => 1,
+                'event'             => 'booking_pending',
+                'session_id'        => null,
+                'booking_ids'       => [$booking->id],
+                'teacher_name'      => $teacherName,
+                'teacher_phone'     => $teacherPhone,
+                'lab_name'          => $lab->name ?? '-',
+                'booking_date'      => Carbon::parse($request->booking_date)->translatedFormat('l, d M Y'),
+                'slot_range'        => 'Seharian',
+                'slot_times'        => '07:00-12:45',
+                'class_name'        => $labClass->name ?? '-',
+                'subject_name'      => $request->subject_name,
+                'title'             => $request->title,
+                'participant_count' => $request->participant_count,
+                'total_slots'       => 1,
+                'is_sunday'         => true,
             ]);
 
         } catch (\Exception $e) {

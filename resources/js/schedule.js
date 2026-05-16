@@ -520,18 +520,176 @@ document.querySelectorAll('form').forEach(function(form) {
     });
 });
 
+/* ─── REALTIME POLLING ───────────────────────────────────────────────────── */
+/* Poll setiap 30 detik — update panel kalau ada perubahan data               */
+
+var POLL_INTERVAL  = 30000; // 30 detik
+var pollTimer      = null;
+var lastPanelsHash = '';
+var isPollPaused   = false;
+
+/**
+ * Ambil hash sederhana dari konten panels-wrap
+ * Dipakai untuk deteksi perubahan tanpa compare DOM penuh
+ */
+function getPanelsHash() {
+    var wrap = document.getElementById('panels-wrap');
+    return wrap ? wrap.innerHTML.length + '_' + wrap.querySelectorAll('.sc').length : '0';
+}
+
+/**
+ * Pause polling saat modal terbuka — hindari update saat user sedang isi form
+ */
+function pausePoll()  { isPollPaused = true; }
+function resumePoll() { isPollPaused = false; }
+
+/**
+ * Satu siklus polling:
+ * 1. Fetch HTML minggu aktif
+ * 2. Bandingkan hash panels-wrap
+ * 3. Kalau berubah, update DOM + tampilkan indikator
+ */
+function doPoll() {
+    // Skip kalau modal sedang terbuka atau sedang fetch manual
+    if (isPollPaused || fetchController) return;
+
+    var url = new URL(window.location.href);
+
+    fetch(url.toString(), {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(function(r) { return r.text(); })
+    .then(function(html) {
+        var parser = new DOMParser();
+        var newDoc = parser.parseFromString(html, 'text/html');
+
+        var newWrap = newDoc.getElementById('panels-wrap');
+        if (!newWrap) return;
+
+        // Bandingkan hash — kalau sama, tidak perlu update DOM
+        var newHash = newWrap.innerHTML.length + '_' + newWrap.querySelectorAll('.sc').length;
+        if (newHash === lastPanelsHash) return;
+
+        // Ada perubahan — update panels-wrap
+        lastPanelsHash = newHash;
+
+        var oldWrap = document.getElementById('panels-wrap');
+        if (!oldWrap) return;
+
+        // Simpan tab aktif
+        var activeTab = document.querySelector('.tab-btn.tab-active');
+        var activeId  = activeTab ? activeTab.id.replace('tab-', '') : null;
+
+        // Update konten
+        oldWrap.innerHTML = newWrap.innerHTML;
+
+        // Update ALL_SLOTS dari response baru
+        newDoc.querySelectorAll('script').forEach(function(s) {
+            var m = s.textContent.match(/window\.ALL_SLOTS\s*=\s*(\[[\s\S]*?\]);/);
+            if (m) { try { window.ALL_SLOTS = JSON.parse(m[1]); } catch(e) {} }
+        });
+
+        // Kembalikan ke tab yang aktif
+        document.querySelectorAll('.lab-panel').forEach(function(p) { p.style.display = 'none'; });
+        var target = activeId
+            ? document.getElementById('panel-' + activeId)
+            : document.querySelector('.lab-panel');
+        if (target) {
+            target.style.display = '';
+            // Animasi subtle biar user sadar ada update
+            target.style.animation = 'none';
+            void target.offsetWidth;
+            target.style.animation = 'panelIn .3s cubic-bezier(.16,1,.3,1)';
+        }
+
+        // Tampilkan toast notif update
+        showToast('🔄 Jadwal diperbarui');
+    })
+    .catch(function() {
+        // Gagal fetch — diam saja, coba lagi di interval berikutnya
+    });
+}
+
+/**
+ * Mulai polling — panggil saat halaman siap
+ */
+function startPolling() {
+    lastPanelsHash = getPanelsHash();
+    pollTimer = setInterval(doPoll, POLL_INTERVAL);
+}
+
+/**
+ * Stop polling — saat tab tidak aktif, hemat resource
+ */
+function stopPolling() {
+    if (pollTimer) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+    }
+}
+
+// Stop polling saat tab browser tidak aktif — hemat resource
+document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+        stopPolling();
+    } else {
+        doPoll();
+        startPolling();
+    }
+});
+
+// Mulai polling saat halaman siap
+startPolling();
+
 /* ─── EXPOSE KE WINDOW (diperlukan karena Vite load JS sebagai module) ────── */
 /* Fungsi-fungsi ini dipanggil dari onclick di HTML, harus ada di global scope  */
 
-window.filterTeacher      = filterTeacher;
+window.filterTeacher       = filterTeacher;
 window.filterTeacherSunday = filterTeacherSunday;
-window.switchTab          = switchTab;
-window.openBooking        = openBooking;
-window.closeModal         = closeModal;
-window.showDetail         = showDetail;
-window.closeDetail        = closeDetail;
-window.changeWeek         = changeWeek;
-window.loadKelas          = loadKelas;
-window.loadKelasSunday    = loadKelasSunday;
-window.openSundayBooking  = openSundayBooking;
-window.closeSundayModal   = closeSundayModal;
+window.switchTab           = switchTab;
+window.openBooking         = openBooking;
+window.closeModal          = closeModal;
+window.showDetail          = showDetail;
+window.closeDetail         = closeDetail;
+window.changeWeek          = changeWeek;
+window.loadKelas           = loadKelas;
+window.loadKelasSunday     = loadKelasSunday;
+window.openSundayBooking   = openSundayBooking;
+window.closeSundayModal    = closeSundayModal;
+
+/* ─── WRAP FUNGSI MODAL UNTUK PAUSE/RESUME POLLING ──────────────────────── */
+/* Harus setelah EXPOSE agar window.xxx sudah terisi fungsi yang benar        */
+
+(function() {
+    var _origOpenBooking  = window.openBooking;
+    var _origCloseModal   = window.closeModal;
+    var _origOpenSunday   = window.openSundayBooking;
+    var _origCloseSunday  = window.closeSundayModal;
+    var _origShowDetail   = window.showDetail;
+    var _origCloseDetail  = window.closeDetail;
+
+    window.openBooking = function() {
+        pausePoll();
+        _origOpenBooking.apply(this, arguments);
+    };
+    window.closeModal = function() {
+        _origCloseModal.apply(this, arguments);
+        setTimeout(resumePoll, 500);
+    };
+    window.openSundayBooking = function() {
+        pausePoll();
+        _origOpenSunday.apply(this, arguments);
+    };
+    window.closeSundayModal = function() {
+        _origCloseSunday.apply(this, arguments);
+        setTimeout(resumePoll, 500);
+    };
+    window.showDetail = function() {
+        pausePoll();
+        _origShowDetail.apply(this, arguments);
+    };
+    window.closeDetail = function() {
+        _origCloseDetail.apply(this, arguments);
+        setTimeout(resumePoll, 500);
+    };
+})();
