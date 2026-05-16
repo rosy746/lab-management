@@ -1,14 +1,19 @@
+@props(['stats' => ['labs' => 0, 'pending' => 0, 'today' => 0]])
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ config('app.name') }} — Login</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-    @livewireStyles
+
+    {{-- FIX #1: Font lokal, tidak request ke Google --}}
+    <link rel="stylesheet" href="{{ asset('css/fonts.css') }}">
+
+    {{-- FIX #3: Hapus @livewireStyles — tidak dipakai di halaman login --}}
+    {{-- FIX: Hanya load app.css, tidak perlu app.js untuk halaman login --}}
+    @vite(['resources/css/app.css'])
+
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -43,7 +48,7 @@
 
         /* ─── BASE ───────────────────────────── */
         body {
-            font-family: 'DM Sans', sans-serif;
+            font-family: 'Plus Jakarta Sans', sans-serif;
             min-height: 100vh;
             display: flex;
             overflow: hidden;
@@ -63,7 +68,6 @@
             animation: slideInLeft .6s cubic-bezier(.16,1,.3,1) both;
         }
 
-        /* Grid background */
         .grid-bg {
             position: absolute; inset: 0;
             background-image:
@@ -72,7 +76,6 @@
             background-size: 52px 52px;
         }
 
-        /* Glow orbs */
         .glow-top {
             position: absolute; top: -120px; right: -80px;
             width: 480px; height: 480px; border-radius: 50%;
@@ -86,7 +89,6 @@
             animation: float 11s ease-in-out infinite reverse;
         }
 
-        /* Brand */
         .brand {
             position: relative; z-index: 1;
             display: flex; align-items: center; gap: 12px;
@@ -101,7 +103,6 @@
         }
         .brand-icon:hover { background: rgba(172,200,162,.22); transform: rotate(-4deg) scale(1.05); }
 
-        /* Hero content */
         .hero-content {
             position: relative; z-index: 1;
             animation: fadeUp .6s .2s both;
@@ -126,7 +127,7 @@
         }
 
         .hero-title {
-            font-family: 'Outfit', sans-serif;
+            font-family: 'Plus Jakarta Sans', sans-serif;
             font-weight: 800;
             font-size: clamp(28px, 3vw, 46px);
             line-height: 1.08;
@@ -139,7 +140,6 @@
             position: relative;
             display: inline-block;
         }
-        /* Shimmer on accent word */
         .hero-title .accent::after {
             content: '';
             position: absolute; top: 0; left: 0;
@@ -156,7 +156,6 @@
             animation: fadeUp .6s .35s both;
         }
 
-        /* Stat cards */
         .stats-row {
             position: relative; z-index: 1;
             display: flex; gap: 14px;
@@ -184,7 +183,7 @@
             transform: translateY(-2px);
         }
         .stat-number {
-            font-family: 'Outfit', sans-serif;
+            font-family: 'Plus Jakarta Sans', sans-serif;
             font-weight: 700; font-size: 26px;
             color: #ACC8A2; line-height: 1; margin-bottom: 5px;
         }
@@ -205,7 +204,6 @@
             overflow-y: auto;
             animation: slideInRight .6s cubic-bezier(.16,1,.3,1) both;
         }
-        /* Accent line */
         .right-panel::before {
             content: '';
             position: absolute; top: 0; left: 0;
@@ -214,7 +212,6 @@
             opacity: .4;
         }
 
-        /* Back link */
         .back-link {
             display: inline-flex; align-items: center; gap: 6px;
             font-size: 13px; font-weight: 600;
@@ -224,7 +221,6 @@
         }
         .back-link:hover { color: #ACC8A2; gap: 9px; }
 
-        /* Header */
         .login-header {
             margin-bottom: 32px;
             animation: fadeUp .5s .25s both;
@@ -235,7 +231,7 @@
             text-transform: uppercase; margin-bottom: 8px;
         }
         .login-title {
-            font-family: 'Outfit', sans-serif;
+            font-family: 'Plus Jakarta Sans', sans-serif;
             font-weight: 800; font-size: 28px;
             color: #1A2517; line-height: 1.15;
             letter-spacing: -.02em;
@@ -245,7 +241,6 @@
             margin-top: 6px; line-height: 1.5;
         }
 
-        /* Form */
         .form-group {
             margin-bottom: 18px;
             animation: fadeUp .5s both;
@@ -262,7 +257,7 @@
             width: 100%;
             border: 1.5px solid #e5e7eb; border-radius: 12px;
             padding: 11px 16px;
-            font-size: 14px; font-family: 'DM Sans', sans-serif;
+            font-size: 14px; font-family: 'Plus Jakarta Sans', sans-serif;
             color: #1A2517; background: #f9fafb;
             outline: none;
             transition: border-color .18s, box-shadow .18s, background .18s, transform .15s;
@@ -287,7 +282,6 @@
         }
         .toggle-pass:hover { color: #ACC8A2; background: rgba(172,200,162,.08); }
 
-        /* Error box */
         .error-box {
             background: #fef2f2; border: 1px solid #fecaca;
             color: #dc2626; padding: 11px 14px;
@@ -297,12 +291,11 @@
             animation: fadeUp .3s both;
         }
 
-        /* Submit button */
         .btn-login {
             width: 100%;
             background: linear-gradient(135deg, #1A2517, #2d3d29);
             color: #ACC8A2; font-weight: 700; font-size: 14px;
-            font-family: 'DM Sans', sans-serif;
+            font-family: 'Plus Jakarta Sans', sans-serif;
             padding: 13px; border: none; border-radius: 12px;
             cursor: pointer; letter-spacing: .01em;
             box-shadow: 0 4px 18px rgba(26,37,23,.25);
@@ -325,8 +318,6 @@
             filter: brightness(1.08);
         }
         .btn-login:active { transform: translateY(0); }
-
-        /* Loading state */
         .btn-login.loading {
             pointer-events: none; opacity: .85;
             color: rgba(172,200,162,.7);
@@ -350,13 +341,13 @@
 
         /* ─── MOBILE ─────────────────────────── */
         @media (max-width: 768px) {
-            body { flex-direction: column; overflow: auto; }
-            .left-panel { flex: none; padding: 32px 28px; min-height: 200px; animation: fadeUp .5s both; }
-            .stats-row  { display: none; }
-            .hero-title { font-size: 24px; margin-bottom: 10px; }
-            .hero-desc  { font-size: 13px; }
+            body         { flex-direction: column; overflow: auto; }
+            .left-panel  { flex: none; padding: 32px 28px; min-height: 200px; animation: fadeUp .5s both; }
+            .stats-row   { display: none; }
+            .hero-title  { font-size: 24px; margin-bottom: 10px; }
+            .hero-desc   { font-size: 13px; }
             .right-panel { width: 100%; padding: 36px 28px; animation: fadeUp .5s .15s both; }
-            .back-link  { margin-bottom: 28px; }
+            .back-link   { margin-bottom: 28px; }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -380,7 +371,7 @@
                 </svg>
             </div>
             <div>
-                <p style="font-family:Outfit,sans-serif;font-weight:700;color:#fff;font-size:14px;line-height:1.2">Lab Management</p>
+                <p style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;color:#fff;font-size:14px;line-height:1.2">Lab Management</p>
                 <p style="font-size:11px;color:rgba(172,200,162,.4)">Nuris Jember</p>
             </div>
         </div>
@@ -401,18 +392,18 @@
             </p>
         </div>
 
-        {{-- Stats --}}
+        {{-- FIX #2: Stats dari controller via $stats, bukan query langsung di blade --}}
         <div class="stats-row">
             <div class="stat-card">
-                <div class="stat-number">{{ \App\Models\Resource::count() }}</div>
+                <div class="stat-number">{{ $stats['labs'] }}</div>
                 <div class="stat-label">Lab Tersedia</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number">{{ \App\Models\Booking::where('status','pending')->count() }}</div>
+                <div class="stat-number">{{ $stats['pending'] }}</div>
                 <div class="stat-label">Booking Pending</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number">{{ \App\Models\Booking::whereDate('created_at', today())->count() }}</div>
+                <div class="stat-number">{{ $stats['today'] }}</div>
                 <div class="stat-label">Booking Hari Ini</div>
             </div>
         </div>
@@ -438,8 +429,9 @@
         <p class="footer-text">&copy; {{ date('Y') }} Lab Management System &middot; Nuris Jember</p>
     </div>
 
-    @livewireScripts
+    {{-- FIX #3: Hapus @livewireScripts — tidak dipakai di halaman login --}}
 
+    {{-- Toggle password pakai vanilla JS — tidak perlu Alpine.js/Livewire --}}
     <script>
         // Loading state on submit
         document.querySelector('form')?.addEventListener('submit', function() {
@@ -450,5 +442,6 @@
             }
         });
     </script>
+
 </body>
 </html>
