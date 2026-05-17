@@ -7,351 +7,402 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ config('app.name') }} — Login</title>
 
-    {{-- FIX #1: Font lokal, tidak request ke Google --}}
     <link rel="stylesheet" href="{{ asset('css/fonts.css') }}">
-
-    {{-- FIX #3: Hapus @livewireStyles — tidak dipakai di halaman login --}}
-    {{-- FIX: Hanya load app.css, tidak perlu app.js untuk halaman login --}}
     @vite(['resources/css/app.css'])
 
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        /* ─── ANIMATIONS ─────────────────────── */
-        @keyframes slideInLeft {
-            from { transform: translateX(-40px); opacity: 0; }
-            to   { transform: none; opacity: 1; }
-        }
-        @keyframes slideInRight {
-            from { transform: translateX(40px); opacity: 0; }
-            to   { transform: none; opacity: 1; }
-        }
         @keyframes fadeUp {
             from { transform: translateY(16px); opacity: 0; }
             to   { transform: none; opacity: 1; }
         }
+        @keyframes slideLeft {
+            from { transform: translateX(-32px); opacity: 0; }
+            to   { transform: none; opacity: 1; }
+        }
+        @keyframes slideRight {
+            from { transform: translateX(32px); opacity: 0; }
+            to   { transform: none; opacity: 1; }
+        }
         @keyframes blink {
-            0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(172,200,162,.9); }
-            50%       { opacity: .35; box-shadow: 0 0 3px rgba(172,200,162,.3); }
+            0%, 100% { opacity: 1; }
+            50%       { opacity: .2; }
         }
         @keyframes float {
             0%, 100% { transform: translateY(0); }
-            50%       { transform: translateY(-8px); }
-        }
-        @keyframes shimmerLine {
-            0%   { transform: translateX(-100%) skewX(-15deg); }
-            100% { transform: translateX(300%)  skewX(-15deg); }
+            50%       { transform: translateY(-10px); }
         }
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        @keyframes shimmer {
+            0%   { left: -60%; }
+            100% { left: 130%; }
+        }
 
-        /* ─── BASE ───────────────────────────── */
+        /* ── BASE ── */
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             min-height: 100vh;
             display: flex;
             overflow: hidden;
-            background: #1A2517;
+            background: #080c08;
         }
 
-        /* ─── LEFT PANEL ─────────────────────── */
+        /* ══════════════════════════════════
+           LEFT PANEL
+        ══════════════════════════════════ */
         .left-panel {
-            flex: 1.1;
+            flex: 1.15;
             position: relative;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            padding: 44px 52px;
+            padding: 48px 52px;
             overflow: hidden;
-            background: linear-gradient(155deg, #1A2517 0%, #243320 45%, #2d3d29 100%);
-            animation: slideInLeft .6s cubic-bezier(.16,1,.3,1) both;
+            background: #090e09;
+            border-right: 1px solid #1a271a;
+            animation: slideLeft .6s cubic-bezier(.16,1,.3,1) both;
         }
 
         .grid-bg {
             position: absolute; inset: 0;
             background-image:
-                linear-gradient(rgba(172,200,162,.04) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(172,200,162,.04) 1px, transparent 1px);
-            background-size: 52px 52px;
+                linear-gradient(rgba(172,200,162,.032) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(172,200,162,.032) 1px, transparent 1px);
+            background-size: 54px 54px;
+            pointer-events: none;
         }
 
-        .glow-top {
-            position: absolute; top: -120px; right: -80px;
-            width: 480px; height: 480px; border-radius: 50%;
-            background: radial-gradient(circle, rgba(172,200,162,.11) 0%, transparent 65%);
-            animation: float 8s ease-in-out infinite;
+        .glow-tl {
+            position: absolute; top: -130px; left: -80px;
+            width: 500px; height: 500px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(172,200,162,.09) 0%, transparent 65%);
+            animation: float 9s ease-in-out infinite;
+            pointer-events: none;
         }
-        .glow-bottom {
-            position: absolute; bottom: -100px; left: -60px;
+        .glow-br {
+            position: absolute; bottom: -100px; right: -60px;
             width: 380px; height: 380px; border-radius: 50%;
-            background: radial-gradient(circle, rgba(172,200,162,.07) 0%, transparent 65%);
-            animation: float 11s ease-in-out infinite reverse;
+            background: radial-gradient(circle, rgba(172,200,162,.05) 0%, transparent 65%);
+            animation: float 13s ease-in-out infinite reverse;
+            pointer-events: none;
         }
 
+        /* brand */
         .brand {
             position: relative; z-index: 1;
             display: flex; align-items: center; gap: 12px;
-            animation: fadeUp .5s .1s both;
+            animation: fadeUp .5s .05s both;
         }
         .brand-icon {
-            width: 42px; height: 42px; border-radius: 13px;
-            display: flex; align-items: center; justify-content: center;
-            background: rgba(172,200,162,.12);
-            border: 1.5px solid rgba(172,200,162,.25);
-            transition: background .2s, transform .2s;
-        }
-        .brand-icon:hover { background: rgba(172,200,162,.22); transform: rotate(-4deg) scale(1.05); }
-
-        .hero-content {
-            position: relative; z-index: 1;
-            animation: fadeUp .6s .2s both;
-        }
-
-        .live-badge {
-            display: inline-flex; align-items: center; gap: 7px;
-            padding: 6px 14px; border-radius: 100px;
+            width: 42px; height: 42px; border-radius: 12px;
             background: rgba(172,200,162,.08);
             border: 1px solid rgba(172,200,162,.18);
-            color: rgba(172,200,162,.75);
-            font-size: 11px; font-weight: 600;
-            letter-spacing: .07em; text-transform: uppercase;
-            margin-bottom: 24px;
-            transition: background .2s, border-color .2s;
+            display: flex; align-items: center; justify-content: center;
+            transition: background .2s, transform .2s;
         }
-        .live-badge:hover { background: rgba(172,200,162,.14); border-color: rgba(172,200,162,.3); }
+        .brand-icon:hover {
+            background: rgba(172,200,162,.15);
+            transform: rotate(-4deg) scale(1.05);
+        }
+        .brand-icon svg { width: 20px; height: 20px; stroke: #ACC8A2; fill: none; }
+        .brand-name {
+            font-weight: 700; font-size: 14px;
+            color: #e8f0e8; letter-spacing: -.01em;
+            line-height: 1.2;
+        }
+        .brand-sub {
+            font-size: 11px;
+            color: rgba(172,200,162,.32);
+            margin-top: 2px;
+        }
+
+        /* hero */
+        .hero {
+            position: relative; z-index: 1;
+            animation: fadeUp .6s .15s both;
+        }
+        .live-badge {
+            display: inline-flex; align-items: center; gap: 7px;
+            padding: 5px 13px; border-radius: 100px;
+            background: rgba(172,200,162,.07);
+            border: 1px solid rgba(172,200,162,.15);
+            color: rgba(172,200,162,.65);
+            font-size: 10px; font-weight: 600;
+            letter-spacing: .1em; text-transform: uppercase;
+            margin-bottom: 22px;
+        }
         .live-dot {
-            width: 7px; height: 7px; border-radius: 50%;
+            width: 6px; height: 6px; border-radius: 50%;
             background: #ACC8A2;
-            animation: blink 2s infinite;
+            animation: blink 2.2s ease-in-out infinite;
+        }
+
+        .accent-line {
+            width: 32px; height: 2px;
+            background: #ACC8A2; border-radius: 1px;
+            opacity: .65; margin-bottom: 16px;
         }
 
         .hero-title {
-            font-family: 'Plus Jakarta Sans', sans-serif;
             font-weight: 800;
-            font-size: clamp(28px, 3vw, 46px);
-            line-height: 1.08;
-            color: #fff;
-            letter-spacing: -.025em;
-            margin-bottom: 18px;
+            font-size: clamp(30px, 3.2vw, 48px);
+            line-height: 1.07;
+            color: #f0f4f0;
+            letter-spacing: -.03em;
+            margin-bottom: 16px;
         }
         .hero-title .accent {
             color: #ACC8A2;
+            font-style: italic;
             position: relative;
             display: inline-block;
+            overflow: hidden;
         }
         .hero-title .accent::after {
             content: '';
-            position: absolute; top: 0; left: 0;
-            width: 35%; height: 100%;
-            background: linear-gradient(105deg, transparent, rgba(255,255,255,.25), transparent);
-            animation: shimmerLine 3.5s ease-in-out infinite 1s;
+            position: absolute; top: 0; left: -60%;
+            width: 40%; height: 100%;
+            background: linear-gradient(105deg, transparent, rgba(255,255,255,.18), transparent);
+            animation: shimmer 4s ease-in-out infinite 1.5s;
         }
 
         .hero-desc {
-            font-size: 14px;
-            color: rgba(172,200,162,.5);
-            line-height: 1.7;
-            max-width: 360px;
-            animation: fadeUp .6s .35s both;
+            font-size: 13px;
+            color: rgba(172,200,162,.36);
+            line-height: 1.75;
+            max-width: 340px;
+            font-weight: 300;
         }
 
+        /* stats */
         .stats-row {
             position: relative; z-index: 1;
-            display: flex; gap: 14px;
-            animation: fadeUp .6s .45s both;
+            display: flex; gap: 10px;
+            animation: fadeUp .6s .3s both;
         }
         .stat-card {
             flex: 1; padding: 16px 18px;
             border-radius: 14px;
-            background: rgba(172,200,162,.05);
-            border: 1px solid rgba(172,200,162,.10);
-            transition: background .2s, border-color .2s, transform .2s;
+            background: rgba(172,200,162,.04);
+            border: 1px solid rgba(172,200,162,.08);
+            transition: background .2s, border-color .2s, transform .18s;
             position: relative; overflow: hidden;
         }
-        .stat-card::before {
-            content: '';
-            position: absolute; top: 0; left: -70%; width: 40%; height: 100%;
-            background: linear-gradient(105deg, transparent, rgba(172,200,162,.08), transparent);
-            transform: skewX(-18deg);
-            transition: left .5s ease;
-        }
-        .stat-card:hover::before { left: 130%; }
         .stat-card:hover {
-            background: rgba(172,200,162,.09);
-            border-color: rgba(172,200,162,.2);
+            background: rgba(172,200,162,.08);
+            border-color: rgba(172,200,162,.18);
             transform: translateY(-2px);
         }
         .stat-number {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            font-weight: 700; font-size: 26px;
-            color: #ACC8A2; line-height: 1; margin-bottom: 5px;
+            font-weight: 800; font-size: 28px;
+            color: #ACC8A2; line-height: 1;
+            margin-bottom: 5px; letter-spacing: -.03em;
         }
         .stat-label {
-            font-size: 11px;
-            color: rgba(172,200,162,.4);
-            font-weight: 500;
+            font-size: 10px; font-weight: 500;
+            color: rgba(172,200,162,.32);
+            letter-spacing: .03em;
         }
 
-        /* ─── RIGHT PANEL ────────────────────── */
+        /* ══════════════════════════════════
+           RIGHT PANEL
+        ══════════════════════════════════ */
         .right-panel {
-            width: 440px; flex-shrink: 0;
+            width: 420px; flex-shrink: 0;
             display: flex; flex-direction: column;
             justify-content: center;
             padding: 52px 44px;
-            background: #fff;
+            background: #0c120c;
             position: relative;
             overflow-y: auto;
-            animation: slideInRight .6s cubic-bezier(.16,1,.3,1) both;
+            animation: slideRight .6s cubic-bezier(.16,1,.3,1) both;
         }
+
         .right-panel::before {
             content: '';
             position: absolute; top: 0; left: 0;
-            width: 3px; height: 100%;
-            background: linear-gradient(180deg, transparent, #ACC8A2, transparent);
-            opacity: .4;
+            width: 1px; height: 100%;
+            background: linear-gradient(180deg,
+                transparent 0%,
+                rgba(172,200,162,.25) 25%,
+                rgba(172,200,162,.45) 50%,
+                rgba(172,200,162,.25) 75%,
+                transparent 100%);
+            pointer-events: none;
         }
 
         .back-link {
             display: inline-flex; align-items: center; gap: 6px;
-            font-size: 13px; font-weight: 600;
-            color: rgba(172,200,162,.5); text-decoration: none;
+            font-size: 12px; font-weight: 600;
+            color: rgba(172,200,162,.28);
+            text-decoration: none;
             transition: color .15s, gap .15s;
-            margin-bottom: 40px;
+            margin-bottom: 44px;
+            letter-spacing: .02em;
         }
+        .back-link svg { width: 14px; height: 14px; stroke: currentColor; fill: none; }
         .back-link:hover { color: #ACC8A2; gap: 9px; }
 
-        .login-header {
-            margin-bottom: 32px;
+        .panel-eyebrow {
+            font-size: 9px; font-weight: 700;
+            letter-spacing: .18em; text-transform: uppercase;
+            color: #ACC8A2; margin-bottom: 10px;
+            display: flex; align-items: center; gap: 10px;
+            animation: fadeUp .5s .2s both;
+        }
+        .panel-eyebrow::after {
+            content: '';
+            flex: 1; height: 1px;
+            background: rgba(172,200,162,.1);
+        }
+
+        .login-title {
+            font-weight: 800; font-size: 32px;
+            color: #f0f4f0; letter-spacing: -.03em;
+            line-height: 1.1; margin-bottom: 6px;
             animation: fadeUp .5s .25s both;
         }
-        .login-eyebrow {
-            font-size: 11px; font-weight: 700;
-            color: #ACC8A2; letter-spacing: .1em;
-            text-transform: uppercase; margin-bottom: 8px;
-        }
-        .login-title {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            font-weight: 800; font-size: 28px;
-            color: #1A2517; line-height: 1.15;
-            letter-spacing: -.02em;
-        }
         .login-sub {
-            font-size: 13px; color: #9ca3af;
-            margin-top: 6px; line-height: 1.5;
+            font-size: 13px; color: rgba(172,200,162,.28);
+            font-weight: 300; margin-bottom: 36px;
+            animation: fadeUp .5s .28s both;
         }
 
-        .form-group {
-            margin-bottom: 18px;
-            animation: fadeUp .5s both;
-        }
-        .form-group:nth-child(1) { animation-delay: .3s; }
-        .form-group:nth-child(2) { animation-delay: .38s; }
+        /* form */
+        .form-group { margin-bottom: 18px; }
 
         .form-label {
-            display: block; font-size: 11px; font-weight: 700;
-            color: #4b5563; text-transform: uppercase;
-            letter-spacing: .07em; margin-bottom: 7px;
+            display: block;
+            font-size: 9px; font-weight: 700;
+            letter-spacing: .16em; text-transform: uppercase;
+            color: rgba(172,200,162,.42);
+            margin-bottom: 7px;
         }
-        .form-input {
-            width: 100%;
-            border: 1.5px solid #e5e7eb; border-radius: 12px;
-            padding: 11px 16px;
-            font-size: 14px; font-family: 'Plus Jakarta Sans', sans-serif;
-            color: #1A2517; background: #f9fafb;
-            outline: none;
-            transition: border-color .18s, box-shadow .18s, background .18s, transform .15s;
-        }
-        .form-input:focus {
-            border-color: #ACC8A2;
-            box-shadow: 0 0 0 3px rgba(172,200,162,.18);
-            background: #fff;
-            transform: translateY(-1px);
-        }
-        .form-input::placeholder { color: #c0c7d0; }
 
         .input-wrap { position: relative; }
+
+        .form-input {
+            width: 100%;
+            background: rgba(172,200,162,.04);
+            border: 1px solid rgba(172,200,162,.11);
+            border-radius: 11px;
+            padding: 12px 16px;
+            font-size: 13px;
+            color: #e8f0e8;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            outline: none;
+            transition: border-color .18s, background .18s, box-shadow .18s;
+        }
+        .form-input::placeholder { color: rgba(172,200,162,.16); font-size: 12px; }
+        .form-input:focus {
+            border-color: rgba(172,200,162,.38);
+            background: rgba(172,200,162,.06);
+            box-shadow: 0 0 0 3px rgba(172,200,162,.06);
+        }
+        .form-input.has-icon { padding-right: 44px; }
+
         .toggle-pass {
-            position: absolute; right: 14px; top: 50%;
+            position: absolute; right: 13px; top: 50%;
             transform: translateY(-50%);
-            background: none; border: none;
-            cursor: pointer; color: #c0c7d0;
+            background: none; border: none; cursor: pointer;
+            color: rgba(172,200,162,.22);
             display: flex; align-items: center;
             padding: 4px; border-radius: 6px;
-            transition: color .15s, background .15s;
+            transition: color .15s;
         }
-        .toggle-pass:hover { color: #ACC8A2; background: rgba(172,200,162,.08); }
+        .toggle-pass:hover { color: #ACC8A2; }
+        .toggle-pass svg { width: 16px; height: 16px; stroke: currentColor; fill: none; }
 
+        /* error */
         .error-box {
-            background: #fef2f2; border: 1px solid #fecaca;
-            color: #dc2626; padding: 11px 14px;
-            border-radius: 10px; font-size: 13px;
-            margin-bottom: 20px;
-            display: flex; align-items: center; gap: 8px;
+            background: rgba(220,53,69,.07);
+            border: 1px solid rgba(220,53,69,.18);
+            color: #f87171;
+            padding: 11px 14px; border-radius: 10px;
+            font-size: 13px; margin-bottom: 20px;
+            display: flex; align-items: flex-start; gap: 9px;
             animation: fadeUp .3s both;
         }
+        .error-box svg {
+            width: 15px; height: 15px;
+            stroke: currentColor; fill: none;
+            flex-shrink: 0; margin-top: 1px;
+        }
 
+        /* button */
         .btn-login {
             width: 100%;
-            background: linear-gradient(135deg, #1A2517, #2d3d29);
-            color: #ACC8A2; font-weight: 700; font-size: 14px;
+            background: #ACC8A2;
+            color: #0b130b;
+            font-weight: 700; font-size: 13px;
             font-family: 'Plus Jakarta Sans', sans-serif;
-            padding: 13px; border: none; border-radius: 12px;
-            cursor: pointer; letter-spacing: .01em;
-            box-shadow: 0 4px 18px rgba(26,37,23,.25);
-            transition: transform .18s, box-shadow .18s, filter .18s;
+            padding: 13px 20px; border: none;
+            border-radius: 11px; cursor: pointer;
+            letter-spacing: .02em;
+            display: flex; align-items: center;
+            justify-content: center; gap: 8px;
             margin-top: 8px;
             position: relative; overflow: hidden;
-            animation: fadeUp .5s .45s both;
+            transition: background .18s, transform .15s;
         }
         .btn-login::after {
             content: '';
-            position: absolute; top: 0; left: -80%; width: 50%; height: 100%;
-            background: linear-gradient(105deg, transparent, rgba(172,200,162,.15), transparent);
+            position: absolute; top: 0; left: -80%;
+            width: 50%; height: 100%;
+            background: linear-gradient(105deg, transparent, rgba(255,255,255,.28), transparent);
             transform: skewX(-18deg);
             transition: left .5s ease;
         }
         .btn-login:hover::after { left: 150%; }
-        .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 28px rgba(26,37,23,.35);
-            filter: brightness(1.08);
+        .btn-login:hover { background: #bdd4b3; transform: translateY(-1px); }
+        .btn-login:active { transform: scale(.99); }
+        .btn-login svg {
+            width: 15px; height: 15px;
+            stroke: currentColor; fill: none;
+            transition: transform .15s;
         }
-        .btn-login:active { transform: translateY(0); }
-        .btn-login.loading {
-            pointer-events: none; opacity: .85;
-            color: rgba(172,200,162,.7);
-        }
+        .btn-login:hover svg { transform: translateX(3px); }
+        .btn-login.loading { pointer-events: none; opacity: .75; }
         .btn-login.loading::before {
             content: '';
-            display: inline-block;
-            width: 14px; height: 14px;
-            border: 2px solid rgba(172,200,162,.3);
-            border-top-color: #ACC8A2;
+            width: 13px; height: 13px;
+            border: 2px solid rgba(11,19,11,.3);
+            border-top-color: #0b130b;
             border-radius: 50%;
             animation: spin .7s linear infinite;
-            margin-right: 8px;
-            vertical-align: middle;
         }
 
-        .footer-text {
-            margin-top: 28px; font-size: 11px;
-            color: #d1d5db; text-align: center;
+        /* footer */
+        .panel-footer {
+            margin-top: 32px;
+            font-size: 11px;
+            color: rgba(172,200,162,.16);
+            text-align: center;
         }
 
-        /* ─── MOBILE ─────────────────────────── */
+        /* ── MOBILE ── */
         @media (max-width: 768px) {
-            body         { flex-direction: column; overflow: auto; }
-            .left-panel  { flex: none; padding: 32px 28px; min-height: 200px; animation: fadeUp .5s both; }
-            .stats-row   { display: none; }
-            .hero-title  { font-size: 24px; margin-bottom: 10px; }
-            .hero-desc   { font-size: 13px; }
-            .right-panel { width: 100%; padding: 36px 28px; animation: fadeUp .5s .15s both; }
-            .back-link   { margin-bottom: 28px; }
+            body { flex-direction: column; overflow: auto; }
+            .left-panel {
+                flex: none; padding: 32px 28px;
+                border-right: none;
+                border-bottom: 1px solid #1a271a;
+                animation: fadeUp .5s both;
+            }
+            .stats-row { display: none; }
+            .hero-title { font-size: 26px; }
+            .right-panel { width: 100%; padding: 36px 28px; animation: fadeUp .5s .1s both; }
+            .back-link { margin-bottom: 28px; }
         }
 
         @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+            *, *::before, *::after {
+                animation-duration: .01ms !important;
+                transition-duration: .01ms !important;
+            }
         }
     </style>
 </head>
@@ -360,39 +411,42 @@
     {{-- ═══ LEFT PANEL ═══ --}}
     <div class="left-panel">
         <div class="grid-bg"></div>
-        <div class="glow-top"></div>
-        <div class="glow-bottom"></div>
+        <div class="glow-tl"></div>
+        <div class="glow-br"></div>
 
         {{-- Brand --}}
         <div class="brand">
             <div class="brand-icon">
-                <svg style="width:22px;height:22px;color:#ACC8A2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                <svg stroke-width="1.7" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                 </svg>
             </div>
             <div>
-                <p style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;color:#fff;font-size:14px;line-height:1.2">Lab Management</p>
-                <p style="font-size:11px;color:rgba(172,200,162,.4)">Nuris Jember</p>
+                <div class="brand-name">Lab Management</div>
+                <div class="brand-sub">Nuris Jember</div>
             </div>
         </div>
 
         {{-- Hero --}}
-        <div class="hero-content">
+        <div class="hero">
             <div class="live-badge">
                 <span class="live-dot"></span>
                 Sistem Aktif
             </div>
+            <div class="accent-line"></div>
             <h1 class="hero-title">
                 Kelola Lab<br>
                 dengan <span class="accent">Efisien</span><br>
-                & Terstruktur
+                &amp; Terstruktur
             </h1>
             <p class="hero-desc">
-                Platform manajemen laboratorium komputer terpadu — jadwal, booking, inventaris, dan pengadaan dalam satu sistem.
+                Platform manajemen laboratorium komputer terpadu —
+                jadwal, booking, inventaris, dan pengadaan dalam satu sistem.
             </p>
         </div>
 
-        {{-- FIX #2: Stats dari controller via $stats, bukan query langsung di blade --}}
+        {{-- Stats --}}
         <div class="stats-row">
             <div class="stat-card">
                 <div class="stat-number">{{ $stats['labs'] }}</div>
@@ -411,34 +465,32 @@
 
     {{-- ═══ RIGHT PANEL ═══ --}}
     <div class="right-panel">
-        <a href="/" class="back-link">
-            <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+
+        <a href="{{ url('/') }}" class="back-link">
+            <svg stroke-width="2.2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
             </svg>
             Kembali ke Jadwal
         </a>
 
-        <div class="login-header">
-            <p class="login-eyebrow">Panel Admin</p>
-            <h2 class="login-title">Selamat<br>Datang Kembali</h2>
-            <p class="login-sub">Masuk untuk mengelola laboratorium</p>
-        </div>
+        <div class="panel-eyebrow">Panel Admin</div>
+        <h2 class="login-title">Selamat<br>Datang Kembali</h2>
+        <p class="login-sub">Masuk untuk mengelola laboratorium</p>
 
+        {{-- slot: konten dari login.blade.php --}}
         {{ $slot }}
 
-        <p class="footer-text">&copy; {{ date('Y') }} Lab Management System &middot; Nuris Jember</p>
+        <div class="panel-footer">
+            &copy; {{ date('Y') }} Lab Management System &middot; Nuris Jember
+        </div>
     </div>
 
-    {{-- FIX #3: Hapus @livewireScripts — tidak dipakai di halaman login --}}
-
-    {{-- Toggle password pakai vanilla JS — tidak perlu Alpine.js/Livewire --}}
     <script>
-        // Loading state on submit
-        document.querySelector('form')?.addEventListener('submit', function() {
+        document.querySelector('form')?.addEventListener('submit', function () {
             const btn = this.querySelector('.btn-login');
             if (btn) {
                 btn.classList.add('loading');
-                btn.textContent = 'Memproses...';
+                btn.innerHTML = 'Memproses...';
             }
         });
     </script>

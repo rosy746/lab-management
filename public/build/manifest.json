@@ -4,6 +4,11 @@
     "src": "resources/css/app.css",
     "isEntry": true
   },
+  "resources/css/assignment.css": {
+    "file": "assets/assignment-BpC9WCU9.css",
+    "src": "resources/css/assignment.css",
+    "isEntry": true
+  },
   "resources/css/inventory.css": {
     "file": "assets/inventory-CBzXpJR_.css",
     "src": "resources/css/inventory.css",

@@ -8,7 +8,8 @@ export default defineConfig({
                 'resources/css/app.css',
                 'resources/css/inventory.css',
                 'resources/css/schedule.css',
-                'resources/css/rekap.css',      // rekap publik
+                'resources/css/rekap.css',
+                'resources/css/assignment.css',  // tugas publik
                 'resources/js/app.js',
                 'resources/js/inventory.js',
                 'resources/js/schedule.js',
