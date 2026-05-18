@@ -16,6 +16,7 @@ use App\Http\Controllers\LabClassController;
 
 // ═══ PUBLIK ═══
 Route::get('/', [ScheduleController::class, 'index'])->name('home');
+Route::get('/jadwal-poll', [ScheduleController::class, 'poll'])->name('schedule.poll')->middleware('throttle:60,1');
 Route::post('/booking', [ScheduleController::class, 'storeBooking'])->name('booking.store')->middleware('throttle:10,1');
 Route::post('/booking-minggu', [ScheduleController::class, 'storeSundayBooking'])->name('sunday.booking.store')->middleware('throttle:10,1');
 Route::get('/kelas', [ScheduleController::class, 'getClasses'])->name('classes.list')->middleware('throttle:30,1');

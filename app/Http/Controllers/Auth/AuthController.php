@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 
 class AuthController extends Controller
@@ -29,19 +30,31 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
+        // Validasi input — tambah max length untuk mencegah long string attack
         $request->validate([
-            'username' => 'required|string',
-            'password' => 'required|string',
+            'username' => 'required|string|max:100',
+            'password' => 'required|string|max:200',
         ], [
             'username.required' => 'Username wajib diisi.',
+            'username.max'      => 'Username tidak valid.',
             'password.required' => 'Password wajib diisi.',
+            'password.max'      => 'Password tidak valid.',
         ]);
 
         // Rate limiting — max 5 percobaan per menit per username+IP
-        $key = 'login.' . $request->input('username') . '.' . $request->ip();
+        // IP diambil dari request yang sudah difilter TrustProxies
+        $key = 'login.' . sha1($request->input('username') . '|' . $request->ip());
 
         if (RateLimiter::tooManyAttempts($key, 5)) {
             $seconds = RateLimiter::availableIn($key);
+
+            // Audit log: rate limit tercapai
+            Log::warning('Login rate limit reached', [
+                'username' => $request->input('username'),
+                'ip'       => $request->ip(),
+                'ua'       => $request->userAgent(),
+            ]);
+
             return back()->withErrors([
                 'username' => "Terlalu banyak percobaan. Coba lagi dalam {$seconds} detik.",
             ])->withInput($request->only('username'));
@@ -54,22 +67,50 @@ class AuthController extends Controller
 
         if (!$user || !Hash::check($request->password, $user->password_hash)) {
             RateLimiter::hit($key, 60);
+
+            // Audit log: login gagal
+            Log::warning('Failed login attempt', [
+                'username' => $request->input('username'),
+                'ip'       => $request->ip(),
+                'ua'       => $request->userAgent(),
+                'reason'   => !$user ? 'user_not_found' : 'wrong_password',
+            ]);
+
             return back()->withErrors([
                 'username' => 'Username atau password salah.',
             ])->withInput($request->only('username'));
         }
 
-        // Login berhasil — clear cache stats karena booking pending mungkin berubah
+        // Login berhasil
         RateLimiter::clear($key);
         Cache::forget('login_page_stats');
 
+        // Rotate remember token — token lama yang mungkin bocor tidak bisa dipakai lagi
+        $user->forceFill(['remember_token' => null])->save();
+
         Auth::login($user, $request->boolean('remember'));
         $request->session()->regenerate();
+
+        // Audit log: login berhasil
+        Log::info('Successful login', [
+            'user_id'  => $user->id,
+            'username' => $user->username,
+            'ip'       => $request->ip(),
+            'ua'       => $request->userAgent(),
+        ]);
+
         return redirect()->intended(route('dashboard'));
     }
 
     public function logout(Request $request)
     {
+        // Audit log: logout
+        Log::info('User logged out', [
+            'user_id'  => Auth::id(),
+            'username' => Auth::user()?->username,
+            'ip'       => $request->ip(),
+        ]);
+
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();

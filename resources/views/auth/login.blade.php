@@ -3,7 +3,7 @@
 
     {{-- Error --}}
     @if ($errors->any())
-        <div class="error-box">
+        <div class="error-box" id="error-box">
             <svg viewBox="0 0 24 24" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round"
                     d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
@@ -17,34 +17,34 @@
 
         {{-- Username --}}
         <div class="form-group">
-            <label class="form-label" for="username">Username</label>
-            <div class="input-wrap">
+            <div class="float-label input-wrap">
                 <input
                     type="text"
                     id="username"
                     name="username"
                     value="{{ old('username') }}"
-                    class="form-input"
-                    placeholder="Masukkan username"
+                    class="form-input {{ $errors->has('username') ? 'is-error' : '' }}"
+                    placeholder="username"
                     autocomplete="username"
                     required autofocus
                 >
+                <label for="username">Username</label>
             </div>
         </div>
 
         {{-- Password --}}
         <div class="form-group">
-            <label class="form-label" for="password">Password</label>
-            <div class="input-wrap">
+            <div class="float-label input-wrap">
                 <input
                     type="password"
                     id="password"
                     name="password"
-                    class="form-input has-icon"
-                    placeholder="Masukkan password"
+                    class="form-input has-icon {{ $errors->has('password') ? 'is-error' : '' }}"
+                    placeholder="password"
                     autocomplete="current-password"
                     required
                 >
+                <label for="password">Password</label>
                 <button
                     type="button"
                     class="toggle-pass"
@@ -63,12 +63,29 @@
                     </svg>
                 </button>
             </div>
+            {{-- Caps Lock warning --}}
+            <div class="caps-warning" id="caps-warning">
+                <svg viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                </svg>
+                Caps Lock aktif
+            </div>
+        </div>
+
+        {{-- Remember me --}}
+        <div class="form-footer">
+            <label class="remember-label">
+                <input type="checkbox" name="remember" {{ old('remember') ? 'checked' : '' }}>
+                Ingat saya
+            </label>
         </div>
 
         {{-- Submit --}}
         <button type="submit" class="btn-login">
-            Masuk ke Sistem
-            <svg viewBox="0 0 24 24" stroke-width="2.2">
+            <span class="spinner"></span>
+            <span class="btn-text">Masuk ke Sistem</span>
+            <svg class="btn-arrow" viewBox="0 0 24 24" stroke-width="2.2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
             </svg>
         </button>
@@ -82,7 +99,7 @@
             const iconEyeOff = document.getElementById('icon-eye-off');
             const isHidden   = input.type === 'password';
 
-            input.type             = isHidden ? 'text'    : 'password';
+            input.type               = isHidden ? 'text'    : 'password';
             iconEye.style.display    = isHidden ? 'none'    : '';
             iconEyeOff.style.display = isHidden ? ''        : 'none';
         }

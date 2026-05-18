@@ -521,114 +521,88 @@ document.querySelectorAll('form').forEach(function(form) {
 });
 
 /* ─── REALTIME POLLING ───────────────────────────────────────────────────── */
-/* Poll setiap 30 detik — update panel kalau ada perubahan data               */
+/* FIX #2: Poll endpoint khusus /jadwal-poll (JSON ringan) — bukan full render */
 
-var POLL_INTERVAL  = 30000; // 30 detik
+var POLL_INTERVAL  = 30000;
 var pollTimer      = null;
-var lastPanelsHash = '';
+var lastPollHash   = '';
 var isPollPaused   = false;
 
-/**
- * Ambil hash sederhana dari konten panels-wrap
- * Dipakai untuk deteksi perubahan tanpa compare DOM penuh
- */
-function getPanelsHash() {
-    var wrap = document.getElementById('panels-wrap');
-    return wrap ? wrap.innerHTML.length + '_' + wrap.querySelectorAll('.sc').length : '0';
-}
-
-/**
- * Pause polling saat modal terbuka — hindari update saat user sedang isi form
- */
 function pausePoll()  { isPollPaused = true; }
 function resumePoll() { isPollPaused = false; }
 
 /**
  * Satu siklus polling:
- * 1. Fetch HTML minggu aktif
- * 2. Bandingkan hash panels-wrap
- * 3. Kalau berubah, update DOM + tampilkan indikator
+ * 1. Fetch /jadwal-poll?week=... — hanya return JSON booking terbaru
+ * 2. Bandingkan hash
+ * 3. Kalau berubah, fetch full HTML untuk update panels-wrap
  */
 function doPoll() {
-    // Skip kalau modal sedang terbuka atau sedang fetch manual
     if (isPollPaused || fetchController) return;
 
     var url = new URL(window.location.href);
+    var pollUrl = new URL('/jadwal-poll', window.location.href);
+    if (url.searchParams.get('week')) {
+        pollUrl.searchParams.set('week', url.searchParams.get('week'));
+    }
 
-    fetch(url.toString(), {
-        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    fetch(pollUrl.toString(), {
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
     })
-    .then(function(r) { return r.text(); })
-    .then(function(html) {
-        var parser = new DOMParser();
-        var newDoc = parser.parseFromString(html, 'text/html');
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (!data.hash || data.hash === lastPollHash) return;
 
-        var newWrap = newDoc.getElementById('panels-wrap');
-        if (!newWrap) return;
+        // Ada perubahan — baru fetch HTML untuk update DOM
+        lastPollHash = data.hash;
 
-        // Bandingkan hash — kalau sama, tidak perlu update DOM
-        var newHash = newWrap.innerHTML.length + '_' + newWrap.querySelectorAll('.sc').length;
-        if (newHash === lastPanelsHash) return;
+        fetch(url.toString(), {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(function(r) { return r.text(); })
+        .then(function(html) {
+            var parser  = new DOMParser();
+            var newDoc  = parser.parseFromString(html, 'text/html');
+            var newWrap = newDoc.getElementById('panels-wrap');
+            var oldWrap = document.getElementById('panels-wrap');
+            if (!newWrap || !oldWrap) return;
 
-        // Ada perubahan — update panels-wrap
-        lastPanelsHash = newHash;
+            var activeTab = document.querySelector('.tab-btn.tab-active');
+            var activeId  = activeTab ? activeTab.id.replace('tab-', '') : null;
 
-        var oldWrap = document.getElementById('panels-wrap');
-        if (!oldWrap) return;
+            oldWrap.innerHTML = newWrap.innerHTML;
 
-        // Simpan tab aktif
-        var activeTab = document.querySelector('.tab-btn.tab-active');
-        var activeId  = activeTab ? activeTab.id.replace('tab-', '') : null;
+            newDoc.querySelectorAll('script').forEach(function(s) {
+                var m = s.textContent.match(/window\.ALL_SLOTS\s*=\s*(\[[\s\S]*?\]);/);
+                if (m) { try { window.ALL_SLOTS = JSON.parse(m[1]); } catch(e) {} }
+            });
 
-        // Update konten
-        oldWrap.innerHTML = newWrap.innerHTML;
+            document.querySelectorAll('.lab-panel').forEach(function(p) { p.style.display = 'none'; });
+            var target = activeId
+                ? document.getElementById('panel-' + activeId)
+                : document.querySelector('.lab-panel');
+            if (target) {
+                target.style.display = '';
+                target.style.animation = 'none';
+                void target.offsetWidth;
+                target.style.animation = 'panelIn .3s cubic-bezier(.16,1,.3,1)';
+            }
 
-        // Update ALL_SLOTS dari response baru
-        newDoc.querySelectorAll('script').forEach(function(s) {
-            var m = s.textContent.match(/window\.ALL_SLOTS\s*=\s*(\[[\s\S]*?\]);/);
-            if (m) { try { window.ALL_SLOTS = JSON.parse(m[1]); } catch(e) {} }
-        });
-
-        // Kembalikan ke tab yang aktif
-        document.querySelectorAll('.lab-panel').forEach(function(p) { p.style.display = 'none'; });
-        var target = activeId
-            ? document.getElementById('panel-' + activeId)
-            : document.querySelector('.lab-panel');
-        if (target) {
-            target.style.display = '';
-            // Animasi subtle biar user sadar ada update
-            target.style.animation = 'none';
-            void target.offsetWidth;
-            target.style.animation = 'panelIn .3s cubic-bezier(.16,1,.3,1)';
-        }
-
-        // Tampilkan toast notif update
-        showToast('🔄 Jadwal diperbarui');
+            showToast('🔄 Jadwal diperbarui');
+        })
+        .catch(function() {});
     })
-    .catch(function() {
-        // Gagal fetch — diam saja, coba lagi di interval berikutnya
-    });
+    .catch(function() {});
 }
 
-/**
- * Mulai polling — panggil saat halaman siap
- */
 function startPolling() {
-    lastPanelsHash = getPanelsHash();
     pollTimer = setInterval(doPoll, POLL_INTERVAL);
 }
 
-/**
- * Stop polling — saat tab tidak aktif, hemat resource
- */
 function stopPolling() {
-    if (pollTimer) {
-        clearInterval(pollTimer);
-        pollTimer = null;
-    }
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
 }
 
-// Stop polling saat tab browser tidak aktif — hemat resource
 document.addEventListener('visibilitychange', function() {
     if (document.hidden) {
         stopPolling();
@@ -638,7 +612,6 @@ document.addEventListener('visibilitychange', function() {
     }
 });
 
-// Mulai polling saat halaman siap
 startPolling();
 
 /* ─── EXPOSE KE WINDOW (diperlukan karena Vite load JS sebagai module) ────── */

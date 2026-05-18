@@ -18,7 +18,9 @@ class User extends Authenticatable
         'full_name', 'phone', 'role', 'organization_id', 'is_active',
     ];
 
-    protected $hidden = [];
+    protected $hidden = [
+        'remember_token',
+    ];
 
     public function getAuthPassword()
     {
