@@ -107,6 +107,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/kelas-admin', [LabClassController::class, 'index'])->name('class.index');
     Route::post('/kelas-admin', [LabClassController::class, 'store'])->name('class.store');
     Route::patch('/kelas-admin/{class}', [LabClassController::class, 'update'])->name('class.update');
+    Route::patch('/kelas-admin/{class}/reset-pin', [LabClassController::class, 'resetPin'])->name('class.reset-pin');
     Route::delete('/kelas-admin/{class}', [LabClassController::class, 'destroy'])->name('class.destroy');
 
     // Lab control admin
