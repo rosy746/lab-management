@@ -1,7 +1,12 @@
 {
   "resources/css/app.css": {
-    "file": "assets/app-DQA9yVYq.css",
+    "file": "assets/app-IdetZ__D.css",
     "src": "resources/css/app.css",
+    "isEntry": true
+  },
+  "resources/css/assignment.css": {
+    "file": "assets/assignment-JCOp_6eu.css",
+    "src": "resources/css/assignment.css",
     "isEntry": true
   },
   "resources/css/inventory.css": {
@@ -10,7 +15,7 @@
     "isEntry": true
   },
   "resources/css/rekap.css": {
-    "file": "assets/rekap-DoEDqmUi.css",
+    "file": "assets/rekap-BOMz0uER.css",
     "src": "resources/css/rekap.css",
     "isEntry": true
   },

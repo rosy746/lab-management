@@ -72,7 +72,9 @@ class ScheduleController extends Controller
 
         $resourceIds = $resources->pluck('id');
 
-        $schedules = Cache::remember('active_schedules', 300, function () use ($resourceIds) {
+        // FIX #3: Cache key menyertakan hash resourceIds agar tidak stale saat resource berubah
+        $resourceHash = md5($resourceIds->sort()->implode(','));
+        $schedules = Cache::remember("active_schedules_{$resourceHash}", 300, function () use ($resourceIds) {
             return Schedule::with(['labClass'])
                 ->where('status', 'active')
                 ->whereIn('resource_id', $resourceIds)
@@ -99,14 +101,115 @@ class ScheduleController extends Controller
             $weekDates[$day] = $weekStart->copy()->addDays($i)->toDateString();
         }
 
+        // FIX #4: Pre-compute Carbon::parse untuk slot times — hindari 300+ parse di view
+        $slotMeta = $timeSlots->mapWithKeys(function ($slot) {
+            return [$slot->id => [
+                'start' => $slot->start_time ? substr($slot->start_time, 0, 5) : '',
+                'end'   => $slot->end_time   ? substr($slot->end_time,   0, 5) : '',
+                'time'  => substr($slot->start_time, 0, 5)
+                         . ($slot->end_time ? '–' . substr($slot->end_time, 0, 5) : ''),
+            ]];
+        });
+
+        // FIX #4: Pre-compute date meta — isToday, isPast, formatted per hari
+        $dateMeta = collect($weekDates)->mapWithKeys(function ($date, $day) {
+            $carbon = Carbon::parse($date);
+            return [$day => [
+                'date'      => $date,
+                'isToday'   => $carbon->isToday(),
+                'isPast'    => $carbon->isPast() && !$carbon->isToday(),
+                'formatted' => $carbon->translatedFormat('d M Y'),
+                'dm'        => $carbon->format('d/m'),
+            ]];
+        });
+
+        // FIX #1: Pre-compute takenSlotIds per resource+date — hindari O(n²) flatten di view
+        // Structure: ['resourceId_date' => [slotId1, slotId2, ...]]
+        $takenSlotsMap = [];
+        foreach ($resources as $resource) {
+            foreach ($weekDates as $day => $date) {
+                $dayEn = $this->dayMapReverse[$day];
+                $key   = $resource->id . '_' . $date;
+
+                // Slot dari booking aktif
+                $bookedIds = $bookings->filter(function ($group, $groupKey) use ($resource, $date) {
+                    return str_starts_with($groupKey, $resource->id . '_' . $date . '_');
+                })->keys()->map(fn($k) => (int) explode('_', $k)[2])->toArray();
+
+                // Slot dari jadwal tetap
+                $scheduledIds = $timeSlots->filter(function ($ts) use ($schedules, $resource, $dayEn) {
+                    return !($ts->is_break ?? false)
+                        && $schedules->has($resource->id . '_' . $dayEn . '_' . $ts->id);
+                })->pluck('id')->map(fn($id) => (int) $id)->toArray();
+
+                $takenSlotsMap[$key] = array_values(array_unique(array_merge($bookedIds, $scheduledIds)));
+            }
+        }
+
+        // FIX #4: Pre-compute isSlotPast per slot (hanya untuk hari ini)
+        $today = Carbon::today();
+        $slotPastMap = $timeSlots->mapWithKeys(function ($slot) use ($today) {
+            $slotTime = Carbon::parse($slot->start_time)->setDateFrom($today);
+            return [$slot->id => $slotTime->isPast()];
+        });
+
+        // Pre-compute nonBreakSlots sekali saja
+        $nonBreakSlots   = $timeSlots->where('is_break', false)->values();
+        $firstNonBreakId = $nonBreakSlots->first()?->id;
+        $sunRowspan      = $timeSlots->count();
+
         $prevWeek = $weekStart->copy()->subWeek()->toDateString();
         $nextWeek = $weekStart->copy()->addWeek()->toDateString();
 
         return view('schedule.index', compact(
             'resources', 'timeSlots', 'schedules', 'bookings', 'sundayBookings',
             'weekDates', 'weekStart', 'weekEnd', 'organizations',
-            'prevWeek', 'nextWeek', 'teachers'
+            'prevWeek', 'nextWeek', 'teachers',
+            'slotMeta', 'dateMeta', 'takenSlotsMap', 'slotPastMap',
+            'firstNonBreakId', 'sunRowspan'
         ))->with('days', $this->days)->with('dayMapReverse', $this->dayMapReverse);
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // POLL ENDPOINT — ringan, hanya return hash + data booking terbaru
+    // Dipanggil oleh schedule.js setiap 30 detik
+    // ══════════════════════════════════════════════════════════════════
+
+    public function poll(Request $request)
+    {
+        $weekStart = $request->get('week')
+            ? Carbon::parse($request->get('week'))->startOfWeek(Carbon::MONDAY)
+            : Carbon::now()->startOfWeek(Carbon::MONDAY);
+
+        $weekEnd = $weekStart->copy()->addDays(6);
+
+        $resourceIds = Cache::remember('active_resources', 300, function () {
+            return Resource::where('status', 'active')->orderBy('name')->get(['id', 'name', 'building', 'capacity', 'status']);
+        })->pluck('id');
+
+        // Hanya query booking — data yang berubah
+        $bookings = Booking::whereBetween('booking_date', [$weekStart, $weekEnd])
+            ->whereIn('resource_id', $resourceIds)
+            ->whereIn('status', ['pending', 'approved'])
+            ->get(['id', 'resource_id', 'time_slot_id', 'booking_date', 'status',
+                   'teacher_name', 'class_name', 'subject_name', 'title',
+                   'description', 'participant_count', 'teacher_phone']);
+
+        $sundayBookings = SundayBooking::whereBetween('booking_date', [$weekStart, $weekEnd])
+            ->whereIn('resource_id', $resourceIds)
+            ->whereIn('status', ['pending', 'approved'])
+            ->get(['id', 'resource_id', 'booking_date', 'status',
+                   'teacher_name', 'class_name', 'subject_name', 'title',
+                   'description', 'participant_count', 'teacher_phone']);
+
+        // Hash sederhana untuk deteksi perubahan di client
+        $hash = md5($bookings->count() . '_' . $bookings->max('updated_at') . '_' . $sundayBookings->count());
+
+        return response()->json([
+            'hash'           => $hash,
+            'bookings'       => $bookings,
+            'sundayBookings' => $sundayBookings,
+        ]);
     }
 
     // ══════════════════════════════════════════════════════════════════
@@ -300,27 +403,36 @@ class ScheduleController extends Controller
                 // Clear cache teacher setelah upsert
                 Cache::forget('active_teachers');
 
-                return SundayBooking::create([
-                    'teacher_id'        => $teacher->id,
-                    'resource_id'       => $request->resource_id,
-                    'organization_id'   => $request->organization_id,
-                    'booking_date'      => $request->booking_date,
-                    'teacher_name'      => $teacherName,
-                    'teacher_phone'     => $teacherPhone,
-                    'class_name'        => $labClass->name,
-                    'subject_name'      => $request->subject_name,
-                    'title'             => $request->title,
-                    'description'       => $request->description,
-                    'participant_count' => $request->participant_count,
-                    'status'            => 'pending',
-                ]);
+                return [
+                    'booking'  => SundayBooking::create([
+                        'teacher_id'        => $teacher->id,
+                        'resource_id'       => $request->resource_id,
+                        'organization_id'   => $request->organization_id,
+                        'booking_date'      => $request->booking_date,
+                        'teacher_name'      => $teacherName,
+                        'teacher_phone'     => $teacherPhone,
+                        'class_name'        => $labClass->name,
+                        'subject_name'      => $request->subject_name,
+                        'title'             => $request->title,
+                        'description'       => $request->description,
+                        'participant_count' => $request->participant_count,
+                        'status'            => 'pending',
+                    ]),
+                    'labClass' => $labClass,
+                    'lab'      => Resource::find($request->resource_id),
+                ];
             });
 
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()])->withInput();
         }
 
-        $this->sendSundayBookingNotification($request, $teacherName, $teacherPhone, $sundayBooking);
+        $this->sendSundayBookingNotification(
+            $request, $teacherName, $teacherPhone,
+            $sundayBooking['booking'],
+            $sundayBooking['labClass'],
+            $sundayBooking['lab']
+        );
 
         return redirect()->back()
             ->with('success', 'Booking Minggu berhasil diajukan! Admin akan segera menghubungi via WhatsApp jika disetujui.')
@@ -422,12 +534,11 @@ class ScheduleController extends Controller
         Request $request,
         string $teacherName,
         string $teacherPhone,
-        SundayBooking $booking
+        SundayBooking $booking,
+        \App\Models\LabClass $labClass,
+        \App\Models\Resource $lab
     ): void {
         try {
-            $lab      = Resource::find($request->resource_id);
-            $labClass = LabClass::find($request->class_id);
-
             Http::timeout(3)->post(config('mikrotik.bot_url') . '/api/webhook/lab-session', [
                 'event'             => 'booking_pending',
                 'session_id'        => null,

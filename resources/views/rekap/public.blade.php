@@ -40,17 +40,17 @@
     <div class="sum-grid">
         <div class="sum-card">
             <div class="sum-lbl">Total Kapasitas</div>
-            <div class="sum-val" style="color:#6b7280">{{ $summary['total_capacity'] }}</div>
+            <div class="sum-val" style="color:#6b7280">{{ number_format($summary['total_capacity']) }}</div>
             <div class="sum-sub">Slot tersedia bulan ini</div>
         </div>
         <div class="sum-card">
             <div class="sum-lbl">Jadwal Tetap</div>
-            <div class="sum-val" style="color:#1A2517">{{ $summary['total_scheduled'] }}</div>
+            <div class="sum-val" style="color:#1A2517">{{ number_format($summary['total_scheduled']) }}</div>
             <div class="sum-sub">Slot terisi rutin</div>
         </div>
         <div class="sum-card">
             <div class="sum-lbl">Booking</div>
-            <div class="sum-val" style="color:#2563eb">{{ $summary['total_booking'] }}</div>
+            <div class="sum-val" style="color:#2563eb">{{ number_format($summary['total_booking']) }}</div>
             <div class="sum-sub">Booking disetujui</div>
         </div>
         <div class="sum-card">
@@ -61,7 +61,7 @@
                 $barColor = $pc >= 70 ? '#22c55e' : ($pc >= 40 ? '#f59e0b' : '#ef4444');
             @endphp
             <div class="sum-val" style="color:{{ $pcColor }}">{{ $pc }}%</div>
-            <div class="sum-sub">{{ $summary['total_used'] }} dari {{ $summary['total_capacity'] }} slot</div>
+            <div class="sum-sub">{{ number_format($summary['total_used']) }} dari {{ number_format($summary['total_capacity']) }} slot</div>
             <div class="pbar-wrap">
                 <div class="pbar" style="width:{{ $pc }}%;background:{{ $barColor }}"></div>
             </div>
@@ -89,6 +89,47 @@
         </button>
     </div>
 
+    {{-- ══════════════════════════════════════════════════════════
+         HEATMAP OVERVIEW SEMUA LAB
+    ══════════════════════════════════════════════════════════ --}}
+    <div class="overview-card">
+        <div class="overview-title">Heatmap Penggunaan — Semua Lab (Per Hari dalam Seminggu)</div>
+        <div class="overview-heatmap">
+            <div class="ohm-header">
+                <div class="ohm-lab-col"></div>
+                @foreach(['Sen','Sel','Rab','Kam','Jum','Sab','Min'] as $d)
+                    <div class="ohm-day {{ $d === 'Min' ? 'ohm-day-sun' : '' }}">{{ $d }}</div>
+                @endforeach
+            </div>
+            @foreach($labData as $lab)
+                @php
+                    $dayNames = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+                    $schedByDay = collect($lab['scheduleDetails'])->groupBy('day_of_week');
+                @endphp
+                <div class="ohm-row">
+                    <div class="ohm-lab">{{ $lab['resource']->name }}</div>
+                    @foreach($dayNames as $dn)
+                        @php
+                            $cnt = $schedByDay->get($dn, collect())->count();
+                            $pct = $totalSlotPerDay > 0 ? ($cnt / $totalSlotPerDay) * 100 : 0;
+                            $lvl = $pct == 0 ? 0 : ($pct <= 25 ? 1 : ($pct <= 50 ? 2 : ($pct <= 75 ? 3 : 4)));
+                        @endphp
+                        <div class="ohm-cell heat-{{ $lvl }} {{ $dn === 'Sunday' ? 'heat-sun-cell' : '' }}"
+                             title="{{ round($pct) }}% — {{ $cnt }} slot"></div>
+                    @endforeach
+                </div>
+            @endforeach
+        </div>
+        <div class="heat-legend">
+            <span class="hl-item"><span class="hl-dot heat-0"></span>Tidak ada</span>
+            <span class="hl-item"><span class="hl-dot heat-1"></span>1–25%</span>
+            <span class="hl-item"><span class="hl-dot heat-2"></span>26–50%</span>
+            <span class="hl-item"><span class="hl-dot heat-3"></span>51–75%</span>
+            <span class="hl-item"><span class="hl-dot heat-4"></span>76–100%</span>
+            <span class="hl-item"><span class="hl-dot heat-sun-cell"></span>Minggu</span>
+        </div>
+    </div>
+
     {{-- TABS --}}
     <div class="tabs">
         @foreach($labData as $i => $lab)
@@ -109,6 +150,29 @@
         $pctColor = $pct >= 70 ? '#86efac' : ($pct >= 40 ? '#fcd34d' : '#f87171');
         $ps       = $lab['totalCapacity'] > 0 ? ($lab['scheduledSlots'] / $lab['totalCapacity'] * 100) : 0;
         $pb       = $lab['totalCapacity'] > 0 ? ($lab['bookingSlots']   / $lab['totalCapacity'] * 100) : 0;
+
+        // Top teachers dari booking
+        $topTeachers = $lab['bookingDetails']
+            ->groupBy('teacher_name')
+            ->map(fn($g) => $g->count())
+            ->sortDesc()
+            ->take(5);
+
+        // Kepadatan per hari
+        $dayLabels = ['Monday'=>'Senin','Tuesday'=>'Selasa','Wednesday'=>'Rabu','Thursday'=>'Kamis','Friday'=>'Jumat','Saturday'=>'Sabtu','Sunday'=>'Minggu'];
+        $schedByDay = collect($lab['scheduleDetails'])->groupBy('day_of_week');
+        $bookByDay  = $lab['bookingDetails']->groupBy(fn($b) => \Carbon\Carbon::parse($b->booking_date)->format('l'));
+        $dayDensity = [];
+        foreach ($dayLabels as $dn => $dlabel) {
+            $sc  = $schedByDay->get($dn, collect())->count();
+            $bc  = $bookByDay->get($dn, collect())->count();
+            $tot = $sc + $bc;
+            $dayDensity[$dn] = [
+                'label'    => $dlabel,
+                'pct'      => $totalSlotPerDay > 0 ? round(($tot / $totalSlotPerDay) * 100) : 0,
+                'isSunday' => $dn === 'Sunday',
+            ];
+        }
     @endphp
     <div class="panel {{ $i === 0 ? 'on' : '' }}" id="panel-{{ $i }}">
         <div class="lab-card">
@@ -121,6 +185,7 @@
                     </h2>
                     <p style="font-size:11px;color:rgba(172,200,162,.4);margin-top:4px">
                         {{ $lab['totalCapacity'] }} slot kapasitas · {{ $totalSlotPerDay }} slot/hari
+                        @if($lab['resource']->building) · {{ $lab['resource']->building }} @endif
                     </p>
                 </div>
                 <div style="display:flex;align-items:center;gap:14px">
@@ -176,11 +241,12 @@
 
             {{-- Calendar --}}
             <div class="cal">
-                <div class="sec-lbl">Kalender Penggunaan</div>
+                <div class="sec-lbl">Kalender Penggunaan — {{ $months[$month] }} {{ $year }}</div>
                 <div class="cal-grid">
                     @foreach($lab['dailyData'] as $day)
                     @php
-                        $dc = 'dc-mt';
+                        $pct2 = $day['capacity'] > 0 ? ($day['total'] / $day['capacity']) * 100 : 0;
+                        $dc   = 'dc-mt';
                         if ($day['isSunday'])                                  $dc = 'dc-sun';
                         elseif ($day['schedule'] > 0 && $day['booking'] > 0)  $dc = 'dc-both';
                         elseif ($day['schedule'] > 0)                          $dc = 'dc-sch';
@@ -188,7 +254,7 @@
                     @endphp
                     <div class="dc {{ $dc }}"
                          style="{{ $day['isToday'] ? 'outline:2px solid #ACC8A2;outline-offset:1px;' : '' }}"
-                         title="{{ $day['date']->translatedFormat('d M Y') }} — Jadwal: {{ $day['schedule'] }} | Booking: {{ $day['booking'] }} | Total: {{ $day['total'] }}/{{ $day['capacity'] }} slot">
+                         title="{{ $day['date']->translatedFormat('d M Y') }} — Jadwal: {{ $day['schedule'] }} | Booking: {{ $day['booking'] }} | Total: {{ $day['total'] }}/{{ $day['capacity'] }} slot ({{ round($pct2) }}%)">
                         <div>{{ $day['date']->format('d') }}</div>
                         @if(!$day['isSunday'] && $day['total'] > 0)
                         <div style="font-size:8px;margin-top:1px">{{ $day['total'] }}/{{ $day['capacity'] }}</div>
@@ -210,6 +276,40 @@
                     </div>
                     @endforeach
                 </div>
+            </div>
+
+            {{-- ══ TOP TEACHERS + KEPADATAN PER HARI ══ --}}
+            <div class="insight-row">
+
+                {{-- Top Pengajar --}}
+                <div class="insight-card">
+                    <div class="sec-lbl">Top Pengajar Bulan Ini</div>
+                    @forelse($topTeachers as $name => $count)
+                        <div class="teacher-row">
+                            <div class="teacher-rank">{{ $loop->iteration }}</div>
+                            <div class="teacher-name">{{ $name }}</div>
+                            <div class="teacher-count">{{ $count }} sesi</div>
+                        </div>
+                    @empty
+                        <div class="insight-empty">Belum ada booking bulan ini</div>
+                    @endforelse
+                </div>
+
+                {{-- Kepadatan per Hari --}}
+                <div class="insight-card">
+                    <div class="sec-lbl">Kepadatan per Hari</div>
+                    @foreach($dayDensity as $dn => $d)
+                        <div class="bar-row">
+                            <div class="bar-label">{{ $d['label'] }}</div>
+                            <div class="bar-track">
+                                <div class="bar-fill {{ $d['isSunday'] ? 'bar-sun' : '' }}"
+                                     style="width:{{ $d['pct'] }}%"></div>
+                            </div>
+                            <div class="bar-val {{ $d['isSunday'] ? 'bar-val-sun' : '' }}">{{ $d['pct'] }}%</div>
+                        </div>
+                    @endforeach
+                </div>
+
             </div>
 
             {{-- Detail --}}
@@ -343,7 +443,9 @@
 
 </div>{{-- /wrap --}}
 
-{{-- JS rekap --}}
+@endsection
+
+@section('scripts')
 <script>
 function switchTab(idx) {
     document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('on'); });
@@ -366,7 +468,7 @@ function getActiveTableData() {
     if (!panel) return { jadwal: [], booking: [] };
     var jadwal = [], booking = [];
     panel.querySelectorAll('table.tbl').forEach(function(tbl) {
-        var h = tbl.previousElementSibling;
+        var h = tbl.closest('.tbl-wrap').previousElementSibling;
         var isBook = h && h.textContent.includes('Booking');
         var target = isBook ? booking : jadwal;
         var headers = Array.from(tbl.querySelectorAll('thead th')).map(function(th) { return th.textContent.trim(); });
@@ -392,12 +494,10 @@ function getSummaryRows() {
 function exportExcel() {
     if (typeof XLSX === 'undefined') {
         var s = document.createElement('script');
-        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+        s.src = '/js/xlsx.full.min.js';
         s.onload = function() { doExportExcel(); };
         document.head.appendChild(s);
-    } else {
-        doExportExcel();
-    }
+    } else { doExportExcel(); }
 }
 function doExportExcel() {
     var lab = getActiveLabName(), period = getPeriod(), wb = XLSX.utils.book_new();
@@ -476,5 +576,4 @@ function exportPDF() {
     setTimeout(function() { win.print(); }, 500);
 }
 </script>
-
 @endsection

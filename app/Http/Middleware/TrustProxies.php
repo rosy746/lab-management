@@ -8,21 +8,23 @@ use Illuminate\Http\Request;
 class TrustProxies extends Middleware
 {
     /**
-     * The trusted proxies for this application.
+     * Proxy yang dipercaya.
+     * - null  = tidak ada proxy dipercaya (default, aman untuk akses langsung)
+     * - '*'   = percaya semua proxy (JANGAN dipakai di production tanpa alasan)
+     * - ['ip'] = hanya percaya IP proxy tertentu
      *
-     * @var array<int, string>|string|null
+     * Karena app ini diakses langsung (Laragon/lokal), set null.
+     * Jika nanti di-deploy di belakang Nginx/load balancer, isi dengan IP proxy-nya.
      */
-    protected $proxies;
+    protected $proxies = null;
 
     /**
-     * The headers that should be used to detect proxies.
-     *
-     * @var int
+     * Header yang dipakai untuk mendeteksi proxy.
+     * Hanya aktifkan yang benar-benar dibutuhkan.
      */
     protected $headers =
         Request::HEADER_X_FORWARDED_FOR |
         Request::HEADER_X_FORWARDED_HOST |
         Request::HEADER_X_FORWARDED_PORT |
-        Request::HEADER_X_FORWARDED_PROTO |
-        Request::HEADER_X_FORWARDED_AWS_ELB;
+        Request::HEADER_X_FORWARDED_PROTO;
 }
