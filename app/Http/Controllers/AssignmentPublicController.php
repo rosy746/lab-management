@@ -13,39 +13,76 @@ use Illuminate\Support\Facades\Storage;
 class AssignmentPublicController extends Controller
 {
     // ══════════════════════════════════════════════════════════════════
-    // INDEX
+    // INDEX — Halaman utama, cek PIN dari session
     // ══════════════════════════════════════════════════════════════════
 
     public function index()
     {
-        $organizations = Cache::remember('active_organizations', 3600, function () {
-            return Organization::where('is_active', true)
-                ->orderBy('name')
-                ->get(['id', 'name']);
-        });
+        // Cek apakah sudah ada PIN valid di session
+        $activeClass = null;
+        $assignments = collect();
 
-        $classes = Cache::remember('active_classes', 3600, function () {
-            return LabClass::where('is_active', true)
-                ->orderBy('name')
-                ->get(['id', 'name', 'organization_id']);
-        });
+        $classPin = session('assignment_class_pin');
 
-        // ── FIX: tambah withCount('submissions') ──────────────────────
-        // Sebelum: $a->submissions->count() di blade → query per assignment (N+1)
-        // Sesudah: $a->submissions_count sudah tersedia → 0 query tambahan
-        $assignments = Cache::remember('active_assignments', 120, function () {
-            return Assignment::with(['teacher:id,name'])
-                ->withCount('submissions')          // ← satu LEFT JOIN, bukan N query
-                ->where('is_active', true)
-                ->orderBy('deadline')
-                ->get([
-                    'id', 'title', 'description', 'deadline',
-                    'teacher_id', 'organization_id', 'is_active',
-                    'attachment_path', 'attachment_name',
-                ]);
-        });
+        if ($classPin) {
+            $activeClass = Cache::remember('class_pin_' . $classPin, 300, function () use ($classPin) {
+                return LabClass::where('pin', $classPin)
+                    ->where('is_active', true)
+                    ->whereNull('deleted_at')
+                    ->with('organization:id,name')
+                    ->first(['id', 'name', 'organization_id', 'pin']);
+            });
 
-        return view('assignments.public', compact('assignments', 'organizations', 'classes'));
+            // PIN tidak valid atau kelas dihapus — hapus session
+            if (!$activeClass) {
+                session()->forget('assignment_class_pin');
+            } else {
+                $assignments = $this->getAssignmentsForClass($activeClass);
+            }
+        }
+
+        return view('assignments.public', compact('activeClass', 'assignments'));
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // VERIFY PIN — POST /tugas/pin
+    // ══════════════════════════════════════════════════════════════════
+
+    public function verifyPin(Request $request)
+    {
+        $request->validate([
+            'pin' => 'required|string|size:6|regex:/^\d{6}$/',
+        ], [
+            'pin.required' => 'PIN wajib diisi.',
+            'pin.size'     => 'PIN harus 6 digit.',
+            'pin.regex'    => 'PIN hanya boleh angka.',
+        ]);
+
+        $pin = $request->pin;
+
+        $class = LabClass::where('pin', $pin)
+            ->where('is_active', true)
+            ->whereNull('deleted_at')
+            ->first(['id', 'name', 'organization_id', 'pin']);
+
+        if (!$class) {
+            return back()->withErrors(['pin' => 'PIN salah atau kelas tidak ditemukan.'])->withInput();
+        }
+
+        // Simpan PIN ke session
+        session(['assignment_class_pin' => $pin]);
+
+        return redirect()->route('assignment.public');
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // CLEAR PIN — POST /tugas/ganti-kelas
+    // ══════════════════════════════════════════════════════════════════
+
+    public function clearPin()
+    {
+        session()->forget('assignment_class_pin');
+        return redirect()->route('assignment.public');
     }
 
     // ══════════════════════════════════════════════════════════════════
@@ -56,6 +93,15 @@ class AssignmentPublicController extends Controller
     {
         if (!$assignment->is_active) abort(404);
 
+        // Validasi — kelas yang membuka harus sesuai PIN di session
+        $classPin    = session('assignment_class_pin');
+        $activeClass = $classPin ? LabClass::where('pin', $classPin)->first(['id', 'name']) : null;
+
+        if (!$activeClass || $activeClass->name !== $assignment->class_name) {
+            return redirect()->route('assignment.public')
+                ->withErrors(['pin' => 'Akses tidak diizinkan. Silakan masukkan PIN kelas yang sesuai.']);
+        }
+
         $submissions = $assignment->submissions()
             ->orderByDesc('submitted_at')
             ->get([
@@ -63,7 +109,7 @@ class AssignmentPublicController extends Controller
                 'file_name', 'file_size', 'file_ext', 'status', 'submitted_at',
             ]);
 
-        return view('assignments.show', compact('assignment', 'submissions'));
+        return view('assignments.show', compact('assignment', 'submissions', 'activeClass'));
     }
 
     // ══════════════════════════════════════════════════════════════════
@@ -76,10 +122,18 @@ class AssignmentPublicController extends Controller
             return back()->withErrors(['error' => 'Deadline sudah lewat.']);
         }
 
+        // Validasi kelas sesuai PIN
+        $classPin    = session('assignment_class_pin');
+        $activeClass = $classPin ? LabClass::where('pin', $classPin)->first(['id', 'name']) : null;
+
+        if (!$activeClass || $activeClass->name !== $assignment->class_name) {
+            return redirect()->route('assignment.public')
+                ->withErrors(['pin' => 'Sesi kelas tidak valid. Masukkan PIN kembali.']);
+        }
+
         $request->validate([
-            'student_name'  => 'required|string|max:100',
-            'student_class' => 'required|string|max:50',
-            'file'          => 'required|file|mimes:pdf,doc,docx,ppt,pptx,xls,xlsx,zip,rar|max:10240',
+            'student_name' => 'required|string|max:100',
+            'file'         => 'required|file|mimes:pdf,doc,docx,ppt,pptx,xls,xlsx,zip,rar|max:10240',
         ], [
             'file.mimes' => 'File harus berformat PDF, Word, PowerPoint, Excel, ZIP, atau RAR.',
             'file.max'   => 'Ukuran file maksimal 10MB.',
@@ -91,7 +145,7 @@ class AssignmentPublicController extends Controller
         AssignmentSubmission::create([
             'assignment_id' => $assignment->id,
             'student_name'  => $request->student_name,
-            'student_class' => $request->student_class,
+            'student_class' => $activeClass->name, // ← dari session, bukan input user
             'file_path'     => $path,
             'file_name'     => $file->getClientOriginalName(),
             'file_size'     => round($file->getSize() / 1024, 1) . ' KB',
@@ -100,8 +154,28 @@ class AssignmentPublicController extends Controller
             'submitted_at'  => now(),
         ]);
 
-        Cache::forget('active_assignments');
+        Cache::forget('active_assignments_class_' . $activeClass->id);
 
         return back()->with('success', 'Tugas berhasil dikumpulkan!');
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // PRIVATE HELPERS
+    // ══════════════════════════════════════════════════════════════════
+
+    private function getAssignmentsForClass(LabClass $class)
+    {
+        return Cache::remember('active_assignments_class_' . $class->id, 120, function () use ($class) {
+            return Assignment::with(['teacher:id,name'])
+                ->withCount('submissions')
+                ->where('is_active', true)
+                ->where('class_name', $class->name)   // filter per kelas
+                ->orderBy('deadline')
+                ->get([
+                    'id', 'title', 'description', 'deadline',
+                    'teacher_id', 'class_name', 'is_active',
+                    'attachment_path', 'attachment_name',
+                ]);
+        });
     }
 }

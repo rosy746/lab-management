@@ -13,7 +13,7 @@
 <div class="hero">
     <p class="hero-eyebrow">Sistem Pengumpulan Tugas</p>
     <h1>📋 Kumpulkan Tugasmu</h1>
-    <p>Pilih tugas · Upload file · Tanpa perlu login</p>
+    <p>Masukkan PIN kelas untuk melihat tugasmu</p>
 </div>
 
 {{-- ═══ MAIN WRAP ═══ --}}
@@ -26,141 +26,184 @@
     <div class="flash flash-err">⚠ {{ $errors->first('error') }}</div>
     @endif
 
-    {{-- Filter --}}
-    <div class="filter-row">
-        <div style="flex:1;min-width:240px">
-            <label class="filter-label">Cari Tugas (Kelas / Guru / Judul)</label>
-            <div style="position:relative">
-                <input type="text" id="search-global" class="inp"
-                    style="width:100%;padding-left:36px"
-                    placeholder="Ketik nama kelas atau guru..."
-                    oninput="filterGlobal()">
-                <svg style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:#9ca3af"
-                     fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+    @if(!$activeClass)
+    {{-- ══════════════════════════════════════════════════════
+         LAYAR 1 — Entry PIN
+         ══════════════════════════════════════════════════════ --}}
+    <div class="pin-screen">
+
+        <div class="pin-icon">
+            <svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="#3d6b3d" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+            </svg>
+        </div>
+
+        <div class="pin-title">Masukkan PIN Kelas</div>
+        <div class="pin-sub">
+            PIN 6 digit diberikan oleh gurumu.<br>
+            Tanyakan ke guru jika belum punya.
+        </div>
+
+        @if($errors->has('pin'))
+        <div class="pin-error-msg">
+            <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+            </svg>
+            {{ $errors->first('pin') }}
+        </div>
+        @endif
+
+        {{-- PIN Display Boxes --}}
+        <div class="pin-boxes" id="pin-boxes" aria-live="polite">
+            @for($i = 0; $i < 6; $i++)
+            <div class="pin-box" id="pin-box-{{ $i }}"></div>
+            @endfor
+        </div>
+
+        {{-- Hidden form --}}
+        <form method="POST" action="{{ route('assignment.pin.verify') }}" id="pin-form">
+            @csrf
+            <input type="hidden" name="pin" id="pin-value">
+
+            {{-- Keypad --}}
+            <div class="pin-keypad" role="group" aria-label="Keypad PIN">
+                @foreach([1,2,3,4,5,6,7,8,9] as $num)
+                <button type="button" class="pin-key" onclick="pinPress('{{ $num }}')" aria-label="Angka {{ $num }}">
+                    {{ $num }}
+                </button>
+                @endforeach
+                <button type="button" class="pin-key" style="visibility:hidden" aria-hidden="true"></button>
+                <button type="button" class="pin-key pin-key-0" onclick="pinPress('0')" aria-label="Angka 0">0</button>
+                <button type="button" class="pin-key pin-key-del" onclick="pinDelete()" aria-label="Hapus">
+                    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z"/>
+                    </svg>
+                </button>
+            </div>
+
+            <button type="submit" class="btn-pin-submit" id="btn-submit" disabled>
+                Lihat Tugasku →
+            </button>
+        </form>
+
+        <div class="pin-hint">
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            PIN tersimpan di sesi browser ini
+        </div>
+    </div>
+
+    @else
+    {{-- ══════════════════════════════════════════════════════
+         LAYAR 2 — Daftar tugas kelas
+         ══════════════════════════════════════════════════════ --}}
+
+    {{-- Header kelas aktif --}}
+    <div class="class-header">
+        <div class="class-header-left">
+            <div class="class-icon">
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#ACC8A2" stroke-width="1.8">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
                 </svg>
             </div>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
             <div>
-                <label class="filter-label" for="filter-org">Lembaga</label>
-                <select id="filter-org" class="inp" style="min-width:180px" onchange="filterByOrg(this.value)">
-                    <option value="">— Semua Lembaga —</option>
-                    @foreach($organizations as $org)
-                    <option value="{{ $org->id }}">{{ $org->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div>
-                <label class="filter-label" for="filter-kelas">Kelas</label>
-                <select id="filter-kelas" class="inp" style="min-width:180px"
-                    onchange="filterByKelas(this.value)" disabled>
-                    <option value="">— Pilih Lembaga Dulu —</option>
-                </select>
-            </div>
-        </div>
-    </div>
-
-    {{-- Data kelas per org untuk JS --}}
-    <script>
-        window.CLASSES_BY_ORG = @json($classes->groupBy('organization_id'));
-    </script>
-
-    {{-- STATE 1: Belum pilih (default) --}}
-    <div id="state-pick" class="state-box">
-        <div class="state-pick-wrap" style="background:#fff;border-radius:24px;border:1px solid #e8f0e6;box-shadow:0 1px 10px rgba(26,37,23,.04)">
-            <div style="font-size:64px;margin-bottom:20px;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.1))">✨</div>
-            <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:24px;color:#1A2517">Halo, Selamat Datang!</div>
-            <div style="font-size:14px;color:#6b7280;margin-top:10px;max-width:340px;margin-left:auto;margin-right:auto;line-height:1.7">
-                Gunakan <strong>Pencarian Cepat</strong> di atas atau pilih <strong>Lembaga & Kelas</strong> untuk melihat daftar tugas yang harus kamu kumpulkan hari ini.
-            </div>
-            <div style="display:flex;flex-direction:column;gap:12px;max-width:400px;margin:32px auto 0;text-align:left">
-                @foreach(['Cari kelas atau namamu di kolom pencarian', 'Pilih tugas yang sesuai dan klik "Kumpulkan"', 'Upload file tugasmu dan selesai!'] as $i => $step)
-                <div style="display:flex;align-items:center;gap:14px;padding:16px;background:#fcfdfb;border-radius:16px;border:1px solid #f0f4ee">
-                    <div style="width:32px;height:32px;border-radius:10px;background:#1A2517;color:#ACC8A2;display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0">{{ $i + 1 }}</div>
-                    <div style="font-size:13px;font-weight:600;color:#1A2517">{{ $step }}</div>
+                <div class="class-name">{{ $activeClass->name }}</div>
+                <div class="class-sub">
+                    {{ $activeClass->organization->name ?? '-' }}
+                    · {{ $assignments->count() }} tugas aktif
                 </div>
-                @endforeach
             </div>
         </div>
+        <form method="POST" action="{{ route('assignment.pin.clear') }}">
+            @csrf
+            <button type="submit" class="btn-ganti">
+                <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                </svg>
+                Ganti Kelas
+            </button>
+        </form>
     </div>
 
-    {{-- STATE 2: Tidak ada tugas --}}
-    <div id="state-empty" class="empty-noresult" style="display:none">
-        <div class="empty-noresult-icon">📭</div>
-        <div style="font-weight:700;color:#374151;margin-bottom:4px">Tidak ada tugas untuk kelas ini</div>
-        <div style="font-size:13px;color:#9ca3af">Belum ada tugas yang diberikan untuk kelas yang dipilih</div>
+    {{-- Daftar tugas --}}
+    @if($assignments->isEmpty())
+    <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <div style="font-weight:700;color:#374151;margin-bottom:4px">Tidak ada tugas aktif</div>
+        <div style="font-size:13px;color:#9ca3af">Belum ada tugas yang diberikan untuk kelas ini. Cek lagi nanti.</div>
     </div>
-
-    {{-- STATE 3: Grid tugas --}}
-    @if(!$assignments->isEmpty())
-    <div class="assignment-grid" id="assignment-grid" style="display:none">
+    @else
+    <div class="assignment-grid">
         @foreach($assignments as $a)
         @php
             $expired       = $a->isExpired();
             $diffHrs       = now()->diffInHours($a->deadline, false);
-            $deadlineClass = $expired ? 'deadline-urgent' : ($diffHrs < 24 ? 'deadline-soon' : 'deadline-ok');
+            $isUrgent      = !$expired && $diffHrs < 24;
+            $badgeClass    = $expired ? 'badge-closed' : ($isUrgent ? 'badge-urgent' : 'badge-open');
+            $badgeLabel    = $expired ? 'Ditutup' : ($isUrgent ? 'Mendesak' : 'Buka');
+
+            $deadlineClass = $expired ? 'pill-neutral' : ($diffHrs < 6 ? 'pill-urgent' : ($diffHrs < 24 ? 'pill-soon' : 'pill-ok'));
             $deadlineLabel = $expired
                 ? 'Deadline terlewat'
                 : ($diffHrs < 1
                     ? 'Kurang dari 1 jam!'
-                    : ($diffHrs < 24 ? "Sisa {$diffHrs} jam" : $a->deadline->translatedFormat('d M Y, H:i')));
+                    : ($diffHrs < 24
+                        ? 'Sisa ' . $diffHrs . ' jam'
+                        : $a->deadline->translatedFormat('d M Y, H:i')));
         @endphp
-        <div class="acard"
-             data-kelas="{{ strtolower($a->class_name) }}"
-             data-search="{{ strtolower($a->title . ' ' . $a->subject_name . ' ' . $a->teacher->name . ' ' . $a->class_name) }}"
-             data-deadline="{{ $a->deadline->toISOString() }}"
-             style="display:none">
+        <div class="acard {{ $expired ? 'acard-closed' : '' }}"
+             data-deadline="{{ $a->deadline->toISOString() }}">
 
             <div class="acard-head">
                 <div>
                     <div class="acard-title">{{ $a->title }}</div>
                     <div class="acard-subject">{{ $a->subject_name }} · {{ $a->teacher->name }}</div>
                 </div>
-                <span class="badge-status {{ $expired ? 'badge-closed' : 'badge-open' }}">
-                    {{ $expired ? 'Ditutup' : 'Buka' }}
-                </span>
+                <span class="badge-status {{ $badgeClass }}">{{ $badgeLabel }}</span>
             </div>
 
             <div class="acard-body">
                 <div class="acard-meta">
-                    <span class="meta-item">
-                        <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"/>
-                        </svg>
-                        {{ $a->class_name }}
-                    </span>
-                    <span class="meta-item {{ $deadlineClass }} countdown-timer" data-time="{{ $a->deadline->toISOString() }}">
-                        <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    {{-- Deadline --}}
+                    <span class="meta-pill {{ $deadlineClass }} countdown-item" data-time="{{ $a->deadline->toISOString() }}">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                         <span>{{ $deadlineLabel }}</span>
                     </span>
-                    <span class="meta-item">
-                        <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+
+                    {{-- Jumlah dikumpulkan --}}
+                    <span class="meta-pill pill-neutral">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
                         {{ $a->submissions_count }} dikumpulkan
                     </span>
-                </div>
-                @if($a->description)
-                <div class="acard-desc">{{ Str::limit($a->description, 120) }}</div>
-                @endif
-            </div>
 
-            <div class="acard-foot">
-                <span class="sub-count">PDF, Word, PPT, Excel, ZIP · maks 10MB</span>
-                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                    {{-- Ada soal --}}
                     @if($a->attachment_path)
-                    <a href="{{ route('assignment.download.attachment', $a) }}"
-                       class="btn-kumpul"
-                       style="background:linear-gradient(135deg,#1e3a5f,#2563eb);color:#93c5fd">
-                        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4 4l-4 4m0 0l-4-4m4 4V4"/>
+                    <span class="meta-pill pill-blue">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
                         </svg>
-                        📎 Unduh Soal ({{ $a->attachment_size }})
+                        Ada soal
+                    </span>
+                    @endif
+                </div>
+
+                <div class="acard-actions">
+                    {{-- Unduh soal --}}
+                    @if($a->attachment_path)
+                    <a href="{{ route('assignment.download.attachment', $a) }}" class="btn-unduh">
+                        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                        Unduh Soal
                     </a>
                     @endif
+
+                    {{-- Kumpulkan / Ditutup --}}
                     @if(!$expired)
                     <a href="{{ route('assignment.show', $a) }}" class="btn-kumpul">
                         <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -169,7 +212,12 @@
                         Kumpulkan
                     </a>
                     @else
-                    <span class="btn-kumpul btn-kumpul-disabled">Ditutup</span>
+                    <span class="btn-disabled">
+                        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                        Ditutup
+                    </span>
                     @endif
                 </div>
             </div>
@@ -178,96 +226,92 @@
     </div>
     @endif
 
+    @endif {{-- end if activeClass --}}
+
 </div>
 
-{{-- JS assignment — inline karena kecil dan tidak perlu file terpisah --}}
+{{-- JS PIN & Countdown --}}
 <script>
-function showState(state) {
-    document.getElementById('state-pick').style.display  = state === 'pick'  ? '' : 'none';
-    document.getElementById('state-empty').style.display = state === 'empty' ? '' : 'none';
-    var grid = document.getElementById('assignment-grid');
-    if (grid) grid.style.display = state === 'grid' ? '' : 'none';
-}
+var pinValue = '';
+var MAX_PIN  = 6;
 
-function filterByOrg(orgId) {
-    var kelasSel = document.getElementById('filter-kelas');
-    if (orgId && window.CLASSES_BY_ORG[orgId]) {
-        kelasSel.innerHTML = '<option value="">— Pilih Kelas —</option>';
-        window.CLASSES_BY_ORG[orgId].forEach(function(k) {
-            var opt = document.createElement('option');
-            opt.value       = k.name.toLowerCase();
-            opt.textContent = k.name;
-            kelasSel.appendChild(opt);
-        });
-        kelasSel.disabled = false;
-    } else {
-        kelasSel.innerHTML = '<option value="">— Pilih Lembaga Dulu —</option>';
-        kelasSel.disabled = true;
+function updateBoxes() {
+    for (var i = 0; i < MAX_PIN; i++) {
+        var box = document.getElementById('pin-box-' + i);
+        if (!box) return;
+        if (i < pinValue.length) {
+            box.textContent = '●';
+            box.className = 'pin-box filled';
+        } else if (i === pinValue.length) {
+            box.textContent = '';
+            box.className = 'pin-box active';
+        } else {
+            box.textContent = '';
+            box.className = 'pin-box';
+        }
     }
-    showState('pick');
+    var btn = document.getElementById('btn-submit');
+    if (btn) btn.disabled = pinValue.length < MAX_PIN;
+    var inp = document.getElementById('pin-value');
+    if (inp) inp.value = pinValue;
 }
 
-function filterByKelas(val) {
-    if (!val) { showState('pick'); return; }
-    document.getElementById('search-global').value = '';
-    var cards = document.querySelectorAll('.acard');
-    var shown = 0;
-    cards.forEach(function(c) {
-        var match = c.dataset.kelas === val.toLowerCase();
-        c.style.display = match ? '' : 'none';
-        if (match) shown++;
-    });
-    showState(shown === 0 ? 'empty' : 'grid');
-}
-
-function filterGlobal() {
-    var search = document.getElementById('search-global').value.toLowerCase();
-    if (!search || search.length < 2) {
-        document.getElementById('filter-org').value   = '';
-        document.getElementById('filter-kelas').value = '';
-        document.getElementById('filter-kelas').disabled = true;
-        showState('pick');
-        return;
+function pinPress(digit) {
+    if (pinValue.length >= MAX_PIN) return;
+    pinValue += digit;
+    updateBoxes();
+    if (pinValue.length === MAX_PIN) {
+        setTimeout(function() {
+            document.getElementById('pin-form').submit();
+        }, 120);
     }
-    document.getElementById('filter-org').value   = '';
-    document.getElementById('filter-kelas').value = '';
-    var cards = document.querySelectorAll('.acard');
-    var shown = 0;
-    cards.forEach(function(c) {
-        var match = c.dataset.search.includes(search);
-        c.style.display = match ? '' : 'none';
-        if (match) shown++;
-    });
-    showState(shown === 0 ? 'empty' : 'grid');
 }
 
-// ─── COUNTDOWN TIMER ──────────────────────────────────────
+function pinDelete() {
+    if (pinValue.length === 0) return;
+    pinValue = pinValue.slice(0, -1);
+    updateBoxes();
+}
+
+// Keyboard support
+document.addEventListener('keydown', function(e) {
+    if (e.key >= '0' && e.key <= '9') { pinPress(e.key); }
+    else if (e.key === 'Backspace')    { pinDelete(); }
+    else if (e.key === 'Enter' && pinValue.length === MAX_PIN) {
+        document.getElementById('pin-form')?.submit();
+    }
+});
+
+// Init boxes kalau ada form PIN
+if (document.getElementById('pin-boxes')) updateBoxes();
+
+// ─── COUNTDOWN ──────────────────────────────────────────────
 function updateCountdowns() {
     var now = new Date();
-    document.querySelectorAll('.countdown-timer').forEach(function(el) {
+    document.querySelectorAll('.countdown-item').forEach(function(el) {
         var deadline = new Date(el.dataset.time);
         var diff = deadline - now;
         if (diff < 0) {
             el.querySelector('span').textContent = 'Deadline terlewat';
-            el.className = 'meta-item deadline-urgent';
+            el.className = 'meta-pill pill-neutral countdown-item';
             return;
         }
-        var hrs  = Math.floor(diff / (1000 * 60 * 60));
-        var mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        var secs = Math.floor((diff % (1000 * 60)) / 1000);
-        if (hrs > 48) return; // biarkan label default kalau masih lama
-        var label = hrs > 0 ? ('Sisa ' + hrs + 'j ' + mins + 'm') : ('Sisa ' + mins + 'm ' + secs + 'd');
+        var hrs  = Math.floor(diff / 3600000);
+        var mins = Math.floor((diff % 3600000) / 60000);
+        var secs = Math.floor((diff % 60000) / 1000);
+        if (hrs > 48) return;
+        var label = hrs > 0
+            ? 'Sisa ' + hrs + 'j ' + mins + 'm'
+            : 'Sisa ' + mins + 'm ' + secs + 'd';
         el.querySelector('span').textContent = label;
-        el.className = 'meta-item ' + (hrs < 24 ? 'deadline-soon' : 'deadline-ok');
+        el.className = 'meta-pill countdown-item ' + (hrs < 6 ? 'pill-urgent' : (hrs < 24 ? 'pill-soon' : 'pill-ok'));
     });
 }
 
-setInterval(updateCountdowns, 1000);
-
-document.addEventListener('DOMContentLoaded', function() {
-    showState('pick');
+if (document.querySelector('.countdown-item')) {
     updateCountdowns();
-});
+    setInterval(updateCountdowns, 1000);
+}
 </script>
 
 @endsection
